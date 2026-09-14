@@ -13,7 +13,8 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-[Releases](https://github.com/Annan687/ok-star-savior/releases) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.0/ok-star-savior-win32-Global-setup.exe) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.0) ·
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 [原始碼](https://github.com/Annan687/ok-star-savior)
 
@@ -49,106 +50,52 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-正式安裝版本將透過：
+**[v0.2.0 測試版已公開發布](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.0)。一般使用者請下載 Global 安裝版。**
 
-**[GitHub Releases](https://github.com/Annan687/ok-star-savior/releases)**
+| 檔案 | 用途 |
+| --- | --- |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.0/ok-star-savior-win32-Global-setup.exe) | 約 301 MiB，包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.0/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
+| `SHA256SUMS.txt` | 以上三個檔案的 SHA-256 校驗碼。 |
 
-提供。
-
-目前專案仍在測試與安裝器驗證階段。
-
-如果 Releases 頁面尚未出現可下載版本，
-代表目前尚未正式發布安裝檔。
-
-預計提供兩種安裝方式：
-
-#### Global
-
-```text
-ok-star-savior-win32-Global-setup.exe
-```
-
-已包含主要執行環境。
-
-一般使用者**不需要另外安裝 Python**。
-
-#### Online Installer
-
-```text
-online-setup.exe
-```
-
-首次啟動需要連網下載：
-
-- OKSS
-- Python
-- Python 套件
-- 相關執行環境
-
-因此第一次啟動時間可能較長。
-
-一般使用者建議優先使用 **Global** 版本。
-
----
+全部檔案與版本說明均位於 [GitHub Releases](https://github.com/Annan687/ok-star-savior/releases)。
+本版尚待安裝精靈及第二台電腦實測；已完成與待完成的驗證列於下方「目前測試狀態」。
 
 ### 開始使用
 
-1. 開啟 Star Savior PC 版。
-2. 將遊戲語言設定為 **繁體中文**。
-3. 使用 **16:9** 畫面。
-4. 回到遊戲大廳。
-5. 啟動 OKSS。
-6. 在「遊戲連線」選擇：
+1. 執行下載的 Global 安裝檔，依安裝精靈完成安裝。
+2. 開啟 Star Savior PC 版，設定為**繁體中文**，使用接近 **16:9** 的畫面並回到大廳。
+3. 啟動 OKSS，在「遊戲連線」選擇 `StarSavior.exe`。
+4. 按「檢查遊戲畫面」，確認能正常取得遊戲畫面。
+5. 勾選需要的日課與刷關目標，再按「開始日課」。需要手動操作時，先按「暫停」或「停止」。
 
-```text
-StarSavior.exe
-```
-
-7. 按下：
-
-```text
-檢查遊戲畫面
-```
-
-確認 OKSS 能正常取得遊戲畫面。
-
-8. 勾選需要執行的日課及刷關設定。
-9. 按下「開始日課」。
-
-首次設定本身不會消耗體力。
-
-限時據點目前預設略過，需要時請自行啟用。
+首次使用時，體力刷關預設為「不消耗體力」，限時據點預設略過。
+勾選項目的資源使用方式，請參閱下方「遊戲資源消耗」。
 
 ---
 
 ## 💻 執行環境
 
-| 項目 | 狀態 |
+| 項目 | 條件或驗證狀態 |
 | --- | --- |
-| Windows 10 64-bit | ✅ |
-| Windows 11 64-bit | ✅ |
-| Star Savior PC 繁體中文版 | ✅ |
-| 16:9 | ✅ 必要 |
-| 1920 × 1080 | ✅ 已實測 |
-| 1600 × 900 | ⚠️ 符合尺寸條件，但仍需更多實測 |
-| 前台執行 | ✅ 必要 |
-| 最小化 / 完整背景操作 | ❌ |
-| 執行時操作滑鼠 | ❌ |
+| Windows 10 / 11 64-bit | 支援目標；不同電腦與 Windows 環境仍待更多實測。 |
+| Star Savior PC 繁體中文版 | 目前適用版本。 |
+| 畫面比例 | 接近 16:9；執行中不要改變視窗大小。 |
+| 約 1920 × 1057 | 已有實測紀錄的**遊戲擷取尺寸**。 |
+| 1600 × 900 | 符合尺寸條件，但仍需更多辨識實測。 |
+| 前台執行 | 必要；執行時避免移動滑鼠或操作其他視窗。 |
+| 最小化 / 完整背景操作 | 不支援。 |
 
-目前主要開發與測試解析度：
-
-```text
-1920 × 1080
-```
-
-其他 16:9 解析度可能可以使用，
-但不保證所有辨識流程都已完成實測。
+遊戲設定中的解析度、整個視窗大小與實際擷取尺寸可能不同。
+例如視窗設定為 1920 × 1080 時，工具取得的遊戲畫面不一定剛好是 1920 × 1080。
+請以「檢查遊戲畫面」的結果確認實際尺寸；其他尺寸仍可能需要校正。
 
 ---
 
 ## ✨ 日課功能
 
-目前包含約 **17 項日常流程**：
+目前包含 **17 項日常流程**：
 
 - 登入彈窗
 - 支援金
@@ -185,41 +132,23 @@ OKSS 會優先停止流程並保留除錯資訊，
 
 ### 啟示錄商店
 
-指定兩種五折商品：
-
-```text
-購買 MAX
-```
+指定兩種五折商品皆購買 **MAX**。
 
 ### 公會
 
-可執行：
-
-```text
-購買星光石
-捐獻黃金
-捐獻活動證明
-```
+- 購買星光石
+- 捐獻黃金
+- 捐獻活動證明
 
 ### 策略戰
 
-允許：
-
-```text
-免費刷新
-黃金刷新
-```
+允許免費刷新與黃金刷新。
 
 ### 體力刷關
 
 只使用帳號目前已有的體力。
 
-目前不會自動：
-
-```text
-購買體力
-使用體力回復道具
-```
+不自動購買體力或使用體力回復道具。
 
 ---
 
@@ -227,9 +156,9 @@ OKSS 會優先停止流程並保留除錯資訊，
 
 OKSS 使用 PyAppify 與 GitHub 版本標籤檢查更新。
 
-正常更新後會保留使用者本機設定。
+更新機制設計為保留使用者本機設定；目前已驗證版本查詢，實際跨版本升級與設定保留仍待測試。
 
-主要資料目錄：
+安裝版的 OKSS 資料位於安裝目錄下的 `data/apps/ok-star-savior/working/`，以下目錄均相對於此位置；從原始碼啟動時則位於專案資料夾內：
 
 | 目錄 | 用途 |
 | --- | --- |
@@ -237,6 +166,8 @@ OKSS 使用 PyAppify 與 GitHub 版本標籤檢查更新。
 | `runs` | 執行相關資料 |
 | `logs` | 程式紀錄及錯誤資訊 |
 | `screenshots` | 異常或未知畫面截圖 |
+
+啟動器本身的紀錄則位於安裝目錄下的 `logs/`。回報安裝或更新問題時，請區分啟動器紀錄與 OKSS 日課紀錄。
 
 這些資料預設保存在使用者本機，
 **不會由 OKSS 自動上傳**。
@@ -279,12 +210,7 @@ OKSS 使用 PyAppify 與 GitHub 版本標籤檢查更新。
 如果問題是在 Star Savior 更新之後才出現，
 可能是 UI、圖示或辨識素材已經改變。
 
-請保留：
-
-```text
-logs
-screenshots
-```
+請保留 OKSS 的 `logs` 與 `screenshots`。
 
 並透過 GitHub Issues 回報。
 
@@ -343,11 +269,7 @@ screenshots
 部分防毒軟體可能因 Python、
 自動化輸入、打包程式或更新機制產生警告。
 
-請先確認檔案確實來自：
-
-```text
-https://github.com/Annan687/ok-star-savior/releases
-```
+請先確認檔案確實來自[本專案的 GitHub Releases](https://github.com/Annan687/ok-star-savior/releases)，並可使用隨附的 `SHA256SUMS.txt` 核對檔案。
 
 不要對來源不明的安裝檔加入防毒排除。
 
@@ -403,7 +325,7 @@ Star Savior 版本：
 範例：
 
 ```text
-OKSS：v0.1.0
+OKSS：v0.2.0
 Windows：Windows 11 64-bit
 Star Savior：目前遊戲版本
 解析度：1920 × 1080
@@ -428,103 +350,50 @@ Star Savior：目前遊戲版本
 
 ## 🧪 目前測試狀態
 
-目前已使用一個實際帳號測試：
+`v0.2.0` 已公開為**測試版**。以下分別列出日課流程、安裝包與啟動器的驗證結果。
 
-- 完整日課流程
-- 任務單獨執行
-- 分段續跑
-- 中途停止後重新開始
-- 部分異常畫面處理
+| 範圍 | 已完成的驗證 |
+| --- | --- |
+| 日課流程 | 單一帳號實機測試，包含主要日課、單項執行、分段續跑、中途停止後再開始及部分異常畫面處理。 |
+| GitHub Windows 建置 | 兩種安裝器建置、套件相依檢查及 17 項日課介面測試通過。 |
+| 安裝包內容 | Global 安裝包解包成功；下載檔案的 SHA-256 與建置結果一致。 |
+| 包內執行環境 | 使用包內 Python 載入 OKSS 與介面成功，套件檢查及實際 OCR 辨識測試通過。 |
+| 啟動器版本查詢 | 在一般 Windows 使用者工作階段成功取得 GitHub 的 `v0.2.0` 版本資訊。 |
 
-仍需要更多測試：
+**尚待測試或擴大驗證：**
 
-- 不同帳號解鎖進度
-- 新手帳號
-- 不同活動週期
-- 新活動介面
-- 不同 Windows 環境
-- 其他 16:9 解析度
-- 完整安裝器乾淨安裝
-- 第二台電腦安裝及執行
-
-> **原始碼可用不代表安裝檔已正式發布。**
->
-> 正式版本請以 GitHub Releases
-> 實際提供的內容為準。
+- 完整安裝精靈、乾淨 Windows 環境及第二台電腦的安裝與執行。
+- 實際跨版本升級，以及升級後設定是否完整保留。
+- 不同帳號解鎖進度、新手帳號、活動週期與新活動介面。
+- 不同 Windows 環境與其他遊戲擷取尺寸。
 
 ---
 
 ## 👨‍💻 從原始碼執行
 
-一般使用者建議使用正式安裝版本。
+一般使用者可直接使用上方的 Global 安裝版。
+開發與除錯請先安裝 **Git 與 Python 3.12（64 位元，包含 `py` 啟動器）**，再於 **PowerShell** 依序執行：
 
-目前開發與除錯環境：
-
-```text
-Python 3.12
-Windows 10 / 11 64-bit
-```
-
-### 1. Clone
-
-```bash
+```powershell
 git clone https://github.com/Annan687/ok-star-savior.git
 cd ok-star-savior
-```
 
-### 2. 建立虛擬環境
-
-```bash
 py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+.\.venv\Scripts\python.exe main.py --check
+.\.venv\Scripts\python.exe main.py
 ```
 
-啟用虛擬環境：
+以上指令直接使用虛擬環境內的 Python，**不需要先執行 activate**。
 
-```bash
-.venv\Scripts\activate
-```
+`main.py --check` 會確認專案內的框架路徑，以及任務模組、OpenCV、OpenCC 等能否載入；
+**不會測試遊戲畫面擷取、滑鼠點擊、OCR 辨識或完整日課流程**。
+啟動後仍需按「檢查遊戲畫面」確認擷取，並另外實測所選日課。
 
-### 3. 安裝套件
-
-```bash
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### 4. 檢查環境
-
-```bash
-python main.py --check
-```
-
-正常情況下會檢查：
-
-- Python
-- 專案內的 ok-script
-- 任務模組
-- OpenCV
-- OpenCC
-
-### 5. 啟動
-
-```bash
-python main.py
-```
-
-OKSS 會優先載入專案內：
-
-```text
-vendor/ok-script
-```
-
-而不是系統中其他位置安裝的同名框架。
-
-實際使用的上游 ok-script 版本
-記錄於：
-
-```text
-vendor/ok-script-source.json
-```
+OKSS 優先載入專案內的 `vendor/ok-script`。
+使用的上游版本記錄於 [`vendor/ok-script-source.json`](vendor/ok-script-source.json)。
 
 ---
 
@@ -540,13 +409,8 @@ https://github.com/ok-oldking/ok-script
 
 作為 OKSS 的主要自動化框架。
 
-實際使用的上游 commit 與來源校驗資訊保存在：
-
-```text
-vendor/ok-script-source.json
-```
-
-上游原始授權條款亦保留於專案中。
+實際使用的上游 commit 與來源資訊見 [`vendor/ok-script-source.json`](vendor/ok-script-source.json)。
+上游原始條款保留於 [`vendor/ok-script/LICENSE.txt`](vendor/ok-script/LICENSE.txt)，包含 Commons Clause 與額外條款。
 
 ### PyAppify
 
@@ -554,23 +418,22 @@ https://github.com/ok-oldking/pyappify
 
 用於安裝、更新及 Python 執行環境管理。
 
+- 安裝器建置使用 **PyAppify v1.2.3**，見 [`BUILDING.md`](BUILDING.md)。
+- Python 執行期套件為 **`pyappify==1.0.13`**，見 [`requirements.txt`](requirements.txt)。
+
+安裝器上游授權見 [`licenses/pyappify/LICENSE.txt`](licenses/pyappify/LICENSE.txt)。
+
 ### PySide6-Fluent-Widgets
 
 OKSS 的 Python 相依套件中包含
 PySide6-Fluent-Widgets。
 
-其授權條款請以上游專案目前公布的
-授權資訊為準。
+本版隨附的授權文件見 [`licenses/PySide6-Fluent-Widgets/LICENSE`](licenses/PySide6-Fluent-Widgets/LICENSE)。
 
 ### 其他第三方套件
 
-完整套件與第三方授權資訊請參考：
-
-```text
-requirements.txt
-THIRD-PARTY-NOTICES.md
-licenses/
-```
+完整套件與第三方授權資訊見 [`requirements.txt`](requirements.txt)、
+[`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) 與 [`licenses/`](licenses/)。
 
 所有第三方元件仍遵循各自原作者的授權條款。
 
@@ -578,14 +441,7 @@ licenses/
 
 ### OKSS 自有程式碼
 
-OKSS 自有程式碼的授權條款
-以專案根目錄中的：
-
-```text
-LICENSE
-```
-
-為準。
+OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`。
 
 第三方元件不受 OKSS 自有程式碼授權取代，
 仍各自遵循其原始授權條款。
@@ -594,17 +450,5 @@ LICENSE
 
 ## 📌 專案狀態
 
-| 功能 | 狀態 |
-| --- | --- |
-| 核心日課 | ✅ 可用 |
-| 繁體中文 | ✅ |
-| 1920 × 1080 | ✅ 已實測 |
-| 1600 × 900 | ⚠️ 待更多實測 |
-| 前台滑鼠操作 | ✅ |
-| 背景操作 | ❌ |
-| 多帳號環境 | ⚠️ 待測 |
-| 安裝器 | 🧪 驗證中 |
-| 新活動 | 🔄 持續適配 |
-
-歡迎透過 Issues
-提供不同環境的測試結果與問題紀錄。
+目前提供 `v0.2.0` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
+歡迎透過 [Issues](https://github.com/Annan687/ok-star-savior/issues) 提供不同環境的測試結果與問題紀錄。
