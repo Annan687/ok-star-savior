@@ -1,0 +1,691 @@
+import sys
+import threading
+import time
+
+from ok.core.events import communicate
+from ok.core.notifications import alert_info
+from ok.task.exceptions import FinishedException, TaskDisabledException, WaitFailedException, CaptureException, \
+    HotkeyConfigException
+from ok.util.GlobalConfig import basic_options
+from ok.util.logger import Logger, config_logger
+from ok.util.process import is_cuda_12_or_above, prevent_sleeping
+from ok.util.window import ratio_text_to_number
+
+logger = Logger.get_logger(__name__)
+
+
+class TaskExecutor:
+    _frame: object
+    paused: bool
+    pause_start: float
+    pause_end_time: float
+    _last_frame_time: float
+    wait_until_timeout: float
+    device_manager: object
+    feature_set: object
+    wait_until_settle_time: float
+    wait_scene_timeout: float
+    exit_event: object
+    debug_mode: bool
+    debug: bool
+    global_config: object
+    _ocr_lib: dict
+    ocr_target_height: int
+    current_task: object
+    config_folder: str
+    trigger_task_index: int
+    trigger_tasks: list
+    onetime_tasks: list
+    onetime_task_queue: list
+    thread: object
+    locale: object
+    scene: object
+    text_fix: dict
+    ocr_po_translation: object
+    config: object
+    basic_options: object
+    lock: object
+    _ocr_lib_lock: object
+    _ocr_init_thread: object
+
+    def __init__(self, device_manager,
+                 wait_until_timeout=10, wait_until_settle_time=-1,
+                 exit_event=None, feature_set=None,
+                 ocr_lib=None,
+                 config_folder=None, debug=False, global_config=None, ocr_target_height=0, config=None):
+        self._frame = None
+        device_manager.executor = self
+        self.pause_start = time.time()
+        self.pause_end_time = time.time()
+        self._last_frame_time = 0
+        self.paused = True
+        self.config = config
+        self.scene = None
+        self.locale = config.get("locale", "en_US")
+        self.text_fix = {}
+        self.ocr_po_translation = None
+        self.load_tr()
+        self.ocr_target_height = ocr_target_height
+        self.device_manager = device_manager
+        self.feature_set = feature_set
+        self.wait_until_settle_time = wait_until_settle_time
+        self.wait_scene_timeout = wait_until_timeout
+        self.exit_event = exit_event
+        self.debug_mode = False
+        self.debug = debug
+        self.global_config = global_config
+        self._ocr_lib = {}
+        if self.config.get('ocr') and not self.config.get('ocr').get('default', False):
+            self.config['ocr']['default'] = self.config.get('ocr')
+        self.current_task = None
+        self.config_folder = config_folder or "config"
+        self.trigger_task_index = -1
+        self.basic_options = global_config.get_config(basic_options)
+
+        self.trigger_tasks = []
+        self.onetime_tasks = []
+        self.onetime_task_queue = []
+        self.thread = None
+        self.lock = threading.Lock()
+        self._wake_condition = threading.Condition()
+        self._wake_version = 0
+        self._destroy_lock = threading.Lock()
+        self._destroyed = False
+        if hasattr(self.exit_event, 'bind_condition'):
+            self.exit_event.bind_condition(self._wake_condition)
+        self._ocr_lib_lock = threading.Lock()
+        self._ocr_init_thread = None
+        self.blur_overlay_processor = None
+        if callable(self.config.get('blur_area')):
+            from ok.util.blur import BlurOverlayProcessor, DEFAULT_BLUR_ALGORITHM
+            self.blur_overlay_processor = BlurOverlayProcessor(
+                self.config.get('blur_area'),
+                lambda: bool(self.basic_options.get('Enable Blur', False)),
+                communicate.blur_overlay.emit,
+                communicate.clear_blur_overlay.emit,
+                self.exit_event,
+                algorithm=lambda: self.basic_options.get('Blur Algorithm', DEFAULT_BLUR_ALGORITHM),
+                interval=lambda: self.basic_options.get('Blur Interval', 1))
+            communicate.window.connect(self.blur_overlay_processor.set_visible)
+        self.init_default_ocr()
+
+    def load_tr(self):
+        locale_name = self.locale.name() if hasattr(self.locale, "name") else str(self.locale)
+        try:
+            from ok.core.translation import get_ocr_translations
+            self.ocr_po_translation = get_ocr_translations(locale_name)
+            self.ocr_po_translation.install()
+            logger.info(f'translation ocr installed for {locale_name}')
+        except:
+            logger.info(f'install ocr translations error for {locale_name}')
+            self.ocr_po_translation = None
+
+    @property
+    def interaction(self):
+        return self.device_manager.interaction
+
+    @property
+    def method(self):
+        return self.device_manager.capture_method
+
+    def ocr_lib(self, name="default"):
+        if name not in self._ocr_lib:
+            with self._ocr_lib_lock:
+                if name not in self._ocr_lib:
+                    self._ocr_lib[name] = self._create_ocr_lib(name)
+        return self._ocr_lib[name]
+
+    def init_default_ocr(self):
+        ocr_config = self.config.get('ocr')
+        if not ocr_config:
+            return
+        default_ocr = ocr_config.get('default')
+        if not default_ocr or not default_ocr.get('lib'):
+            return
+        self._ocr_init_thread = threading.Thread(target=self._init_default_ocr, name="DefaultOCRInit", daemon=True)
+        self._ocr_init_thread.start()
+
+    def _init_default_ocr(self):
+        start = time.time()
+        try:
+            logger.info('start init default ocr')
+            self.ocr_lib()
+            logger.info(f'default ocr init end, cost: {time.time() - start:.2f}s')
+        except Exception as e:
+            logger.error(f'init default ocr error, cost: {time.time() - start:.2f}s', e)
+
+    def _create_ocr_lib(self, name):
+        ocr_config = self.config.get('ocr').get(name)
+        lib = ocr_config.get('lib')
+        to_download = ocr_config.get('download_models')
+        if to_download:
+            models = self.config.get('download_models').get(to_download)
+            from ok.core.downloads import download_models
+            download_models(models)
+
+        config_params = ocr_config.get('params')
+        if config_params is None:
+            config_params = {}
+        else:
+            config_params = dict(config_params)
+        if lib == 'paddleocr':
+            logger.info('use paddleocr as ocr lib')
+            from paddleocr import PaddleOCR
+            config_params['use_textline_orientation'] = False
+            config_params['use_doc_unwarping'] = False
+            config_params['use_doc_orientation_classify'] = False
+            config_params['device'] = "gpu" if is_cuda_12_or_above() else "cpu"
+            logger.info(f'init PaddleOCR with {config_params}')
+            ocr_lib = PaddleOCR(**config_params)
+            import logging
+            logging.getLogger('ppocr').setLevel(logging.ERROR)
+            config_logger(self.config)
+        elif lib == 'dgocr':
+            if config_params.get('use_dml', True):
+                config_params['use_dml'] = True
+            from dgocr import DGOCR
+            ocr_lib = DGOCR(**config_params)
+        elif lib == 'onnxocr':
+            from onnxocr.onnx_paddleocr import ONNXPaddleOcr
+            logger.info(f'init onnxocr {config_params}')
+            ocr_lib = ONNXPaddleOcr(use_angle_cls=False,
+                                    logger=logger,
+                                    use_npu=config_params.get('use_npu', True),
+                                    use_openvino=config_params.get('use_openvino', False))
+        elif lib == 'rapidocr':
+            from rapidocr import RapidOCR
+            params = {"Global.use_cls": False, "Global.max_side_len": 100000, "Global.min_side_len": 0,
+                      "EngineConfig.onnxruntime.use_dml": False}
+            params.update(config_params)
+            logger.info(f'init rapidocr {params}')
+            ocr_lib = RapidOCR(params=params)
+        else:
+            raise Exception(f'ocr lib not supported: {lib}')
+        logger.info(f'ocr_lib init {ocr_lib} {lib}')
+        return ocr_lib
+
+    def nullable_frame(self):
+        return self._frame
+
+    def check_frame_and_resolution(self, supported_ratio, min_size, time_out=8.0):
+        if supported_ratio is None or min_size is None:
+            return True, '0x0'
+        logger.info(f'start check_frame_and_resolution')
+        self.device_manager.update_resolution_for_hwnd()
+        start = time.time()
+        frame = None
+        while frame is None and (time.time() - start) < time_out:
+            frame = self.method.get_frame()
+            time.sleep(0.1)
+        if frame is None:
+            logger.error(f'check_frame_and_resolution failed can not get frame after {time_out} {time.time() - start}')
+            return False, '0x0'
+        width = self.method.width
+        height = self.method.height
+        actual_ratio = 0
+        if height == 0:
+            actual_ratio = 0
+        else:
+            actual_ratio = width / height
+        supported_ratio = ratio_text_to_number(supported_ratio)
+        # Calculate the difference between the actual and supported ratios
+        difference = abs(actual_ratio - supported_ratio)
+        support = difference <= 0.01 * supported_ratio
+        if not support:
+            logger.error(f'resolution error {width}x{height} {frame is None}')
+        if not support and frame is not None:
+            communicate.screenshot.emit(frame, "resolution_error", False, None)
+        # Check if the difference is within 1%
+        if support and min_size is not None:
+            if width < min_size[0] or height < min_size[1]:
+                support = False
+        return support, f"{width}x{height}"
+
+    def can_capture(self):
+        if self.device_manager.get_preferred_device() is None:
+            return False
+        return (self.method is not None and self.method.connected()
+                and self.interaction is not None and self.interaction.should_capture())
+
+    def next_frame(self, time_out=6):
+        self.reset_scene()
+        start = time.time()
+        while not self.exit_event.is_set():
+            self.check_enabled()
+            if time_out is not None and time.time() - start >= time_out:
+                return None
+            if self.can_capture():
+                frame = self.method.get_frame()
+                if frame is not None:
+                    height, width = frame.shape[:2]
+                    if height <= 0 or width <= 0:
+                        logger.warning(f"captured wrong size frame: {width}x{height}")
+                    self._frame = frame
+                    self._last_frame_time = time.time()
+                    if self.blur_overlay_processor:
+                        self.blur_overlay_processor.next_frame(frame)
+                    return self._frame
+            if time_out is not None and time.time() - start >= time_out:
+                return None
+            sleep_time = 1
+            if time_out is not None:
+                sleep_time = min(sleep_time, max(0, time_out - (time.time() - start)))
+            self.sleep(sleep_time)
+        raise FinishedException()
+
+    def is_executor_thread(self):
+        return self.thread == threading.current_thread()
+
+    def connected(self):
+        return self.method is not None and self.method.connected()
+
+    @property
+    def frame(self):
+        while self.paused and not self.debug_mode:
+            self.sleep(1)
+        if self.exit_event.is_set():
+            logger.info("frame Exit event set. Exiting early.")
+            sys.exit(0)
+        if self._frame is None:
+            self.next_frame()
+        return self._frame
+
+    def check_enabled(self, check_pause=True):
+        if check_pause and self.paused:
+            self.sleep(1)
+        if self.current_task and not self.current_task._enabled:
+            logger.info(f'{self.current_task} is disabled, raise Exception')
+            self.current_task = None
+            raise TaskDisabledException()
+
+    def sleep(self, timeout: float):
+        """
+        Sleeps for the specified timeout, checking for an exit event every 100ms, with adjustments to prevent oversleeping.
+
+        :param timeout: The total time to sleep in seconds.
+        """
+        self.reset_scene(check_enabled=False)
+        if timeout <= 0:
+            return
+        if self.debug_mode:
+            time.sleep(timeout)
+            return
+        self.pause_end_time = time.time() + timeout
+        task = None
+        while True:
+            self.check_enabled(check_pause=False)
+            next_sleep_check = None
+            if self.current_task is not None:
+                task = self.current_task
+                if task.sleep_check_interval >= 0:
+                    elapsed = time.time() - task.last_sleep_check_time
+                    if not task.in_sleep_check and elapsed >= task.sleep_check_interval:
+                        task.in_sleep_check = True
+                        try:
+                            self.next_frame()
+                            task.sleep_check()
+                            self.reset_scene()
+                        except Exception as e:
+                            logger.info(f"sleep_check error {task}")
+                            raise
+                        finally:
+                            task.last_sleep_check_time = time.time()
+                            task.in_sleep_check = False
+                        next_sleep_check = task.sleep_check_interval
+                    elif not task.in_sleep_check:
+                        next_sleep_check = max(0, task.sleep_check_interval - elapsed)
+            if self.exit_event.is_set():
+                logger.info("sleep Exit event set. Exiting early.")
+                sys.exit(0)
+            if not (self.paused or (
+                    self.current_task is not None and self.current_task.paused) or self.interaction is None or not self.interaction.should_capture()):
+                to_sleep = self.pause_end_time - time.time()
+                if to_sleep <= 0:
+                    return
+                if next_sleep_check is not None:
+                    to_sleep = min(to_sleep, next_sleep_check)
+                self._wait_for_activity(to_sleep)
+            else:
+                self._wait_for_activity(0.1)
+
+    def _wake_executor(self):
+        condition = getattr(self, '_wake_condition', None)
+        if condition is None:
+            return
+        with condition:
+            self._wake_version += 1
+            condition.notify_all()
+
+    def _get_wake_version(self):
+        condition = getattr(self, '_wake_condition', None)
+        if condition is None:
+            return None
+        with condition:
+            return self._wake_version
+
+    def _wait_for_activity(self, timeout, wake_version=None):
+        if timeout <= 0:
+            return False
+        condition = getattr(self, '_wake_condition', None)
+        if condition is None:
+            time.sleep(timeout)
+            return False
+        with condition:
+            if wake_version is not None and wake_version != self._wake_version:
+                return True
+            return condition.wait(timeout)
+
+    def pause(self, task=None):
+        if task is not None:
+            if self.current_task != task:
+                raise Exception(f"Can only pause current task {self.current_task}")
+        elif not self.paused:
+            self.paused = True
+            self._wake_executor()
+            communicate.executor_paused.emit(self.paused)
+            self.reset_scene(check_enabled=False)
+            self.pause_start = time.time()
+            return True
+
+    def stop_current_task(self):
+        if task := self.current_task:
+            task.disable()
+            task.unpause()
+
+    def start(self):
+        with self.lock:
+            if self.thread is None:
+                # Application shutdown must not be held hostage by a custom
+                # task or interaction backend that ignores exit_event.
+                self.thread = threading.Thread(
+                    target=self.execute, name="TaskExecutor", daemon=True)
+                self.thread.start()
+            if self.paused:
+                self.paused = False
+                communicate.executor_paused.emit(self.paused)
+                self.pause_end_time += self.pause_start - time.time()
+            self._wake_executor()
+
+    def wait_condition(self, condition, time_out=0, pre_action=None, post_action=None, settle_time=-1,
+                       raise_if_not_found=False):
+        self.reset_scene()
+        start = time.time()
+        if time_out == 0:
+            time_out = self.wait_scene_timeout
+        settled = 0
+        while not self.exit_event.is_set():
+            if pre_action is not None:
+                pre_action()
+            self.next_frame()
+            result = condition()
+            result_str = list_or_obj_to_str(result)
+            if result:
+                if settle_time == -1:
+                    settle_time = self.wait_until_settle_time
+                if settle_time > 0:
+                    now = time.time()
+                    if settled > 0 and now - settled > settle_time:
+                        logger.debug(f"found result {result_str} {(now - start):.3f}")
+                        return result
+                    if settled == 0:
+                        logger.debug(f"found result {result_str} {(now - start):.3f}")
+                        settled = now
+                    continue
+                else:
+                    logger.debug(f"found result {result_str} {(time.time() - start):.3f}")
+                    return result
+            else:
+                settled = 0
+            if post_action is not None:
+                post_action()
+            if time.time() - start > time_out:
+                logger.info(f"wait_until timeout {condition} {time_out} seconds")
+                break
+        if raise_if_not_found:
+            raise WaitFailedException()
+        return None
+
+    def reset_scene(self, check_enabled=True):
+        if check_enabled:
+            self.check_enabled()
+        self._frame = None
+        if self.scene:
+            self.scene.reset()
+
+    def enqueue_onetime_task(self, task):
+        if task not in self.onetime_tasks:
+            self._wake_executor()
+            return False
+        with self.lock:
+            if task not in self.onetime_task_queue:
+                self.onetime_task_queue.append(task)
+                logger.info(f'queued onetime_task {task.name}')
+        self._wake_executor()
+        return True
+
+    def remove_onetime_task(self, task):
+        if task not in self.onetime_tasks:
+            return False
+        removed = False
+        with self.lock:
+            while task in self.onetime_task_queue:
+                self.onetime_task_queue.remove(task)
+                removed = True
+        if removed:
+            self._wake_executor()
+        return removed
+
+    def waiting_for_task(self, task):
+        if task not in self.onetime_tasks or not task.enabled or task.running:
+            return None
+        with self.lock:
+            queue = [queued_task for queued_task in self.onetime_task_queue
+                     if queued_task.enabled and not queued_task.running]
+        if task not in queue:
+            return None
+        index = queue.index(task)
+        if index > 0:
+            return queue[index - 1]
+        if self.current_task and self.current_task != task and self.current_task.running:
+            return self.current_task
+        return None
+
+    def next_task(self) -> tuple:
+        if self.exit_event.is_set():
+            logger.error(f"next_task exit_event.is_set exit")
+            return None, False, False
+        with self.lock:
+            while self.onetime_task_queue:
+                onetime_task = self.onetime_task_queue.pop(0)
+                if onetime_task.enabled:
+                    logger.info(f'get queued onetime_task {onetime_task.name}')
+                    return onetime_task, True, False
+        for onetime_task in self.onetime_tasks:
+            if onetime_task.enabled:
+                logger.info(f'get one enabled onetime_task {onetime_task.name}')
+                return onetime_task, True, False
+        cycled = False
+        for _ in range(len(self.trigger_tasks)):
+            if self.trigger_task_index == len(self.trigger_tasks) - 1:
+                self.trigger_task_index = -1
+                self.trigger_sleep()
+                cycled = True
+            self.trigger_task_index += 1
+            task = self.trigger_tasks[self.trigger_task_index]
+            if task.enabled and task.should_trigger():
+                return task, cycled, True
+        return None, cycled, False
+
+    def active_trigger_task_count(self):
+        return len([x for x in self.trigger_tasks if x.enabled])
+
+    def trigger_sleep(self):
+        if interval := self.basic_options.get('Trigger Interval', 1):
+            self.sleep(interval / 1000)
+
+    def next_trigger_delay(self, default=1.0):
+        now = time.time()
+        delays = [
+            max(0, task.trigger_interval - (now - task.last_trigger_time))
+            for task in self.trigger_tasks
+            if task.enabled and task.trigger_interval > 0
+        ]
+        return min(delays, default=default)
+
+    def execute(self):
+        logger.info(f"start execute")
+        while not self.exit_event.is_set():
+            if self.paused:
+                logger.info(f'executor is paused sleep')
+                self.sleep(1)
+            wake_version = self._get_wake_version()
+            task, cycled, is_trigger_task = self.next_task()
+            if not task:
+                self._wait_for_activity(self.next_trigger_delay(), wake_version)
+                continue
+            if cycled:
+                self.reset_scene()
+            elif time.time() - self._last_frame_time > 0.2:
+                self.reset_scene()
+            try:
+                task.start_time = time.time()
+                task.running = True
+                self.current_task = task
+                if not is_trigger_task:
+                    communicate.task.emit(task)
+                if cycled or self._frame is None:
+                    if self.next_frame(time_out=4) is None and is_trigger_task:
+                        logger.info("no frame available, skip remaining trigger tasks")
+                        self.trigger_task_index = len(self.trigger_tasks) - 1
+                        self.current_task = None
+                        task.running = False
+                        continue
+                if is_trigger_task:
+                    if task.run():
+                        self.trigger_task_index = -1
+                        self.reset_scene()
+                        continue
+                else:
+                    prevent_sleeping(True)
+                    logger.debug(f'start running onetime_task {task.name}')
+                    task.run()
+                    logger.debug(f'end running onetime_task {task.name}')
+                    prevent_sleeping(False)
+                    task.disable()
+                    communicate.task_done.emit(task)
+                    if task.exit_after_task or task.config.get('Exit After Task'):
+                        logger.info('Successfully Executed Task, Exiting Game and App!')
+                        alert_info('Successfully Executed Task, Exiting Game and App!')
+                        time.sleep(5)
+                        self.device_manager.stop_hwnd()
+                        time.sleep(5)
+                        communicate.quit.emit()
+                task.running = False
+                self.current_task = None
+                if not is_trigger_task:
+                    communicate.task.emit(task)
+            except TaskDisabledException:
+                logger.info(f"TaskDisabledException, continue {task}")
+                task.running = False
+                self.current_task = None
+                if not is_trigger_task:
+                    communicate.task.emit(task)
+                communicate.notification.emit('Stopped', task.name, False,
+                                              False, None, None, None)
+                continue
+            except FinishedException:
+                logger.info(f"FinishedException, breaking")
+                task.running = False
+                self.current_task = None
+                if not is_trigger_task:
+                    communicate.task.emit(task)
+                break
+            except Exception as e:
+                if isinstance(e, CaptureException):
+                    communicate.capture_error.emit()
+                name = task.name
+                task.running = False
+                task.disable()
+                from ok import og
+                params = None
+                if isinstance(e, HotkeyConfigException):
+                    error = "{key} is invalid, please check the hotkey config!"
+                    params = {"key": e.key}
+                else:
+                    error = str(e)
+                communicate.notification.emit(error, name, True, True, None, params, None)
+                task.info_set(task._app.tr('Error'), error)
+                logger.error(f"{name} exception stopped", e)
+                if self._frame is not None:
+                    communicate.screenshot.emit(self.frame, name, True, None)
+                self.current_task = None
+                communicate.task.emit(None)
+        self.destroy()
+
+    def stop(self):
+        logger.info('stop')
+        self.exit_event.set()
+        self._wake_executor()
+
+    def destroy(self):
+        lock = getattr(self, '_destroy_lock', None)
+        if lock is None:
+            lock = self._destroy_lock = threading.Lock()
+        with lock:
+            if getattr(self, '_destroyed', False):
+                return
+            self._destroyed = True
+        logger.info(f'Executor destroy')
+        onetime_tasks, self.onetime_tasks = self.onetime_tasks, []
+        trigger_tasks, self.trigger_tasks = self.trigger_tasks, []
+        for task in (*onetime_tasks, *trigger_tasks):
+            try:
+                task.on_destroy()
+            except Exception as error:
+                logger.error(f'task on_destroy failed for {task}: {error}')
+        if self.interaction:
+            try:
+                self.interaction.on_destroy()
+            except Exception as error:
+                logger.error(f'interaction on_destroy failed: {error}')
+
+    def request_destroy(self):
+        """Run cleanup away from the GUI close event when needed."""
+        if self.thread is not None and self.thread.is_alive():
+            # execute() owns normal cleanup after observing exit_event.
+            return
+        threading.Thread(
+            target=self.destroy, name="TaskExecutorCleanup", daemon=True).start()
+
+    def wait_until_done(self):
+        self.thread.join()
+
+    def get_all_tasks(self):
+        return self.onetime_tasks + self.trigger_tasks
+
+    def get_task_by_class_name(self, class_name):
+        for onetime_task in self.onetime_tasks:
+            if onetime_task.__class__.__name__ == class_name:
+                return onetime_task
+        for trigger_task in self.trigger_tasks:
+            if trigger_task.__class__.__name__ == class_name:
+                return trigger_task
+
+    def get_task_by_class(self, cls):
+        logger.debug(f'get_task_by_class {cls} {self.onetime_tasks} {self.trigger_tasks}')
+        for onetime_task in self.onetime_tasks:
+            if isinstance(onetime_task, cls):
+                return onetime_task
+        for trigger_task in self.trigger_tasks:
+            if isinstance(trigger_task, cls):
+                return trigger_task
+
+
+def list_or_obj_to_str(val):
+    if val is not None:
+        if isinstance(val, list):
+            return ', '.join(str(obj) for obj in val)
+        else:
+            return str(val)
+    else:
+        return None

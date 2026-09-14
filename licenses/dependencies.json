@@ -1,0 +1,172 @@
+[
+  {
+    "name": "certifi",
+    "version": "2026.7.22",
+    "license_files": 1
+  },
+  {
+    "name": "charset-normalizer",
+    "version": "3.5.1",
+    "license_files": 1
+  },
+  {
+    "name": "colorama",
+    "version": "0.4.6",
+    "license_files": 1
+  },
+  {
+    "name": "comtypes",
+    "version": "1.4.16",
+    "license_files": 1
+  },
+  {
+    "name": "darkdetect",
+    "version": "0.8.0",
+    "license_files": 1
+  },
+  {
+    "name": "idna",
+    "version": "3.19",
+    "license_files": 1
+  },
+  {
+    "name": "mouse",
+    "version": "0.7.1",
+    "license_files": 1
+  },
+  {
+    "name": "numpy",
+    "version": "2.5.3",
+    "license_files": 17
+  },
+  {
+    "name": "ok-d3dshot",
+    "version": "0.1.5",
+    "license_files": 1
+  },
+  {
+    "name": "onnxocr-ppocrv5",
+    "version": "0.0.22",
+    "license_files": 1
+  },
+  {
+    "name": "OpenCC",
+    "version": "1.2.0",
+    "license_files": 2
+  },
+  {
+    "name": "opencv-python",
+    "version": "5.0.0.93",
+    "license_files": 2
+  },
+  {
+    "name": "openvino",
+    "version": "2026.3.1",
+    "license_files": 4
+  },
+  {
+    "name": "openvino-telemetry",
+    "version": "2025.2.0",
+    "license_files": 1
+  },
+  {
+    "name": "packaging",
+    "version": "26.3",
+    "license_files": 3
+  },
+  {
+    "name": "pillow",
+    "version": "12.3.0",
+    "license_files": 1
+  },
+  {
+    "name": "psutil",
+    "version": "7.2.2",
+    "license_files": 1
+  },
+  {
+    "name": "pyappify",
+    "version": "1.0.13",
+    "license_files": 0
+  },
+  {
+    "name": "pycaw",
+    "version": "20240210",
+    "license_files": 1
+  },
+  {
+    "name": "pyclipper",
+    "version": "1.4.0",
+    "license_files": 1
+  },
+  {
+    "name": "PyDirectInput",
+    "version": "1.0.4",
+    "license_files": 1
+  },
+  {
+    "name": "pynput",
+    "version": "1.8.2",
+    "license_files": 1
+  },
+  {
+    "name": "PySide6",
+    "version": "6.11.2",
+    "license_files": 1
+  },
+  {
+    "name": "PySide6-Fluent-Widgets",
+    "version": "1.11.3",
+    "license_files": 1
+  },
+  {
+    "name": "PySide6_Addons",
+    "version": "6.11.2",
+    "license_files": 1
+  },
+  {
+    "name": "PySide6_Essentials",
+    "version": "6.11.2",
+    "license_files": 1
+  },
+  {
+    "name": "PySideSix-Frameless-Window",
+    "version": "0.8.2",
+    "license_files": 1
+  },
+  {
+    "name": "pywin32",
+    "version": "311",
+    "license_files": 0
+  },
+  {
+    "name": "requests",
+    "version": "2.34.2",
+    "license_files": 2
+  },
+  {
+    "name": "shapely",
+    "version": "2.1.2",
+    "license_files": 3
+  },
+  {
+    "name": "shiboken6",
+    "version": "6.11.2",
+    "license_files": 1
+  },
+  {
+    "name": "six",
+    "version": "1.17.0",
+    "license_files": 1
+  },
+  {
+    "name": "typing_extensions",
+    "version": "4.16.0",
+    "license_files": 1
+  },
+  {
+    "name": "urllib3",
+    "version": "2.7.0",
+    "license_files": 1
+  }
+]

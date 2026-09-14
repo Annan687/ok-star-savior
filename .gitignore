@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+configs/
+logs/
+runs/
+screenshots/
+backups/
+cache/
+.env
+pyappify_dist/
+p/
