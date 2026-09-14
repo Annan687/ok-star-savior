@@ -173,7 +173,7 @@ class Engine:
                 self.click(icon)
                 continue
             # Nested overlays must be closed, not clicked through.
-            if v.has("購買商品", "跳過戰鬥", "刷新對戰列表", "緊急支援", area=CENTER):
+            if v.has("購買商品", "跳過戰鬥", "刷新對戰列表", "緊急支援", area=CENTER, contains=False):
                 self.tap("取消", area=CENTER)
                 continue
             regions = [(.73, .16, .89, .32), (.72, .01, .99, .13)]
@@ -232,7 +232,26 @@ class Engine:
             raise NeedsReview(f"{title} 確認框內容不符")
         self.tap("確認", area=CENTER)
 
-    def claim_all(self, labels=("一鍵領取",), max_claims=4):
+    @staticmethod
+    def claim_button(v, labels=("一鍵領取",), required=False):
+        # At 900p the download icon merges as punctuation or the kana 'と'.
+        # Only allow a symbol prefix and an exact label at the end, no prose.
+        hits = []
+        for token in v.within(BOTTOM):
+            for label in labels:
+                key = norm(label)
+                if token.key.endswith(key):
+                    prefix = token.key[:-len(key)]
+                    if not prefix or re.fullmatch(r"(?:[^\w]|と)+", prefix):
+                        hits.append(token)
+                        break
+        if len(hits) == 1:
+            return hits[0]
+        if required:
+            raise NeedsReview(f"一鍵領取按鈕辨識不明確：{[t.text for t in hits]}")
+        return None
+
+    def claim_all(self, labels=("一鍵領取",), max_claims=4, require_button=False):
         count = 0
         for _ in range(max_claims):
             # Task claims briefly remove/disable the button before the points
@@ -240,12 +259,14 @@ class Engine:
             for attempt in range(5):
                 self.rewards()
                 v = self.see()
-                token = v.one(*labels, area=BOTTOM, required=False)
+                token = self.claim_button(v, labels)
                 if token is not None and v.enabled(token):
                     break
                 if attempt < 4:
                     self.task.sleep(.4)
             else:
+                if require_button and token is None:
+                    raise NeedsReview("未辨識到一鍵領取按鈕，不能確認獎勵已領完")
                 return count
             before = [(t.key, round(t.cx, 2), round(t.cy, 2)) for t in v.items]
             self.click(token)

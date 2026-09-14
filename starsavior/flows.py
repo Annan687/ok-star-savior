@@ -145,6 +145,14 @@ class DailyFlows(Engine):
             self.task.sleep(.4)
         raise NeedsReview("信箱已空，但關閉點擊後未返回大廳，背景輸入可能未生效")
 
+    @staticmethod
+    def friend_button(v, label):
+        # The leading horizontal stroke can disappear in 900p OCR.
+        # Limit the alias to its own footer button on the verified friend page.
+        area = ((.65, .85, .79, .97) if label == "一鍵領取"
+                else (.79, .85, .93, .97))
+        return v.one(label, label[1:], area=area)
+
     def friend_panel(self):
         v = self.expect("好友列表", area=LEFT)
         if not v.has("好友", area=(.07, .015, .38, .13), contains=False):
@@ -152,7 +160,7 @@ class DailyFlows(Engine):
         # Both controls must be present, even when disabled. Missing OCR is
         # not evidence that today's claims or sends have finished.
         for label in ("一鍵領取", "一鍵發送"):
-            v.one(label, area=(.65, .85, .93, .97))
+            self.friend_button(v, label)
         return v
 
     def friends(self):
@@ -162,7 +170,7 @@ class DailyFlows(Engine):
         results = []
         for label in ("一鍵領取", "一鍵發送"):
             v = self.friend_panel()
-            token = v.one(label, area=(.65, .85, .93, .97))
+            token = self.friend_button(v, label)
             if not v.enabled(token):
                 results.append(f"{label}目前不可用，略過")
                 continue
@@ -172,7 +180,7 @@ class DailyFlows(Engine):
             for _ in range(10):
                 self.rewards()
                 v = self.friend_panel()
-                token = v.one(label, area=(.65, .85, .93, .97))
+                token = self.friend_button(v, label)
                 if not v.enabled(token):
                     results.append(f"{label}已完成")
                     break
@@ -410,6 +418,24 @@ class DailyFlows(Engine):
             self.task.sleep(.5)
         raise NeedsReview("星際迴廊載入後仍未辨識到完整的太陽／月亮／星辰入口")
 
+    def strategy_keys(self, v):
+        count = v.count(6, area=TOP, required=False)
+        if count is not None:
+            return count[1][0]
+        # At 900p the icon and plus button can merge into OCR such as 0%6+.
+        # Re-read the isolated digits, never replace '%' with '/' or guess zero.
+        if not (v.has("策略戰", area=TOP, contains=False)
+                and v.has("對戰列表", area=TOP, contains=False)):
+            raise NeedsReview("策略戰鑰匙重讀缺少頁面標題")
+        import cv2
+        patch = v.crop((.63, .035, .661, .085))
+        readings = self.task.ocr(frame=cv2.resize(patch, None, fx=2, fy=2), threshold=.9)
+        if len(readings) == 1 and re.fullmatch(r"\d+\s*/\s*6", readings[0].name.strip()):
+            value = fraction(readings[0].name, 6)
+            if value is not None:
+                return value[0]
+        raise NeedsReview("策略戰鑰匙放大重讀仍不明確")
+
     def strategy(self):
         v = self.see()
         if not v.has("週聯賽獎勵", "防禦紀錄資訊", "對戰列表"):
@@ -437,7 +463,7 @@ class DailyFlows(Engine):
                 self.tap("確認", area=BOTTOM)
                 self.rewards()
                 continue
-            before = v.count(6, area=TOP)[1][0]
+            before = self.strategy_keys(v)
             if before == 0:
                 return "鑰匙已用完"
             targets = [t for t in v.within((.5, .22, .97, .98)) if exact_challenge(t.text)]
@@ -445,7 +471,7 @@ class DailyFlows(Engine):
             if targets:
                 self.click(targets[0])
                 self.skip_battle(strategy=True)
-                if self.expect("對戰列表", area=TOP, seconds=15).count(6, area=TOP)[1][0] != before-1:
+                if self.strategy_keys(self.expect("對戰列表", area=TOP, seconds=15)) != before-1:
                     raise NeedsReview("策略戰後未確認鑰匙扣除")
                 continue
             # Check the lower part before deciding every opponent was tried.
@@ -506,14 +532,14 @@ class DailyFlows(Engine):
         self.menu("任務")
         for label in ("每日任務", "每週任務"):
             self.tap(label, area=LEFT)
-            self.claim_all()
+            self.claim_all(require_button=True)
         return "每日及每週的任務／點數獎勵已檢查"
 
     def dispatch(self):
         self.menu("地區派遣")
         v = self.expect("地區派遣", "派遣中", "一鍵領取")
-        claim = v.one("一鍵領取", area=BOTTOM, required=False)
-        if not claim or not v.enabled(claim):
+        claim = self.claim_button(v, required=True)
+        if not v.enabled(claim):
             return "目前沒有已完成派遣可領"
         self.click(claim)
         self.expect("派遣完成", "重新派遣")
@@ -557,13 +583,10 @@ class DailyFlows(Engine):
                 remaining = v.count(3, area=column)[1][0]
                 if remaining == 0:
                     break
-                numbers = [t for t in v.within((column[0], .70, column[2], .85))
-                           if re.fullmatch(r"[\d,]+", t.key)]
-                if len(numbers) != 1:
-                    raise NeedsReview(f"{name} 捐獻費用按鈕辨識不明確")
-                if not v.enabled(numbers[0]):
+                button = self.donation_button(v, column, name)
+                if not v.enabled(button):
                     break
-                self.click(numbers[0])
+                self.click(button)
                 self.rewards()
                 updated = False
                 for _ in range(15):
@@ -579,8 +602,19 @@ class DailyFlows(Engine):
                     raise NeedsReview("捐獻後剩餘次數未減少")
         self.close((.74, .15, .88, .32))
         self.tap("公會任務", area=BOTTOM, contains=True)
-        self.claim_all()
+        self.claim_all(require_button=True)
         return "公會商店、黃金／活動證明捐獻及任務已檢查"
+
+    @staticmethod
+    def donation_button(v, column, name):
+        area = (column[0], .70, column[2], .85)
+        button = v.one("捐獻", area=area)
+        price = v.field("捐獻", area=area)
+        # The gold coin icon can be recognized as © or a bullet. The heading and
+        # its own footer are already checked; never select the starlight card.
+        if not re.fullmatch(r"[^\w,]*\d[\d,]*", price.key):
+            raise NeedsReview(f"{name} 捐獻費用按鈕辨識不明確")
+        return button
 
     def passes(self):
         self.menu("通行證")

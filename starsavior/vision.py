@@ -161,7 +161,10 @@ class View:
         return None
 
     def field(self, label, area=CENTER):
-        anchor = self.one(label, area=area, contains=True)
+        # A description can repeat the label (e.g. emergency support at 900p).
+        # Prefer the standalone field; keep merged label/value OCR as fallback.
+        exact = self.find(label, area=area)
+        anchor = self.one(label, area=area, contains=not bool(exact))
         label_key = norm(label)
         if anchor.key.startswith(label_key) and anchor.key != label_key:
             suffix = anchor.key[len(label_key):].lstrip(":：")

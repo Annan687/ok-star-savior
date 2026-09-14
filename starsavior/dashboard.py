@@ -157,7 +157,7 @@ class DailyPanel(QWidget):
         hero_layout.addLayout(heading, 1)
         right = QVBoxLayout()
         right.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        right.addWidget(self.label("OK-StarSavior · v0.2", "version"))
+        right.addWidget(self.label("OK-StarSavior · v0.2.1", "version"))
         self.connection_badge = self.label("等待遊戲連線", "connectionBadge")
         right.addWidget(self.connection_badge)
         hero_layout.addLayout(right)
