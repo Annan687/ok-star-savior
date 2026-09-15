@@ -42,6 +42,8 @@ BOTTOM = (0, .67, 1, 1)
 CENTER = (.20, .18, .83, .91)
 RIGHT = (.67, .18, 1, 1)
 LEFT = (0, .12, .30, .97)
+LOBBY_RAIL = (.035, .23, .145, .76)
+LOBBY_LABELS = ("戰鬥", "管理", "總部", "公會", "商店", "觀測")
 
 
 class View:
@@ -49,6 +51,39 @@ class View:
         self.frame = frame
         h, w = frame.shape[:2]
         self.items = [Text(b.name, b.x/w, b.y/h, b.width/w, b.height/h) for b in boxes]
+
+    def lobby_labels(self):
+        """Exact labels in the lobby rail, with unique, ordered, aligned rows."""
+        found = []
+        for label in LOBBY_LABELS:
+            hits = self.find(label, area=LOBBY_RAIL, contains=False)
+            if len(hits) > 1:
+                return set()
+            if hits:
+                found.append((label, hits[0]))
+        if any(b.cy-a.cy < .035 for (_, a), (_, b) in zip(found, found[1:])):
+            return set()
+        if found and max(t.cx for _, t in found)-min(t.cx for _, t in found) > .045:
+            return set()
+        return {label for label, _ in found}
+
+    def repair_lobby_labels(self, recognize):
+        """Re-read only the fixed rail; never admit wallpaper text elsewhere."""
+        if len(self.lobby_labels()) < 2:
+            return
+        h, w = self.frame.shape[:2]
+        x, y = int(LOBBY_RAIL[0]*w), int(LOBBY_RAIL[1]*h)
+        patch = cv2.resize(self.crop(LOBBY_RAIL), None, fx=2, fy=2)
+        allowed = {norm(label) for label in LOBBY_LABELS}
+        for box in recognize(patch):
+            if norm(box.name) not in allowed:
+                continue
+            if self.has(box.name, area=LOBBY_RAIL, contains=False):
+                continue
+            token = Text(box.name, (x+box.x/2)/w, (y+box.y/2)/h,
+                         box.width/2/w, box.height/2/h)
+            if LOBBY_RAIL[0] <= token.cx <= LOBBY_RAIL[2] and LOBBY_RAIL[1] <= token.cy <= LOBBY_RAIL[3]:
+                self.items.append(token)
 
     def repair_icon_counts(self, recognize):
         """Re-read an impossible ticket count after isolating its colored icon.

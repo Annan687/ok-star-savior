@@ -5,9 +5,9 @@ from .dashboard import DailyPanel, RuntimeBackend
 
 class DailyTab(Tab):
     name = "星守日課"
-    icon = FluentIcon.HOME
+    icon = FluentIcon.CHECKBOX
     add_after_default_tabs = False
-    position = NavigationItemPosition.TOP
+    position = NavigationItemPosition.SCROLL
 
     def __init__(self):
         super().__init__()

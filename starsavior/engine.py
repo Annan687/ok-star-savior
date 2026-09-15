@@ -2,6 +2,7 @@ import json
 import re
 import sys
 import time
+import unicodedata
 from dataclasses import asdict
 from pathlib import Path
 
@@ -38,6 +39,8 @@ class Engine:
         boxes = self.task.ocr(frame=frame, threshold=.65)
         self.view = View(frame, boxes)
         self.view.repair_icon_counts(lambda patch: self.task.ocr(frame=patch, threshold=.9))
+        if not self.is_menu(self.view) and not self.is_lobby(self.view):
+            self.view.repair_lobby_labels(lambda patch: self.task.ocr(frame=patch, threshold=.8))
         return self.view
 
     def save(self, detail):
@@ -86,11 +89,14 @@ class Engine:
                 raise NeedsReview(f"畫面未到達：{' / '.join(labels)}")
             self.task.sleep(.4)
 
-    def rewards(self, maximum=18, wait_initial=False):
+    def rewards(self, maximum=18, wait_initial=False, require_reward=False, return_when=None):
         seen = 0
         quiet = 0
         pending = 0
+        deadline = time.monotonic() + 30 if require_reward else None
         while seen < maximum:
+            if deadline is not None and time.monotonic() >= deadline:
+                raise NeedsReview("等待獎勵與返回頁面逾時，未繼續導航")
             v = self.see()
             if (v.has("月卡商品", area=CENTER, contains=False)
                     and v.has("REWARD", area=CENTER, contains=False)
@@ -111,8 +117,13 @@ class Engine:
                     quiet = 0
                     if pending >= 20:
                         raise NeedsReview("獎勵動畫後仍未出現繼續提示")
-                elif seen or wait_initial:
-                    quiet += 1
+                elif seen or wait_initial or require_reward:
+                    # A blank/transitional frame is not proof of settlement.
+                    # For sweeps, require an actual reward dismissal followed
+                    # by five consecutive readings of the expected stage UI.
+                    ready = ((not require_reward or seen > 0)
+                             and (return_when is None or return_when(v)))
+                    quiet = quiet + 1 if ready else 0
                     if quiet >= 5:
                         return seen
                 else:
@@ -133,7 +144,11 @@ class Engine:
 
     @staticmethod
     def is_lobby(v):
-        return all(v.has(s, area=LEFT) for s in ("管理", "總部", "觀測")) and not Engine.is_menu(v)
+        if Engine.is_menu(v):
+            return False
+        labels = v.lobby_labels()
+        core = labels & {"管理", "總部", "觀測"}
+        return len(core) == 3 or (len(labels) >= 4 and len(core) >= 2)
 
     @staticmethod
     def page_name(v):
@@ -198,6 +213,26 @@ class Engine:
                 self.click(Text("關閉四格選單", .27, .36, .01, .01))
                 self.expect(destination, area=title_area, seconds=15)
             return
+        # A completed sweep leaves the stage detail open. Those pages have a
+        # verified back arrow, while the four-square shortcut may be absent or
+        # missed by vision. Return through the known hierarchy first.
+        stage_names = ("城市巡邏", "據點調查", "遺跡探索",
+                       "扭曲的情感", "酷寒襲擊", "被遺忘的誓言")
+        for _ in range(3):
+            if self.is_menu(v) or not v.has("探索委託", "討伐委託", *stage_names,
+                                           area=title_area, contains=False):
+                break
+            if v.has("掃蕩次數", "購買商品", "確認", "取消", area=CENTER, contains=False):
+                break
+            detail = (v.has(*stage_names, area=(.07, .50, .28, .80), contains=False)
+                      and v.has("掃蕩戰鬥", area=BOTTOM, contains=False))
+            overview = any(all(v.has(name, area=(.54, .25, .85, .86), contains=False)
+                               for name in group)
+                           for group in (stage_names[:3], stage_names[3:]))
+            if not (detail or overview):
+                break
+            self.click(Text("返回燭光廣場上一層", .038, .055, .01, .025))
+            v = self.see()
         if not v.has("燭光廣場", area=title_area):
             self.menu("燭光廣場")
         # Navigation may return while the loading animation is still visible.
@@ -281,6 +316,38 @@ class Engine:
             count += 1
         raise NeedsReview("一鍵領取仍可用，超過正常領取次數")
 
+    @staticmethod
+    def stage_label(token, stage):
+        prefix = norm(stage)
+        if not token.key.startswith(prefix):
+            return False
+        suffix = token.key[len(prefix):]
+        # The full stage name identifies the label. OCR can turn its numeral
+        # into punctuation (I -> |, !, 「); that is not evidence of a level.
+        # Keep rejecting prose/other names, and read the card's number below.
+        return len(suffix) <= 8 and all(
+            char in "IVXLCDM0123456789|" or unicodedata.category(char).startswith("P")
+            for char in suffix)
+
+    def selected_stage_level(self, v, token, stage):
+        headers = [t for t in v.within((.73, .14, .97, .34))
+                   if self.stage_label(t, stage)]
+        if len(headers) != 1 or not v.selected_stage_row(token):
+            return None
+        level = roman_value(headers[0].key[len(norm(stage)):])
+        if level is not None and level > 0:
+            return level
+        area = (.295, token.cy-.04, .342, token.cy+.065)
+        numbers = [int(t.key) for t in v.within(area) if t.key.isdecimal()]
+        if not numbers:
+            import cv2
+            patch = v.crop(area)
+            if not patch.size:
+                return None
+            boxes = self.task.ocr(frame=cv2.resize(patch, None, fx=2, fy=2), threshold=.8)
+            numbers = [int(norm(b.name)) for b in boxes if norm(b.name).isdecimal()]
+        return numbers[0] if len(numbers) == 1 and 1 <= numbers[0] <= 99 else None
+
     def select_sweep_stage(self, stage, dark_rows=False):
         # Try visible stage rows from highest downward. The enabled sweep button
         # is the game's own 3-star eligibility check, independent of star color.
@@ -289,9 +356,9 @@ class Engine:
         rows = []
         row_area = (.28, .14, .72, .95)
         for t in v.within(row_area):
-            if t.key.startswith(prefix):
+            if self.stage_label(t, stage):
                 level = roman_value(t.key[len(prefix):])
-                if level is not None and (dark_rows or v.available_stage_row(t)):
+                if dark_rows or v.available_stage_row(t):
                     rows.append((level, t))
         if not rows:
             raise NeedsReview(f"未辨識到 {stage} 的關卡列")
@@ -302,7 +369,7 @@ class Engine:
         for level, old in sorted(rows, key=lambda p: p[1].cy, reverse=True):
             v = self.see()
             nearby = [t for t in v.within(row_area)
-                      if t.key.startswith(prefix) and abs(t.cy-old.cy) < .025]
+                      if self.stage_label(t, stage) and abs(t.cy-old.cy) < .025]
             if len(nearby) != 1:
                 raise NeedsReview("關卡列表位置已變化，未沿用舊座標")
             token = nearby[0]
@@ -312,14 +379,7 @@ class Engine:
                 continue
             sweep = v.one("掃蕩戰鬥", area=BOTTOM, required=False)
             if sweep and v.enabled(sweep):
-                headers = [t for t in v.within((.73, .16, .97, .34))
-                           if t.key.startswith(prefix)]
-                selected = roman_value(headers[0].key[len(prefix):]) if len(headers) == 1 else None
-                if selected is None and len(headers) == 1:
-                    numbers = [t for t in v.within((.28, token.cy-.045, .34, token.cy+.06))
-                               if t.key.isdecimal()]
-                    if len(numbers) == 1:
-                        selected = int(numbers[0].key)
+                selected = self.selected_stage_level(v, token, stage)
                 if selected is None:
                     raise NeedsReview("未能確認所選可掃蕩關卡的難度")
                 return selected
@@ -355,8 +415,20 @@ class Engine:
             return "資源不足或掃蕩不可用"
         self.click(button)
         self.expect("REWARD", "點擊以繼續", seconds=15)
-        self.rewards()
+        self.rewards(require_reward=True, return_when=lambda screen: self.sweep_page(screen, stage))
         return "已按 MAX 完成掃蕩並領取獎勵"
+
+    @staticmethod
+    def sweep_page(v, stage):
+        """Recognize the settled stage, not its quantity panel or an overlay."""
+        if (Engine.is_menu(v)
+                or v.has("REWARD", "LEVELUP", "確認", "取消", area=CENTER, contains=False)
+                or not v.has("掃蕩戰鬥", area=BOTTOM, contains=False)
+                or v.has("開始掃蕩", "掃蕩次數", area=BOTTOM, contains=False)):
+            return False
+        return (v.has(stage, area=(.07, .50, .28, .80), contains=False)
+                or any(Engine.stage_label(t, stage)
+                       for t in v.within((.73, .14, .97, .34))))
 
     def skip_battle(self, strategy=False):
         self.expect("跳過戰鬥", seconds=12)

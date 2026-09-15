@@ -4,6 +4,7 @@ Every spending operation requires the expected page, live availability and a
 bounded amount. Unknown layouts stop the run and produce a review report.
 """
 import re
+import time
 
 from .engine import Engine
 from .policy import FARM, TIMED, NeedsReview, is_free, exact_challenge, fraction
@@ -13,29 +14,43 @@ from .vision import norm, Text, FULL, TOP, BOTTOM, CENTER, RIGHT, LEFT
 class DailyFlows(Engine):
     def startup(self):
         visited = set()
-        blank_frames = 0
+        unknown_since = None
+        entered_title = False
         for _ in range(30):
             self.rewards()
             v = self.see()
-            if not v.items:
-                blank_frames += 1
-                if blank_frames >= 15:
-                    raise NeedsReview("登入過場等待後仍無可辨識文字")
-                self.task.sleep(.4)
+            start = self.title_start_button(v)
+            if start is not None:
+                if entered_title:
+                    raise NeedsReview("登入後又回到標題畫面，未重複送出登入")
+                self.click(start)
+                entered_title = True
+                self.wait_for_title_transition()
+                unknown_since = None
                 continue
-            blank_frames = 0
+            animation_dialog = v.has("跳過動畫", "茶跳過動畫", area=(.12, .12, .5, .45), contains=False)
+            if animation_dialog:
+                confirm = self.animation_skip_confirmation(v)
+                if confirm is not None:
+                    self.click(confirm)
+                    unknown_since = None
+                    continue
             if (v.has("通知", area=CENTER, contains=False)
                     and v.has("30天星光石補給商品", "30天意志力補給商品", area=CENTER)
                     and v.has("是否前往購買商品以更新剩餘期限", area=CENTER)):
+                unknown_since = None
                 self.tap("取消", area=CENTER)
                 continue
-            if self.is_lobby(v) or self.is_menu(v):
+            if not animation_dialog and (self.is_lobby(v) or self.is_menu(v)):
                 return "已到大廳"
             if v.has("LOGINBONUS", "登入獎勵", "勤紀錄"):
+                unknown_since = None
                 self.close()
             elif v.has("星穹傳送門") and v.has("全新首領登場"):
+                unknown_since = None
                 self.close((.86, .15, .96, .30))
             elif v.has("簽到簿", "300日紀念"):
+                unknown_since = None
                 highlights = v.outline_targets((.3, .22, .95, .90))
                 highlights = [t for t in highlights if not v.has("COMPLETE", area=v.around(t, t.w/2, t.h/2))]
                 if len(highlights) == 1:
@@ -56,8 +71,45 @@ class DailyFlows(Engine):
                     else:
                         self.close()
             else:
-                raise NeedsReview("請先進入大廳；目前登入畫面不在已辨識的版型內")
+                # Lobby wallpapers animate on entry. Intermediate frames can
+                # contain text while the actual navigation is still hidden.
+                now = time.monotonic()
+                if unknown_since is None:
+                    unknown_since = now
+                if now-unknown_since >= 15:
+                    raise NeedsReview("等待大廳進場動畫約 15 秒後仍無法確認介面；請檢查是否已進入大廳")
+                self.task.sleep(.5)
+                continue
         raise NeedsReview("登入領取超過次數上限")
+
+    @staticmethod
+    def title_start_button(v):
+        if not v.has("STARSAVIOR", "星之救援者", area=(.25, .5, .75, .87), contains=False):
+            return None
+        return v.one("TOUCHTOSTART", area=(.25, .75, .75, .94), required=False)
+
+    def wait_for_title_transition(self):
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
+            v = self.see()
+            if v.items and not v.has("STARSAVIOR", "星之救援者", area=(.25, .5, .75, .87), contains=False):
+                return
+            self.task.sleep(.5)
+        raise NeedsReview("點擊 Touch to Start 後登入等待逾時，請檢查遊戲連線或登入狀態")
+
+    @staticmethod
+    def animation_skip_confirmation(v):
+        # The star emblem can merge into the title as 茶 in the supplied image.
+        if not (v.has("跳過動畫", "茶跳過動畫", area=(.12, .12, .5, .45), contains=False)
+                and v.has("確定要跳過動畫嗎？", "確定要跳過動畫嗎",
+                          area=CENTER, contains=False)):
+            return None
+        cancel = v.one("取消", area=(.2, .55, .5, .85), required=False)
+        confirm = v.one("確認", area=(.5, .55, .8, .85), required=False)
+        if (cancel is None or confirm is None or abs(cancel.cy-confirm.cy) > .04
+                or not v.enabled(confirm)):
+            return None
+        return confirm
 
     @staticmethod
     def red_mark(v, area):
@@ -330,10 +382,52 @@ class DailyFlows(Engine):
         self.tap("自動協議", area=BOTTOM, enabled=True)
         self.confirm("自動協議", "帕萊斯權限卡")
         self.expect("REWARD", "點擊以繼續", seconds=15)
-        self.rewards()
-        if self.see().count(1, area=TOP)[1][0] != 0:
-            raise NeedsReview("自動協議後未確認權限卡扣除")
+        self.rewards(require_reward=True, return_when=self.cube_settled)
         return "自動協議完成"
+
+    @staticmethod
+    def cube_settled(v):
+        if (Engine.is_menu(v)
+                or not v.has("帕萊斯立方", area=(.07, .015, .38, .13), contains=False)
+                or not v.has("自動協議", area=BOTTOM, contains=False)
+                or v.has("確認", "取消", "REWARD", area=CENTER, contains=False)):
+            return False
+        count = v.count(1, area=TOP, required=False)
+        return count is not None and count[1][0] == 0
+
+    @staticmethod
+    def timed_entrance(v, stage):
+        area = (.22, .22, .98, .85)
+        matches = v.find(stage, area=area, contains=True)
+        if len(matches) == 1:
+            return matches[0]
+        if matches or stage != "雷塔爾吉亞的魔術師":
+            return None
+        if not (v.has("限時據點", area=(.07, .015, .38, .13), contains=False)
+                and v.has("阿爾克那", area=(.2, .08, .96, .2), contains=False)):
+            return None
+        # The card title scrolls horizontally: its tail and head can be visible
+        # on the same line while the full name never occurs in a single token.
+        tails = v.find("魔術師", area=area, contains=False)
+        heads = v.find("雷塔爾", "雷塔爾吉亞", area=area, contains=False)
+        pairs = [(tail, head) for tail in tails for head in heads
+                 if abs(tail.cy-head.cy) < .018
+                 and 0 <= head.x-(tail.x+tail.w) < .06
+                 and head.x+head.w-tail.x < .17]
+        return pairs[0][0] if len(pairs) == 1 else None
+
+    def open_timed_entrance(self, stage):
+        for _ in range(20):
+            v = self.see()
+            token = self.timed_entrance(v, stage)
+            if token is not None:
+                self.click(token)
+                # Card fragments identify only the entrance. The destination
+                # must expose the full stage name in its detail header.
+                self.expect(stage, area=(.73, .14, .98, .35))
+                return
+            self.task.sleep(.5)
+        raise NeedsReview(f"未能確認限時據點入口：{stage}（名稱可能正在捲動）")
 
     def timed(self):
         target = self.task.config["限時據點關卡"]
@@ -349,9 +443,11 @@ class DailyFlows(Engine):
         v = self.see()
         if not v.count(3, area=TOP, allow_overflow=True)[1][0]:
             return "今日票券已用完"
-        self.tap("進入" if category == "晨星綻放石" else stage,
-                 area=(.25, .22, .98, .97), contains=True)
-        self.expect(stage)
+        if category == "晨星綻放石":
+            self.tap("進入", area=(.25, .22, .98, .97), contains=True)
+            self.expect(stage)
+        else:
+            self.open_timed_entrance(stage)
         return self.sweep(stage, resource="timed")
 
     def corridors(self):

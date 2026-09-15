@@ -43,7 +43,8 @@ class DailyTask(BaseTask):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = "2. Star Savior 日課（測試版）"
-        self.description = "從大廳開始。依示範流程執行；遇到未識別畫面會停下並留下原因。"
+        self.description = "可由標題畫面進入大廳，支援計劃任務。遇到未識別畫面會停下並留下原因。"
+        self.support_schedule_task = True
         self.icon = FluentIcon.SYNC
         self.visible = False
         self.default_config.update({
@@ -51,6 +52,7 @@ class DailyTask(BaseTask):
             "體力刷關": "不消耗體力",
             "限時據點關卡": "略過",
             "活動名稱": "魔女的帷幕",
+            "Exit After Task": False,
         })
         self.config_type.update({
             "執行項目": {"type": "multi_selection", "options": [s for s, _ in STEPS]},
@@ -62,6 +64,7 @@ class DailyTask(BaseTask):
             "體力刷關": "選一種目標，MAX 使用現有意志力；不購買或使用回體道具。探索目標先耗免費券。",
             "限時據點關卡": "選一關使用當日剩餘票券；只在可掃蕩的滿星關卡執行。",
             "活動名稱": "活動列表中的名稱；換活動時需更新。新活動版型仍需實測。",
+            "Exit After Task": "全部勾選項目成功結束後，關閉遊戲與 OKSS；失敗或手動停止時不執行。",
         })
 
     def run(self):
@@ -69,6 +72,8 @@ class DailyTask(BaseTask):
         self.info_clear()
         self.info_set("執行狀態", "執行中")
         selected = self.config["執行項目"]
+        if not selected:
+            raise NeedsReview("尚未勾選任何日課，未執行完成後關閉")
         unknown = set(selected)-{name for name, _ in STEPS}
         if unknown:
             raise NeedsReview(f"未知設定：{unknown}")

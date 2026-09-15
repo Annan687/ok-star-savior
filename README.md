@@ -1,4 +1,7 @@
-# OKSS · 星之守護者日課
+<p align="center">
+  <img src="assets/icon.png" width="240" alt="OKSS 角色圖示" />
+</p>
+<h1 align="center">ok-star-savior</h1>
 
 Star Savior 繁體中文 PC 版日課助手。
 
@@ -13,8 +16,8 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.1/ok-star-savior-win32-Global-setup.exe) ·
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.1) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.2/ok-star-savior-win32-Global-setup.exe) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.2) ·
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 [原始碼](https://github.com/Annan687/ok-star-savior)
 
@@ -50,12 +53,12 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-**[v0.2.1 測試版已公開發布](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.1)。一般使用者請下載 Global 安裝版。**
+**[v0.2.2 測試版已公開發布](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.2)。一般使用者請下載 Global 安裝版。**
 
 | 檔案 | 用途 |
 | --- | --- |
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.1/ok-star-savior-win32-Global-setup.exe) | 約 301 MiB，包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.1/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.2/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.2/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 | `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
 | `SHA256SUMS.txt` | 以上三個檔案的 SHA-256 校驗碼。 |
 
@@ -74,6 +77,21 @@ OKSS 是第三方遊戲自動化工具：
 勾選項目的資源使用方式，請參閱下方「遊戲資源消耗」。
 
 ---
+
+## 計劃任務與自動啟動（實驗功能）
+
+v0.2.2 已加入以下功能，目前已完成離線驗證，仍待實際定時啟動至任務結束的整段測試。首次使用請在有人操作時測試。
+
+1. 首次先手動開啟遊戲，在 OKSS 完成遊戲連線，讓框架記住執行檔位置。Steam 版會透過 Steam 啟動；Steam 必須已能正常登入遊戲。
+2. 在「星守日課」勾選日課與刷關目標。自動進入遊戲請保留「登入彈窗」；它會辨識 Touch to Start，等待登入與進場動畫。
+3. 到左側「計劃任務」建立任務，選擇 Star Savior 日課、每天及執行時間。
+4. 若要跑完關閉，勾選排程中的「完成後退出（-e）」。首頁的「完成後關閉遊戲與 OKSS」也能控制手動執行；兩者任一啟用便會在成功結束後關閉。
+
+成功結束後沿用框架的關閉流程，結束匹配的遊戲程序並退出 OKSS；日課報錯時不執行這個成功後關閉流程。這不是遊戲內登出。排程使用建立時的程式路徑，移動或重新安裝 OKSS 後請重新建立。
+
+電腦需開機、Windows 已登入且未鎖定，並保持遊戲可前台操作；不會自動開機或喚醒休眠。遊戲未開時，框架的自動啟動流程需要管理員權限，請先在有人操作時確認提升權限與 Steam 啟動流程可用。
+
+排程頁會一起顯示 Windows 工作排程器中以 `ok-` 開頭的其他專案群組；其他專案的項目在本版框架中只能檢視。每個排程仍啟動自己的程式，不共用遊戲設定。多款遊戲請安排不同時間並預留足夠間隔，列表共通不代表會自動排隊。
 
 ## 💻 執行環境
 
@@ -325,7 +343,7 @@ Star Savior 版本：
 範例：
 
 ```text
-OKSS：v0.2.1
+OKSS：v0.2.2
 Windows：Windows 11 64-bit
 Star Savior：目前遊戲版本
 解析度：1920 × 1080
@@ -350,11 +368,11 @@ Star Savior：目前遊戲版本
 
 ## 🧪 目前測試狀態
 
-`v0.2.1` 已公開為**測試版**。以下分別列出日課流程、安裝包與啟動器的驗證結果。
+`v0.2.2` 已公開為**測試版**。以下分別列出日課流程、安裝包與啟動器的驗證結果。
 
 | 範圍 | 已完成的驗證 |
 | --- | --- |
-| 日課流程 | 單一帳號實機測試，含 1600×900 跨日分段續跑；93 項離線測試及真實鑰匙圖像 OCR 回歸通過。[v0.2.1 修正內容](CHANGELOG.md) |
+| 日課流程 | 單一帳號實機測試，含 1600×900 跨日分段續跑；128 項離線測試及實際錯誤截圖辨識回歸通過。[v0.2.2 修正內容](CHANGELOG.md) |
 | GitHub Windows 建置 | v0.2.0 的兩種安裝器建置、套件相依檢查及 17 項日課介面測試通過；各新版以對應 Actions 結果為準。 |
 | 安裝包內容 | v0.2.0 Global 安裝包已解包驗證；各新版校驗碼隨 Release 提供。 |
 | 包內執行環境 | v0.2.0 使用包內 Python 載入 OKSS 與介面成功，套件檢查及實際 OCR 辨識測試通過。 |
@@ -362,6 +380,7 @@ Star Savior：目前遊戲版本
 
 **尚待測試或擴大驗證：**
 
+- 計劃任務定時啟動遊戲、跑完日課並自動關閉的完整實機流程。
 - 完整安裝精靈、乾淨 Windows 環境及第二台電腦的安裝與執行。
 - 實際跨版本升級，以及升級後設定是否完整保留。
 - 不同帳號解鎖進度、新手帳號、活動週期與新活動介面。
@@ -450,5 +469,5 @@ OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`�
 
 ## 📌 專案狀態
 
-目前提供 `v0.2.1` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
+目前提供 `v0.2.2` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
 歡迎透過 [Issues](https://github.com/Annan687/ok-star-savior/issues) 提供不同環境的測試結果與問題紀錄。

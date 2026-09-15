@@ -1,3 +1,5 @@
+from .launch import game_launch_path
+
 config = {
     "debug": False,
     "use_gui": True,
@@ -5,7 +7,7 @@ config = {
     "custom_tasks": False,
     "gui_title": "OK-StarSavior · 星守日課",
     "gui_icon": "assets/icon.png",
-    "version": "v0.2.1",
+    "version": "v0.2.2",
     "custom_tabs": [["starsavior.ui", "DailyTab"]],
     "my_app": ["starsavior.app", "Globals"],
     "about": "<h2>OK-StarSavior · 星守日課</h2><p>專為 Star Savior 整理的個人日課助手。</p><p>本機測試版；日課辨識仍待實機校正。</p><p>使用獨立 Python 環境與 <a href='https://github.com/ok-oldking/ok-script'>ok-script 官方框架</a>。</p>",
@@ -21,13 +23,15 @@ config = {
             "params": {"use_openvino": True}},
     "windows": {
         "exe": "StarSavior.exe",
+        "start_exe": True,
+        "calculate_pc_exe_path": game_launch_path,
         "interaction": "Pynput",
         "capture_method": ["WGC", "BitBlt_RenderFull", "BitBlt"],
         "require_bg": False,
         "check_hdr": False,
         "force_no_hdr": False,
     },
-    "start_timeout": 45,
+    "start_timeout": 120,
     "window_size": {"width": 1260, "height": 900, "min_width": 1050, "min_height": 760},
     "onetime_tasks": [["starsavior.tasks", "InspectTask"],
                       ["starsavior.tasks", "DailyTask"]],

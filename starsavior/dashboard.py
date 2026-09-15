@@ -102,7 +102,7 @@ class PreviewBackend:
     """Only for rendering this widget offline. Does not construct a game driver."""
     def __init__(self):
         self.values = {"執行項目": [n for n, _ in STEPS], "體力刷關": "不消耗體力",
-                       "限時據點關卡": "略過", "活動名稱": "魔女的帷幕"}
+                       "限時據點關卡": "略過", "活動名稱": "魔女的帷幕", "Exit After Task": False}
 
     def settings(self):
         return dict(self.values)
@@ -147,7 +147,7 @@ class DailyPanel(QWidget):
         hero_layout = QHBoxLayout(hero)
         hero_layout.setContentsMargins(24, 20, 24, 20)
         brand = QLabel()
-        brand.setPixmap(QIcon(str(ROOT / "assets/icon.svg")).pixmap(62, 62))
+        brand.setPixmap(QIcon(str(ROOT / "assets/icon.png")).pixmap(62, 62))
         hero_layout.addWidget(brand)
         heading = QVBoxLayout()
         heading.setSpacing(4)
@@ -157,7 +157,7 @@ class DailyPanel(QWidget):
         hero_layout.addLayout(heading, 1)
         right = QVBoxLayout()
         right.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        right.addWidget(self.label("OK-StarSavior · v0.2.1", "version"))
+        right.addWidget(self.label("OK-StarSavior · v0.2.2", "version"))
         self.connection_badge = self.label("等待遊戲連線", "connectionBadge")
         right.addWidget(self.connection_badge)
         hero_layout.addLayout(right)
@@ -231,6 +231,14 @@ class DailyPanel(QWidget):
         self.event_name.editingFinished.connect(self.persist)
         self.settings_widgets.append(self.event_name)
         option_layout.addWidget(self.event_name)
+        self.exit_after = QCheckBox("完成後關閉遊戲與 OKSS")
+        self.exit_after.setChecked(bool(values.get("Exit After Task", False)))
+        self.exit_after.toggled.connect(self.persist)
+        self.settings_widgets.append(self.exit_after)
+        option_layout.addWidget(self.exit_after)
+        schedule_hint = self.label("每日時間請至左側「計劃任務」設定。\n電腦需開機、Windows 已登入且未鎖定。", "hint")
+        schedule_hint.setWordWrap(True)
+        option_layout.addWidget(schedule_hint)
         option_layout.addStretch()
         option_layout.addWidget(self.label("設定自動儲存，下次開啟繼續沿用。", "hint"))
         columns.addWidget(options, 2)
@@ -309,10 +317,11 @@ class DailyPanel(QWidget):
         return [name for name, check in self.checks.items() if check.isChecked()]
 
     def persist(self, *args):
-        if not hasattr(self, "event_name"):
+        if not hasattr(self, "exit_after"):
             return
         self.backend.save({"執行項目": self.selected(), "體力刷關": self.farm.currentText(),
-                           "限時據點關卡": self.timed.currentText(), "活動名稱": self.event_name.text().strip()})
+                           "限時據點關卡": self.timed.currentText(), "活動名稱": self.event_name.text().strip(),
+                           "Exit After Task": self.exit_after.isChecked()})
         self.refresh()
 
     def select_all(self, selected):
