@@ -7,12 +7,62 @@ import re
 import time
 
 from .engine import Engine
+from .events import EventFlows
 from .policy import FARM, TIMED, NeedsReview, is_free, exact_challenge, fraction
-from .vision import norm, Text, FULL, TOP, BOTTOM, CENTER, RIGHT, LEFT
+from .vision import norm, Text, View, FULL, TOP, BOTTOM, CENTER, RIGHT, LEFT
 
 
-class DailyFlows(Engine):
-    def startup(self):
+class DailyFlows(EventFlows, Engine):
+    @staticmethod
+    def boot_phase(v):
+        if DailyFlows.title_start_button(v) is not None:
+            return None
+        if v.has("STARSAVIOR", "星之救援者", area=(.25, .3, .75, .65), contains=False):
+            return "等待遊戲 Logo 結束"
+        if (v.has("完整性檢查", area=(.75, 0, .98, .16), contains=False)
+                and (v.has("VERSION", area=(0, .88, .3, 1))
+                     or v.has("正在下載", "正在載入", area=(.6, .8, 1, 1)))):
+            return "等待遊戲載入資料"
+        if v.has("STARSAVIOR", "星之救援者", area=(.25, .65, .75, .87), contains=False):
+            return "等待 Touch to Start"
+        # A newly created game window can be black even with a Steam overlay
+        # in its corner. Wait only; never click black frames to advance them.
+        patch = v.crop((.2, .2, .8, .8))
+        if patch.size and float((patch.max(axis=2) < 20).mean()) > .995:
+            return "等待遊戲畫面出現"
+        return None
+
+    def prepare_game(self, claim_login=False):
+        """Boot readiness is a prerequisite, independent of selected chores."""
+        v = self.see()
+        if self.is_lobby(v) or self.is_menu(v):
+            return
+        phase = self.boot_phase(v)
+        title = self.title_start_button(v)
+        login_popup = v.has("LOGINBONUS", "登入獎勵", "勤紀錄", "簽到簿", "300日紀念")
+        if not phase and title is None and not login_popup:
+            return  # Existing in-game pages retain their own navigation rules.
+        deadline = time.monotonic() + 180
+        previous = None
+        while title is None and not login_popup:
+            if time.monotonic() >= deadline:
+                raise NeedsReview(f"遊戲啟動等待逾時（180 秒）：{phase}；未開始日課")
+            if phase != previous:
+                self.task.info_set("目前項目", phase)
+                self.task.log_info(phase)
+                previous = phase
+            self.task.sleep(.5)
+            v = self.see()
+            # Ready navigation must win over wallpaper pixels or text.
+            if self.is_lobby(v) or self.is_menu(v):
+                return
+            phase = self.boot_phase(v) or "等待登入入口"
+            title = self.title_start_button(v)
+            login_popup = v.has("LOGINBONUS", "登入獎勵", "勤紀錄", "簽到簿", "300日紀念")
+        self.task.info_set("目前項目", "等待登入並進入大廳")
+        self.startup(claim_login=claim_login)
+
+    def startup(self, claim_login=True):
         visited = set()
         unknown_since = None
         entered_title = False
@@ -51,6 +101,9 @@ class DailyFlows(Engine):
                 self.close((.86, .15, .96, .30))
             elif v.has("簽到簿", "300日紀念"):
                 unknown_since = None
+                if not claim_login:
+                    self.close()
+                    continue
                 highlights = v.outline_targets((.3, .22, .95, .90))
                 highlights = [t for t in highlights if not v.has("COMPLETE", area=v.around(t, t.w/2, t.h/2))]
                 if len(highlights) == 1:
@@ -266,17 +319,45 @@ class DailyFlows(Engine):
         self.free_purchase()
         return True
 
+    def open_special_free_tab(self):
+        # Limited-time sub-tabs can disappear while the left category remains.
+        # Require a loaded shop and a stable alternative tab before skipping.
+        area = (.17, .08, .96, .20)
+        previous = None
+        stable = 0
+        for _ in range(12):
+            v = self.see()
+            shop = (v.has("付費商店", area=TOP, contains=False)
+                    and v.has("普通禮包", area=LEFT, contains=False)
+                    and v.has("特別販售禮包", area=LEFT, contains=False))
+            if shop and v.find("特別販售禮包", area=area, contains=False):
+                target = v.one("特別販售禮包", area=area)
+                self.click(target)
+                self.expect("每個帳號購買", "免費裝備製作禮包", "SOLDOUT",
+                            area=(.17, .20, .98, .99))
+                return True
+            tabs = tuple(t.key for t in v.within(area) if len(t.key) >= 3)
+            loaded = shop and tabs and v.has("每個帳號購買", area=(.17, .20, .98, .99))
+            stable = stable + 1 if loaded and tabs == previous else (1 if loaded else 0)
+            previous = tabs if loaded else None
+            self.task.sleep(.4)
+        if stable >= 3:
+            self.task.log_info("特別販售禮包的限時分頁目前未出現，繼續檢查普通免費禮包")
+            return False
+        raise NeedsReview("特別禮包分頁或商品尚未辨識完整，未判定為無免費商品")
+
     def paid_shop(self):
         self.menu("付費商店")
         self.tap("特別販售禮包", area=LEFT)
-        self.tap("特別販售禮包", area=(.3, .08, .96, .20))
-        n = int(self.free_card("免費裝備製作禮包"))
+        special = self.open_special_free_tab()
+        n = int(self.free_card("免費裝備製作禮包")) if special else 0
         self.tap("普通禮包", area=LEFT)
         for period in ("每日", "每週", "每月"):
             self.tap(f"{period}禮包", area=(.17, .08, .96, .20))
             self.expect(f"{period}購買", area=(.17, .20, .98, .99))
             n += int(self.free_card(f"{period}免費禮包"))
-        return f"已檢查特別、每日、每週與每月免費禮包，領取 {n} 個"
+        detail = "已檢查特別、每日、每週與每月免費禮包" if special else "特別限時分頁未出現；已檢查每日、每週與每月免費禮包"
+        return f"{detail}，領取 {n} 個"
 
     def apocalypse(self):
         self.menu("啟示錄商店")
@@ -532,8 +613,23 @@ class DailyFlows(Engine):
                 return value[0]
         raise NeedsReview("策略戰鑰匙放大重讀仍不明確")
 
+    def strategy_screen(self, *labels, area=FULL, seconds=15):
+        # Promotion may appear after the battle reward handler has returned.
+        for _ in range(3):
+            v = self.expect(*labels, "晉級", area=area, seconds=seconds)
+            if self.strategy_promotion(v):
+                self.rewards(wait_initial=True)
+                continue
+            if v.has("晉級", area=(.4, .23, .6, .36), contains=False):
+                raise NeedsReview("策略戰晉級畫面尚未辨識完整")
+            return v
+        raise NeedsReview("策略戰晉級後未回到對戰列表")
+
     def strategy(self):
         v = self.see()
+        if self.strategy_promotion(v):
+            self.rewards(wait_initial=True)
+            v = self.strategy_screen("週聯賽獎勵", "防禦紀錄資訊", "對戰列表")
         if not v.has("週聯賽獎勵", "防禦紀錄資訊", "對戰列表"):
             self.menu("聖鎧")
             v = self.expect("策略戰")
@@ -545,7 +641,7 @@ class DailyFlows(Engine):
             self.click(Text("策略戰卡片", entry.cx-.005, entry.cy-.25, .01, .01))
         refreshes = 0
         for _ in range(35):
-            v = self.expect("週聯賽獎勵", "防禦紀錄資訊", "對戰列表", "重新挑戰", "挑戰", seconds=15)
+            v = self.strategy_screen("週聯賽獎勵", "防禦紀錄資訊", "對戰列表", "重新挑戰", "挑戰")
             if v.has("防禦紀錄資訊", area=CENTER):
                 if not (v.has("戰鬥結果現況", area=CENTER)
                         and v.has("勝利次數", area=CENTER)
@@ -567,7 +663,7 @@ class DailyFlows(Engine):
             if targets:
                 self.click(targets[0])
                 self.skip_battle(strategy=True)
-                if self.strategy_keys(self.expect("對戰列表", area=TOP, seconds=15)) != before-1:
+                if self.strategy_keys(self.strategy_screen("對戰列表")) != before-1:
                     raise NeedsReview("策略戰後未確認鑰匙扣除")
                 continue
             # Check the lower part before deciding every opponent was tried.
@@ -601,11 +697,10 @@ class DailyFlows(Engine):
         raise NeedsReview("策略戰超過處理上限")
 
     def event(self):
-        self.menu("事件")
-        if not self.see().has("襲擊"):
-            name = self.task.config["活動名稱"]
-            aliases = (name, "TheWitchsVeil", "TheWitch'sVeil") if name == "魔女的帷幕" else (name,)
-            self.tap(*aliases, contains=True)
+        if self.task.config.get("活動名稱", "灰色研究") == "灰色研究":
+            return self.gray_assault()
+        if not self.open_legacy_event():
+            return "事件入口未開放，略過活動襲擊"
         v = self.expect("襲擊")
         if v.count(3, area=(.54, 0, .64, .15))[1][0] == 0:
             result = "活動票券已用完"
@@ -620,9 +715,26 @@ class DailyFlows(Engine):
             result = self.sweep(prefixes.pop())
             self.click(Text("返回活動", .032, .043, .015, .03))
         self.expect("襲擊", "任務")
+        return result
+
+    def open_legacy_event(self):
+        if self.menu("事件") is False:
+            return False
+        if not self.see().has("襲擊"):
+            name = self.task.config["活動名稱"]
+            aliases = (name, "TheWitchsVeil", "TheWitch'sVeil") if name == "魔女的帷幕" else (name,)
+            self.tap(*aliases, contains=True)
+        self.expect("襲擊", "任務")
+        return True
+
+    def event_missions(self):
+        if self.task.config.get("活動名稱", "灰色研究") == "灰色研究":
+            return self.gray_missions()
+        if not self.open_legacy_event():
+            return "事件入口未開放，略過活動任務"
         self.tap("任務")
         self.claim_all()
-        return result + "；活動任務與點數獎勵已檢查"
+        return "活動任務與點數獎勵已檢查"
 
     def missions(self):
         self.menu("任務")
@@ -631,10 +743,43 @@ class DailyFlows(Engine):
             self.claim_all(require_button=True)
         return "每日及每週的任務／點數獎勵已檢查"
 
+    def dispatch_claim_button(self, v):
+        claim = self.claim_button(v)
+        if claim is not None and .83 < claim.cx < .96 and claim.cy > .87:
+            return claim
+        return self.reread_claim_button(v, (.84, .89, .95, .95))
+
+    def dispatch_ready(self):
+        previous = None
+        stable = 0
+        for _ in range(30):
+            v = self.see()
+            counter = v.count(area=(.4, .86, .57, 1), required=False)
+            page_ready = (not self.is_menu(v)
+                     and v.has("地區派遣", area=(.07, .015, .38, .13), contains=False)
+                     and v.has("地區派遣資訊", area=(.4, .10, .6, .23), contains=False)
+                     and (v.has("派遣完成", "派遣中", "領取獎勵", "派遣",
+                                area=(.4, .20, .98, .86), contains=False)
+                          or any(re.fullmatch(r"派遣中[口〇○◯O0]?", t.key)
+                                 for t in v.within((.83, .2, .96, .86))))
+                     and counter is not None)
+            claim = self.dispatch_claim_button(v) if page_ready else None
+            if page_ready and claim is not None:
+                state = (counter[1], v.enabled(claim), round(claim.cx, 2), round(claim.cy, 2))
+                stable = stable + 1 if state == previous else 1
+                previous = state
+                if stable >= 3:
+                    return v, claim
+            else:
+                stable = 0
+                previous = None
+            self.task.sleep(.4)
+        missing = "右下角一鍵領取文字仍無法確認" if page_ready and claim is None else "完整頁面、派遣次數或列表狀態尚未穩定"
+        raise NeedsReview(f"地區派遣：{missing}；未點擊或判定已領完")
+
     def dispatch(self):
         self.menu("地區派遣")
-        v = self.expect("地區派遣", "派遣中", "一鍵領取")
-        claim = self.claim_button(v, required=True)
+        v, claim = self.dispatch_ready()
         if not v.enabled(claim):
             return "目前沒有已完成派遣可領"
         self.click(claim)

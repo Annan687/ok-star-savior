@@ -89,15 +89,43 @@ class Engine:
                 raise NeedsReview(f"畫面未到達：{' / '.join(labels)}")
             self.task.sleep(.4)
 
+    @staticmethod
+    def strategy_promotion(v):
+        if not (v.has("策略戰", area=(.43, .17, .57, .24), contains=False)
+                and v.has("晉級", area=(.4, .23, .6, .36), contains=False)):
+            return False
+        ranks = [t for t in v.within((.4, .64, .6, .78))
+                 if re.fullmatch(r"[\u4e00-\u9fff]{2,6}[1-9]?", t.key)]
+        return len(ranks) == 1
+
     def rewards(self, maximum=18, wait_initial=False, require_reward=False, return_when=None):
         seen = 0
         quiet = 0
         pending = 0
+        promotion_frames = 0
+        promotion_clicked = False
         deadline = time.monotonic() + 30 if require_reward else None
         while seen < maximum:
             if deadline is not None and time.monotonic() >= deadline:
                 raise NeedsReview("等待獎勵與返回頁面逾時，未繼續導航")
             v = self.see()
+            if self.strategy_promotion(v):
+                quiet = 0
+                promotion_frames += 1
+                if promotion_clicked:
+                    pending += 1
+                    if pending >= 20:
+                        raise NeedsReview("策略戰晉級畫面點擊後仍未關閉，未重複點擊")
+                elif promotion_frames >= 3:
+                    # This full-screen rank animation has no continue label.
+                    # Click its lower blank area only after stable recognition.
+                    self.click(Text("策略戰晉級下方空白", .495, .85, .01, .01))
+                    promotion_clicked = True
+                    pending = 0
+                    seen += 1
+                self.task.sleep(.35)
+                continue
+            promotion_frames = 0
             if (v.has("月卡商品", area=CENTER, contains=False)
                     and v.has("REWARD", area=CENTER, contains=False)
                     and v.has("30天星光石補給", "30天意志力補給", area=BOTTOM)):
@@ -165,11 +193,32 @@ class Engine:
         v = self.see()
         self.click(v.close_icon(area))
 
+    def event_menu_available(self, v):
+        for attempt in range(3):
+            if not self.is_menu(v):
+                raise NeedsReview("事件入口檢查時四格選單已改變")
+            event = v.one("事件", area=(.82, .35, .92, .44))
+            state = v.menu_tile_state(event)
+            if state is True:
+                return True
+            # Other white tiles rule out a globally darkened/loading menu.
+            neighbors = [v.one(label, area=(.52, .2, .84, .44), required=False)
+                         for label in ("付費商店", "燭光廣場", "聖鎧")]
+            if (state is not False or sum(t is not None and v.menu_tile_state(t) is True
+                                         for t in neighbors) < 2):
+                raise NeedsReview("事件入口狀態不明確，未判定為活動未開放")
+            if attempt < 2:
+                self.task.sleep(.4)
+                v = self.see()
+        return False
+
     def menu(self, destination):
         self.rewards()
         for _ in range(5):
             v = self.see()
             if self.is_menu(v):
+                if destination == "事件" and not self.event_menu_available(v):
+                    return False
                 if destination == "好友":
                     # Handshake icon in the verified menu's right-hand rail.
                     token = Text("好友入口", .935, .418, .01, .015)
@@ -282,37 +331,129 @@ class Engine:
                         break
         if len(hits) == 1:
             return hits[0]
+        if (not hits and labels == ("一鍵領取",)
+                and v.has("信件", area=(.035, .02, .16, .12), contains=False)
+                and v.has("已到的信件", area=(.5, .86, .65, .95))):
+            # 900p can lose the first stroke on this specific mail footer.
+            # Require the mailbox title and received-count footer together.
+            missed = v.find("鍵領取", area=(.22, .86, .35, .95), contains=False)
+            if len(missed) == 1:
+                return missed[0]
         if required:
             raise NeedsReview(f"一鍵領取按鈕辨識不明確：{[t.text for t in hits]}")
         return None
 
+    def reread_claim_button(self, v, area, labels=("一鍵領取",)):
+        """Caller must establish the page and supply its observed button ROI."""
+        import cv2
+        patch = v.crop(area)
+        if not patch.size:
+            return None
+        large = cv2.resize(patch, None, fx=3, fy=3)
+        h, w = v.frame.shape[:2]
+        for contrasted in (False, True):
+            image = large
+            if contrasted:
+                gray = cv2.cvtColor(large, cv2.COLOR_BGR2GRAY)
+                image = cv2.cvtColor(cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX), cv2.COLOR_GRAY2BGR)
+            local = View(image, self.task.ocr(frame=image, threshold=.9))
+            hits = local.find(*labels, contains=False)
+            if len(hits) > 1:
+                raise NeedsReview("一鍵領取局部重讀有多個候選，未點擊")
+            if hits:
+                t = hits[0]
+                ih, iw = image.shape[:2]
+                return Text(t.text, (int(w*area[0])+t.x*iw/3)/w,
+                            (int(h*area[1])+t.y*ih/3)/h, t.w*iw/3/w, t.h*ih/3/h)
+        return None
+
+    def resolve_claim_button(self, v, labels=("一鍵領取",)):
+        token = self.claim_button(v, labels)
+        if token is not None:
+            return token
+        # Scope fallback to an actual footer candidate; no screen-wide fuzzy
+        # match or invented coordinate. Dispatch/events supply stricter ROIs.
+        candidates = [t for t in v.within(BOTTOM)
+                      if t.key.endswith(norm("鍵領取")) and len(t.key) <= 9]
+        if len(candidates) == 1:
+            t = candidates[0]
+            return self.reread_claim_button(v, v.around(t, t.w/2+.02, t.h+.015), labels)
+        return None
+
+    def wait_claim_ready(self, resolver, description="未辨識到一鍵領取按鈕，不能確認獎勵已領完"):
+        previous = None
+        stable = 0
+        for _ in range(30):
+            v = self.see()
+            if v.has("REWARD", area=CENTER, contains=False):
+                self.rewards(require_reward=True, return_when=lambda screen: resolver(screen) is not None)
+                stable = 0
+                continue
+            token = resolver(v)
+            if token is not None:
+                state = (v.enabled(token), round(token.cx, 2), round(token.cy, 2))
+                stable = stable+1 if state == previous else 1
+                previous = state
+                # Allow the points claim to appear after a temporarily gray
+                # task button. Missing text is never a disabled-state signal.
+                if stable >= (3 if state[0] else 5):
+                    return v, token
+            else:
+                previous = None
+                stable = 0
+            self.task.sleep(.4)
+        raise NeedsReview(description)
+
+    @staticmethod
+    def claim_signature(v):
+        # Ignore OCR box jitter, the resource bar, and countdowns: none prove
+        # a claim succeeded. Button appearance is checked separately below.
+        return tuple(sorted(t.key for t in v.items if t.cy > .18
+                            and not re.search(r"\d+:\d{2}", t.key)))
+
+    def wait_claim_change(self, before, resolver, allow_mail_confirmation=False):
+        before_token = resolver(before)
+        signature = (self.claim_signature(before),
+                     before.enabled(before_token) if before_token is not None else None)
+        previous = None
+        stable = 0
+        for _ in range(40):
+            v = self.see()
+            if allow_mail_confirmation and v.has("信件全部領取", area=CENTER):
+                self.confirm("信件全部領取", "所有信件")
+                allow_mail_confirmation = False
+                continue
+            if v.has("REWARD", area=CENTER, contains=False):
+                self.rewards(require_reward=True)
+                return
+            token = resolver(v)
+            current = (self.claim_signature(v), v.enabled(token) if token is not None else None)
+            empty_mail = (v.has("信件", area=TOP, contains=False)
+                          and v.has("沒有收到的信件"))
+            if current != signature and (token is not None or empty_mail):
+                stable = stable+1 if current == previous else 1
+                previous = current
+                if stable >= 3:
+                    return
+            else:
+                previous = None
+                stable = 0
+            self.task.sleep(.4)
+        raise NeedsReview("一鍵領取後畫面沒有穩定更新，未重複送出")
+
     def claim_all(self, labels=("一鍵領取",), max_claims=4, require_button=False):
         count = 0
+        resolver = lambda v: self.resolve_claim_button(v, labels)
         for _ in range(max_claims):
-            # Task claims briefly remove/disable the button before the points
-            # claim appears. Require a quiet interval before declaring done.
-            for attempt in range(5):
-                self.rewards()
-                v = self.see()
-                token = self.claim_button(v, labels)
-                if token is not None and v.enabled(token):
-                    break
-                if attempt < 4:
-                    self.task.sleep(.4)
-            else:
-                if require_button and token is None:
-                    raise NeedsReview("未辨識到一鍵領取按鈕，不能確認獎勵已領完")
-                return count
-            before = [(t.key, round(t.cx, 2), round(t.cy, 2)) for t in v.items]
-            self.click(token)
-            v = self.see()
-            if v.has("信件全部領取", area=CENTER):
-                self.confirm("信件全部領取", "所有信件")
             self.rewards()
             v = self.see()
-            after = [(t.key, round(t.cx, 2), round(t.cy, 2)) for t in v.items]
-            if before == after:
-                raise NeedsReview("一鍵領取後畫面沒有更新，未重複送出")
+            if not require_button and v.has("信件", area=TOP, contains=False) and v.has("沒有收到的信件"):
+                return count
+            v, token = self.wait_claim_ready(resolver)
+            if not v.enabled(token):
+                return count
+            self.click(token)
+            self.wait_claim_change(v, resolver, allow_mail_confirmation=True)
             count += 1
         raise NeedsReview("一鍵領取仍可用，超過正常領取次數")
 

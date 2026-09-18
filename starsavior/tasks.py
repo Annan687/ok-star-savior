@@ -3,6 +3,7 @@ from qfluentwidgets import FluentIcon
 
 from .engine import Engine
 from .flows import DailyFlows
+from .events import ONSLAUGHT
 from .policy import FARM, TIMED, NeedsReview
 
 STEPS = [
@@ -10,9 +11,20 @@ STEPS = [
     ("好友點數", "friends"), ("付費商店免費禮包", "paid_shop"), ("啟示錄商店", "apocalypse"),
     ("探索委託免費券", "exploration"), ("體力刷關", "stamina"), ("帕萊斯立方", "cube"),
     ("限時據點", "timed"), ("星際迴廊", "corridors"), ("策略戰", "strategy"),
-    ("活動襲擊與任務", "event"), ("每日與每週任務", "missions"),
+    ("激戰委託", "onslaught"), ("活動襲擊", "event"), ("活動任務", "event_missions"), ("環形鏈路", "orbital"),
+    ("每日與每週任務", "missions"),
     ("地區派遣", "dispatch"), ("公會", "guild"), ("通行證", "passes"),
 ]
+
+
+def migrate_event_selection(selected):
+    """Expand the former combined task in saved settings and schedules."""
+    result = []
+    for name in selected:
+        for target in (("活動襲擊", "活動任務") if name == "活動襲擊與任務" else (name,)):
+            if target not in result:
+                result.append(target)
+    return result
 
 
 class InspectTask(BaseTask):
@@ -51,27 +63,36 @@ class DailyTask(BaseTask):
             "執行項目": [s for s, _ in STEPS],
             "體力刷關": "不消耗體力",
             "限時據點關卡": "略過",
-            "活動名稱": "魔女的帷幕",
+            "活動名稱": "灰色研究",
+            "激戰委託關卡": "略過",
             "Exit After Task": False,
         })
         self.config_type.update({
             "執行項目": {"type": "multi_selection", "options": [s for s, _ in STEPS]},
             "體力刷關": {"type": "drop_down", "options": ["不消耗體力", *FARM]},
             "限時據點關卡": {"type": "drop_down", "options": ["略過", *TIMED]},
+            "激戰委託關卡": {"type": "drop_down", "options": ["略過", *ONSLAUGHT]},
         })
         self.config_description.update({
             "執行項目": "按示範順序執行勾選項目。今日已做完的項目可取消勾選。",
             "體力刷關": "選一種目標，MAX 使用現有意志力；不購買或使用回體道具。探索目標先耗免費券。",
             "限時據點關卡": "選一關使用當日剩餘票券；只在可掃蕩的滿星關卡執行。",
             "活動名稱": "活動列表中的名稱；換活動時需更新。新活動版型仍需實測。",
+            "激戰委託關卡": "三種關卡共用每日免費票，預設略過；只掃蕩已滿星關卡。",
             "Exit After Task": "全部勾選項目成功結束後，關閉遊戲與 OKSS；失敗或手動停止時不執行。",
         })
+
+    def load_config(self):
+        super().load_config()
+        self.config["執行項目"] = migrate_event_selection(self.config["執行項目"])
+        if "活動掃蕩次數" in self.config:
+            self.config.pop("活動掃蕩次數")
 
     def run(self):
         engine = DailyFlows(self)
         self.info_clear()
         self.info_set("執行狀態", "執行中")
-        selected = self.config["執行項目"]
+        selected = migrate_event_selection(self.config["執行項目"])
         if not selected:
             raise NeedsReview("尚未勾選任何日課，未執行完成後關閉")
         unknown = set(selected)-{name for name, _ in STEPS}
@@ -81,6 +102,9 @@ class DailyTask(BaseTask):
             raise NeedsReview("未知體力刷關選項")
         if self.config["限時據點關卡"] not in ["略過", *TIMED]:
             raise NeedsReview("未知限時據點選項")
+        if self.config.get("激戰委託關卡", "略過") not in ("略過", *ONSLAUGHT):
+            raise NeedsReview("未知激戰委託關卡")
+        prepared = False
         for index, (name, method) in enumerate(STEPS):
             engine.current = name
             if name not in selected:
@@ -89,6 +113,10 @@ class DailyTask(BaseTask):
             self.log_info(f"開始：{name}")
             self.info_set("目前項目", name)
             try:
+                if not prepared:
+                    engine.prepare_game(claim_login="登入彈窗" in selected)
+                    prepared = True
+                    self.info_set("目前項目", name)
                 detail = getattr(engine, method)()
                 engine.record("已執行", detail)
             except NeedsReview as error:

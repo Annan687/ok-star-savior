@@ -172,9 +172,29 @@ class View:
         white = (hsv[:, :, 1] < 35) & (hsv[:, :, 2] > 215)
         return float(bright_color.mean()) > .24 or float(white.mean()) > .50
 
+    def menu_tile_state(self, token):
+        """Sample both blank margins of a four-square menu tile."""
+        states = []
+        for left, right in ((-.040, -.032), (.032, .040)):
+            patch = self.crop((token.cx+left, token.cy-.06,
+                               token.cx+right, token.cy+.008))
+            if not patch.size:
+                return None
+            hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+            white = (hsv[:, :, 1] < 35) & (hsv[:, :, 2] > 215)
+            gray = ((hsv[:, :, 1] < 40) & (hsv[:, :, 2] >= 85)
+                    & (hsv[:, :, 2] <= 175))
+            states.append(True if white.mean() > .70 else False if gray.mean() > .80 else None)
+        return states[0] if states[0] is states[1] else None
+
     def max_is_gray(self, token):
         """Positive gray-background check; active MAX is black, not colored."""
         if token.key != "MAX":
+            return False
+        return self.stepper_is_gray(token)
+
+    def stepper_is_gray(self, token):
+        if token.key not in ("MIN", "MAX"):
             return False
         patch = self.crop((token.cx-.013, token.cy-.018,
                            token.cx+.013, token.cy+.018))

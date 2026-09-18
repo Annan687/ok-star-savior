@@ -3,17 +3,19 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices, QIcon
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QToolButton,
     QLabel, QPushButton, QCheckBox, QComboBox, QLineEdit, QFrame, QProgressBar)
 
 from .policy import FARM, TIMED
 from .tasks import STEPS
+from .events import ONSLAUGHT
 
 ROOT = Path(__file__).resolve().parent.parent
 GROUPS = {
     "領取與商店": [name for name, _ in STEPS[:6]],
-    "刷關與挑戰": [name for name, _ in STEPS[6:13]],
-    "任務與養成": [name for name, _ in STEPS[13:]],
+    "刷關與挑戰": [name for name, _ in STEPS[6:12]],
+    "活動": [name for name, _ in STEPS[12:16]],
+    "任務與養成": [name for name, _ in STEPS[16:]],
 }
 
 
@@ -54,7 +56,12 @@ class RuntimeBackend:
             self.daily.info_clear()
 
     def busy(self):
-        return self.pending or self.daily.enabled or self.inspect.enabled
+        return self.pending or self.daily.enabled or self.inspect.enabled or bool(self.other_task())
+
+    def other_task(self):
+        executor = getattr(getattr(self, "og", None), "executor", None)
+        return next((task for task in getattr(executor, "onetime_tasks", ())
+                     if task not in (self.daily, self.inspect) and (task.enabled or task.running)), None)
 
     def start(self, inspect=False):
         if self.busy():
@@ -87,11 +94,13 @@ class RuntimeBackend:
         connected = bool(window and window.exists)
         active = self.daily.enabled or self.inspect.enabled
         info = dict(self.daily.info)
+        other = self.other_task()
         return {
             "connected": connected, "pending": self.pending, "busy": self.busy(),
             "active": active, "paused": self.daily.paused and self.daily.enabled,
             "daily_active": self.daily.enabled, "info": info,
             "inspection": dict(self.inspect.info), "error": self.error,
+            "other_task": other.name if other else "",
         }
 
     def connection(self):
@@ -102,7 +111,8 @@ class PreviewBackend:
     """Only for rendering this widget offline. Does not construct a game driver."""
     def __init__(self):
         self.values = {"執行項目": [n for n, _ in STEPS], "體力刷關": "不消耗體力",
-                       "限時據點關卡": "略過", "活動名稱": "魔女的帷幕", "Exit After Task": False}
+                       "限時據點關卡": "略過", "活動名稱": "灰色研究", "激戰委託關卡": "略過",
+                       "Exit After Task": False}
 
     def settings(self):
         return dict(self.values)
@@ -128,6 +138,42 @@ class PreviewBackend:
         pass
 
 
+class TaskSection(QFrame):
+    """Folding is presentation only; it never changes task selections."""
+    def __init__(self, title, parent=None):
+        super().__init__(parent)
+        self.setObjectName("taskSection")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        header = QHBoxLayout()
+        header.setContentsMargins(10, 5, 18, 5)
+        self.toggle = QToolButton()
+        self.toggle.setObjectName("sectionToggle")
+        self.toggle.setText(title)
+        self.toggle.setCheckable(True)
+        self.toggle.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.toggle.setCursor(Qt.PointingHandCursor)
+        self.summary = QLabel()
+        self.summary.setObjectName("sectionSummary")
+        header.addWidget(self.toggle, 1)
+        header.addWidget(self.summary)
+        layout.addLayout(header)
+        self.body = QWidget()
+        self.body_layout = QVBoxLayout(self.body)
+        self.body_layout.setContentsMargins(18, 0, 18, 12)
+        self.body_layout.setSpacing(0)
+        layout.addWidget(self.body)
+        self.toggle.toggled.connect(self.set_expanded)
+        self.set_expanded(False)
+
+    def set_expanded(self, expanded):
+        self.toggle.setChecked(expanded)
+        self.toggle.setArrowType(Qt.DownArrow if expanded else Qt.RightArrow)
+        self.toggle.setAccessibleName(f"{'折疊' if expanded else '展開'}{self.toggle.text()}")
+        self.body.setVisible(expanded)
+
+
 class DailyPanel(QWidget):
     def __init__(self, backend, parent=None):
         super().__init__(parent)
@@ -136,6 +182,9 @@ class DailyPanel(QWidget):
         self.setMinimumWidth(800)
         self.checks = {}
         self.row_status = {}
+        self.sections = {}
+        self.task_options = {}
+        self.event_fields = []
         self.settings_widgets = []
         values = backend.settings()
         root = QVBoxLayout(self)
@@ -157,7 +206,7 @@ class DailyPanel(QWidget):
         hero_layout.addLayout(heading, 1)
         right = QVBoxLayout()
         right.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        right.addWidget(self.label("OK-StarSavior · v0.2.2", "version"))
+        right.addWidget(self.label("OK-StarSavior · v0.2.3", "version"))
         self.connection_badge = self.label("等待遊戲連線", "connectionBadge")
         right.addWidget(self.connection_badge)
         hero_layout.addLayout(right)
@@ -181,10 +230,6 @@ class DailyPanel(QWidget):
         self.state_value = self.add_metric(metrics, "執行狀態", "尚未開始")
         root.addLayout(metrics)
 
-        columns = QHBoxLayout()
-        columns.setSpacing(14)
-        checklist, checklist_layout = self.card()
-        checklist_layout.setSpacing(7)
         title_row = QHBoxLayout()
         title_row.addWidget(self.label("日課清單", "sectionTitle"))
         title_row.addStretch()
@@ -193,56 +238,49 @@ class DailyPanel(QWidget):
         self.settings_widgets.extend([all_button, none_button])
         title_row.addWidget(all_button)
         title_row.addWidget(none_button)
-        checklist_layout.addLayout(title_row)
+        title_row.addWidget(self.button("全部展開", "small", lambda: self.expand_all(True)))
+        title_row.addWidget(self.button("全部折疊", "small", lambda: self.expand_all(False)))
+        root.addLayout(title_row)
         selected = values.get("執行項目", [])
         for group, names in GROUPS.items():
-            checklist_layout.addWidget(self.label(group, "groupTitle"))
-            grid = QGridLayout()
-            grid.setHorizontalSpacing(16)
-            grid.setVerticalSpacing(3)
-            for i, name in enumerate(names):
+            section = TaskSection(group)
+            self.sections[group] = section
+            root.addWidget(section)
+            for name in names:
+                item = QFrame()
+                item.setObjectName("taskItem")
+                item_layout = QVBoxLayout(item)
+                item_layout.setContentsMargins(6, 10, 6, 10)
+                item_layout.setSpacing(6)
                 row = QHBoxLayout()
                 check = QCheckBox(name)
                 check.setChecked(name in selected)
-                check.setMinimumHeight(30)
+                check.setMinimumHeight(28)
                 check.stateChanged.connect(self.persist)
                 status = self.label("待執行", "rowStatus")
-                status.setFixedWidth(42)
+                status.setFixedWidth(54)
+                status.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 row.addWidget(check, 1)
                 row.addWidget(status)
-                grid.addLayout(row, i//2, i%2)
+                item_layout.addLayout(row)
                 self.checks[name] = check
                 self.row_status[name] = status
                 self.settings_widgets.append(check)
-            checklist_layout.addLayout(grid)
-        checklist_layout.addStretch()
-        columns.addWidget(checklist, 3)
+                self.add_task_options(name, item_layout, values)
+                section.body_layout.addWidget(item)
 
         options, option_layout = self.card()
-        options.setMinimumWidth(255)
-        option_layout.addWidget(self.label("刷關安排", "sectionTitle"))
-        self.farm = self.combo(option_layout, "體力要刷哪裡", ["不消耗體力", *FARM], values["體力刷關"])
-        option_layout.addWidget(self.label("選定一關，MAX 使用現有體力。", "hint"))
-        self.timed = self.combo(option_layout, "限時據點", ["略過", *TIMED], values["限時據點關卡"])
-        option_layout.addWidget(self.label("每天剩餘的票券集中刷這一關。", "hint"))
-        option_layout.addWidget(self.label("目前活動", "fieldLabel"))
-        self.event_name = QLineEdit(values.get("活動名稱", "魔女的帷幕"))
-        self.event_name.setPlaceholderText("輸入活動列表上的名稱")
-        self.event_name.editingFinished.connect(self.persist)
-        self.settings_widgets.append(self.event_name)
-        option_layout.addWidget(self.event_name)
+        option_layout.addWidget(self.label("執行設定", "sectionTitle"))
         self.exit_after = QCheckBox("完成後關閉遊戲與 OKSS")
         self.exit_after.setChecked(bool(values.get("Exit After Task", False)))
         self.exit_after.toggled.connect(self.persist)
         self.settings_widgets.append(self.exit_after)
         option_layout.addWidget(self.exit_after)
-        schedule_hint = self.label("每日時間請至左側「計劃任務」設定。\n電腦需開機、Windows 已登入且未鎖定。", "hint")
+        schedule_hint = self.label("每日時間請至左側「計劃任務」設定。電腦需開機、Windows 已登入且未鎖定。", "hint")
         schedule_hint.setWordWrap(True)
         option_layout.addWidget(schedule_hint)
-        option_layout.addStretch()
         option_layout.addWidget(self.label("設定自動儲存，下次開啟繼續沿用。", "hint"))
-        columns.addWidget(options, 2)
-        root.addLayout(columns)
+        root.addWidget(options)
 
         progress_card, progress_layout = self.card()
         progress_layout.setSpacing(8)
@@ -263,12 +301,62 @@ class DailyPanel(QWidget):
         note = self.label("前台模式 · 執行時會切到遊戲並使用滑鼠；整輪日課仍待實機校正。", "footer")
         note.setWordWrap(True)
         root.addWidget(note)
+        root.addStretch()
 
         self.setStyleSheet(STYLE)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh)
         self.timer.start(750)
         self.refresh()
+
+    def add_task_options(self, name, layout, values):
+        if name not in ("體力刷關", "限時據點", "激戰委託", "活動襲擊", "活動任務", "環形鏈路"):
+            return
+        container = QFrame()
+        container.setObjectName("taskOptions")
+        inner = QVBoxLayout(container)
+        inner.setContentsMargins(24, 0, 14, 10)
+        inner.setSpacing(7)
+        if name == "體力刷關":
+            self.farm = self.combo(inner, "體力要刷哪裡", ["不消耗體力", *FARM], values["體力刷關"])
+            hint = "選定一關，MAX 使用現有體力。"
+        elif name == "限時據點":
+            self.timed = self.combo(inner, "限時據點關卡", ["略過", *TIMED], values["限時據點關卡"])
+            hint = "每天剩餘的票券集中刷這一關。"
+        elif name == "激戰委託":
+            self.onslaught = self.combo(inner, "激戰委託關卡", ["略過", *ONSLAUGHT], values.get("激戰委託關卡", "略過"))
+            hint = "三種關卡共用免費票；選定後 MAX 用完剩餘票券。"
+        elif name in ("活動襲擊", "活動任務"):
+            inner.addWidget(self.label("目前活動", "fieldLabel"))
+            field = QLineEdit(values.get("活動名稱", "灰色研究"))
+            field.setMaximumWidth(480)
+            field.setPlaceholderText("輸入活動列表上的名稱")
+            field.textEdited.connect(self.sync_event_name)
+            field.editingFinished.connect(self.persist)
+            self.event_fields.append(field)
+            if name == "活動襲擊":
+                self.event_name = field
+            self.settings_widgets.append(field)
+            inner.addWidget(field)
+            hint = ("MAX 用完剩餘免費票；活動任務可另外勾選。" if name == "活動襲擊"
+                    else "只領取活動任務與點數獎勵，不進行襲擊掃蕩。與活動襲擊共用活動名稱。")
+        else:
+            hint = "領取環形鏈路任務票券後，全部抽取。"
+        label = self.label(hint, "hint")
+        label.setWordWrap(True)
+        inner.addWidget(label)
+        layout.addWidget(container)
+        self.task_options[name] = container
+        container.setVisible(self.checks[name].isChecked())
+
+    def sync_event_name(self, text):
+        for field in self.event_fields:
+            if field.text() != text:
+                field.setText(text)
+
+    def expand_all(self, expanded):
+        for section in self.sections.values():
+            section.set_expanded(expanded)
 
     @staticmethod
     def label(text, name):
@@ -308,6 +396,7 @@ class DailyPanel(QWidget):
         widget.addItems(options)
         widget.setCurrentText(selected)
         widget.setMinimumWidth(210)
+        widget.setMaximumWidth(480)
         widget.currentTextChanged.connect(self.persist)
         self.settings_widgets.append(widget)
         layout.addWidget(widget)
@@ -321,6 +410,7 @@ class DailyPanel(QWidget):
             return
         self.backend.save({"執行項目": self.selected(), "體力刷關": self.farm.currentText(),
                            "限時據點關卡": self.timed.currentText(), "活動名稱": self.event_name.text().strip(),
+                           "激戰委託關卡": self.onslaught.currentText(),
                            "Exit After Task": self.exit_after.isChecked()})
         self.refresh()
 
@@ -355,6 +445,8 @@ class DailyPanel(QWidget):
             state = "日課執行中" if data["daily_active"] else "畫面檢查中"
         elif data["error"]:
             state = "連線未完成"
+        elif data.get("other_task"):
+            state = f"{data['other_task']}執行中"
         self.selected_value.setText(f"{len(selected)} 項")
         self.done_value.setText(f"{done} / {len(selected)}")
         self.state_value.setText(state)
@@ -369,6 +461,8 @@ class DailyPanel(QWidget):
         self.stop_button.setEnabled(data["active"] and not data["pending"])
         for widget in self.settings_widgets:
             widget.setEnabled(not data["busy"])
+        for name, options in self.task_options.items():
+            options.setVisible(self.checks[name].isChecked())
         for name, status in self.row_status.items():
             full = str(info.get(name, ""))
             current = info.get("目前項目") == name and data["daily_active"]
@@ -377,10 +471,19 @@ class DailyPanel(QWidget):
                     "需檢查" if full.startswith(("需校正", "執行失敗")) else "待執行")
             status.setText(text)
             status.setToolTip(full)
+        for group, section in self.sections.items():
+            names = [name for name in GROUPS[group] if name in selected]
+            handled, _ = status_summary(info, names)
+            attention = any(str(info.get(name, "")).startswith(("需校正", "執行失敗")) for name in names)
+            running = info.get("目前項目") in names and data["daily_active"]
+            suffix = " · 需檢查" if attention else " · 處理中" if running else ""
+            section.summary.setText(f"已選 {len(names)} / {len(GROUPS[group])} · 已處理 {handled}{suffix}")
         error_rows = [str(info[n]) for n in selected if str(info.get(n, "")).startswith(("需校正", "執行失敗"))]
         if data["error"]:
             detail = "尚未連上遊戲。請開啟右上方「遊戲連線」選擇 StarSavior.exe。"
             self.detail.setToolTip(data["error"])
+        elif data.get("other_task"):
+            detail = f"{data['other_task']}正在執行，請至左側「任務」查看進度或停止。"
         elif error_rows:
             detail = error_rows[0]
         elif data["active"]:
@@ -404,6 +507,12 @@ QLabel#heroText {color:#bac9dc; font-size:12px;}
 QLabel#version {color:#b8c6d7; font-size:11px;}
 QLabel#connectionBadge {color:#f1d497; background:#2a3d55; padding:7px 12px; border-radius:12px; font-size:11px;}
 QFrame#card {background:white; border:1px solid #e3e7ee; border-radius:10px;}
+QFrame#taskSection {background:white; border:1px solid #e3e7ee; border-radius:10px;}
+QToolButton#sectionToggle {background:transparent; color:#263349; border:none; text-align:left; padding:10px 8px; font-size:14px; font-weight:600;}
+QToolButton#sectionToggle:hover {background:#edf2f8; border-radius:6px;}
+QLabel#sectionSummary {color:#768398; font-size:11px;}
+QFrame#taskItem {border:none; border-top:1px solid #edf0f5;}
+QFrame#taskOptions {background:#f7f9fc; border:none; border-radius:6px;}
 QLabel#sectionTitle {font-size:15px; font-weight:700;}
 QLabel#groupTitle {color:#758499; font-size:11px; margin-top:7px;}
 QLabel#fieldLabel {font-size:12px; font-weight:600; margin-top:8px;}

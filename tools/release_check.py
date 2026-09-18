@@ -38,6 +38,12 @@ def check_source(root=ROOT, repository=None):
         if line and not line.startswith('#') and not re.fullmatch(r'[\w.-]+==[\w.+-]+', line):
             raise ValueError(f'Requirement is not a portable version pin: {line}')
     for relative in ('main.py', 'assets/icon.png', 'icons/icon.ico',
+                     'starsavior/case_task.py', 'starsavior/case_files/source.json',
+                     'starsavior/case_files/assets/CoreHost.exe',
+                     'starsavior/case_files/assets/RouteSearch-v1.2.exe',
+                     'starsavior/case_files/assets/digits.npz',
+                     'starsavior/case_files/assets/hud_digits.npz',
+                     'starsavior/case_files/assets/screens.npz',
                      'vendor/ok-script/ok/__init__.py', 'vendor/ok-script/LICENSE.txt',
                      'THIRD-PARTY-NOTICES.md', 'licenses/pyappify/LICENSE.txt'):
         if not (root / relative).is_file():
@@ -53,6 +59,8 @@ def smoke():
     from PySide6.QtWidgets import QApplication
     from starsavior.dashboard import DailyPanel, PreviewBackend
     from starsavior.tasks import STEPS
+    from starsavior.case_task import verify_case_assets
+    verify_case_assets()
     import ok
     import cv2
     import openvino
@@ -60,7 +68,7 @@ def smoke():
     assert Path(ok.__file__).resolve() == ROOT / 'vendor/ok-script/ok/__init__.py'
     app = QApplication.instance() or QApplication([])
     panel = DailyPanel(PreviewBackend())
-    assert len(panel.checks) == len(STEPS) == 17
+    assert len(panel.checks) == len(STEPS) == 20
     assert not panel.start_button.isEnabled()
     panel.timer.stop()
     panel.close()
@@ -78,4 +86,3 @@ if __name__ == '__main__':
         smoke()
     else:
         check_source(repository=args.repository)
-

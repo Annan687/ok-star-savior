@@ -1,0 +1,11 @@
+{
+  "source": "StarSavior助手 v1.4.1",
+  "imported_at": "2026-09-18",
+  "assets": {
+    "RouteSearch-v1.2.exe": "62d7b6f4c6e0a01afeb09dbf18a383bf070ec0588a981e994c608dbd8db9221b",
+    "CoreHost.exe": "022672c9227991648a82ea5405353301341f4610c9c4d8673fd64c25dc50714d",
+    "hud_digits.npz": "abda4eebb2812d01f175b36f8d3691ce8ceff10c8a99667d42fc6bc703d23ace",
+    "screens.npz": "aa21bfe6046cca5c32461aaf5e3b06bea21c15608ae4fa060fec288b04063b0b",
+    "digits.npz": "a49674d052aad5e926be58f6e495e5435028f51c39c4c78b6ee1903aecaaecdc"
+  }
+}
