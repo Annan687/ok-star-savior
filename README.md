@@ -16,10 +16,10 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-目前原始碼版本為 **v0.2.3**，包含新版活動、折疊介面與案件檔案任務，詳見 [更新紀錄](CHANGELOG.md)。新版安裝器請查看 [建置狀態](https://github.com/Annan687/ok-star-savior/actions) 與 [Releases](https://github.com/Annan687/ok-star-savior/releases)；下列直接下載暫時仍為 v0.2.2。
+**v0.2.3 測試版已發布**，包含新版活動、折疊介面與案件檔案任務，詳見 [更新紀錄](CHANGELOG.md)。新安裝器已通過檔案校驗及隨附環境的離線檢查；新增功能的實機限制見下方說明。
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.2/ok-star-savior-win32-Global-setup.exe) ·
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.2) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.3/ok-star-savior-win32-Global-setup.exe) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.3) ·
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 [原始碼](https://github.com/Annan687/ok-star-savior)
 
@@ -55,12 +55,12 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-**[v0.2.2 測試版已公開發布](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.2)。一般使用者請下載 Global 安裝版。**
+**[v0.2.3 測試版已公開發布](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.3)。一般使用者請下載 Global 安裝版。**
 
 | 檔案 | 用途 |
 | --- | --- |
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.2/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.2/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.3/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.3/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 | `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
 | `SHA256SUMS.txt` | 以上三個檔案的 SHA-256 校驗碼。 |
 
@@ -117,7 +117,7 @@ v0.2.2 已加入以下功能，目前已完成離線驗證，仍待實際定時�
 
 ## ✨ 日課功能
 
-目前原始碼包含 **20 項日常流程**（新活動功能尚未包含在 v0.2.2 安裝版）：
+v0.2.3 包含 **20 項日常流程**：
 
 - 登入彈窗
 - 支援金
@@ -489,5 +489,5 @@ OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`�
 
 ## 📌 專案狀態
 
-目前提供 `v0.2.2` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
+目前提供 `v0.2.3` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
 歡迎透過 [Issues](https://github.com/Annan687/ok-star-savior/issues) 提供不同環境的測試結果與問題紀錄。
