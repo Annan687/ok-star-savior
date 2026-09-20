@@ -1,11 +1,11 @@
 {
-  ".github/workflows/build.yml": "374045cbc3a963eea8673763adba83aca179ebe713b39960228a11434c9c2dca",
+  ".github/workflows/build.yml": "71237e8fca5ec5f0873c6afc656fafeb3867b9c486bacbd2ef9ac93153dc0574",
   ".gitignore": "da1dda18906cb71e6c8dec6aa64052d3ae068007a937d89d52c0e24ef3bb90d5",
   "assets/check.svg": "45318e0d524c6a3a73a8fcaea52da16d0dc18baf083ac0305134a43d74bf4ebc",
   "assets/icon.ico": "31c210750d2a1d3b6e97fac48873b2aaff723d4907ed5642bbc446cb0437d643",
   "assets/icon.png": "39584670ff745c2b2f7e9e80adc74461da0cc212a98e0969ca8eebb04f179687",
   "assets/icon.svg": "a190c47d333a32903d4e725d27a73250a4a6b7abbdf555d7e89da88d9f8ca323",
-  "BUILDING.md": "03842f8a28fb0f27e43bee24a5dce34ed802aea203070449f45850f2c6fd5b09",
+  "BUILDING.md": "2f1d56261ff69accf76c27506e42edb7e260299518d13dfde8147e5ffd2e49b5",
   "CHANGELOG.md": "9e5fad633eb0ab6ce920f6eae1925982b019064faf3fc3fd915f82f81cb07407",
   "icons/icon.ico": "31c210750d2a1d3b6e97fac48873b2aaff723d4907ed5642bbc446cb0437d643",
   "icons/icon.png": "39584670ff745c2b2f7e9e80adc74461da0cc212a98e0969ca8eebb04f179687",

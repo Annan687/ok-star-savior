@@ -23,3 +23,9 @@
 框架直接從 `vendor/ok-script/ok` 載入，不安裝開發機的 editable 套件，也不依赖開發者的 Python 路徑。`requirements.txt` 固定執行期套件版本，安裝器自行建立 Python 3.12 環境。
 
 工作流程固定 PyAppify v1.2.3 及 pyappify-action commit `c5cc8fe5c9bd5c732969018694a2645474c48b7e`，正式發佈前仍須完成實際建置測試。若有套件版本無法取得，須先重建並驗證依賴鎖定檔，不能略過安裝失敗。
+
+## GitHub Actions 的 Node.js 執行環境
+
+checkout v5、setup-python v6、upload-artifact v6 已改用 Node.js 24，工作流程固定其 commit。PyAppify Action 仍固定上述已驗證的 commit；由於該版上游宣告 `node20`，建置時先取得它，再只把 `action.yml` 的執行環境改為 `node24`，從本機路徑執行。打包程式、PyAppify v1.2.3 與 Python 相依套件版本保持原值。上游宣告格式若改變會停止並要求重新核對。
+
+手動執行可勾選 `verify_actions_only`：只驗證來源、Action 取得與 Node.js 24 宣告、JavaScript 語法和 artifact 上傳，不編譯或產生安裝器。此檢查不代表完整安裝器重建通過；預設不勾選，新版本標籤仍執行完整建置。歷史建置紀錄的 Node.js 20 警告不會因更新工作流程而消失。

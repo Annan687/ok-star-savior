@@ -2,6 +2,11 @@ name: Build OKSS installers
 
 on:
   workflow_dispatch:
+    inputs:
+      verify_actions_only:
+        description: 'Verify Action runtimes without building installers'
+        type: boolean
+        default: false
   push:
     tags: ['v*']
 
@@ -17,26 +22,51 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5, Node.js 24
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node.js 24
         with:
           python-version: '3.12'
       - name: Validate release source
         run: python tools/release_check.py --repository '${{ github.repository }}'
       - name: Install and verify runtime
+        if: ${{ !inputs.verify_actions_only }}
         shell: pwsh
         run: |
           python -m pip install -r requirements.txt
           python -m pip check
           python main.py --check
           python tools/release_check.py --smoke
+      - name: Fetch pinned PyAppify Action
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5, Node.js 24
+        with:
+          repository: ok-oldking/pyappify-action
+          ref: c5cc8fe5c9bd5c732969018694a2645474c48b7e
+          path: .ci-tools/pyappify
+          persist-credentials: false
+      - name: Use Node.js 24 for the pinned PyAppify Action
+        shell: pwsh
+        run: |
+          $actionFile = Join-Path $env:GITHUB_WORKSPACE '.ci-tools/pyappify/action.yml'
+          $actionText = [IO.File]::ReadAllText($actionFile)
+          $runtimePattern = '(?m)^  using: ''node20''\r?$'
+          if ([regex]::Matches($actionText, $runtimePattern).Count -ne 1) {
+            throw 'Pinned PyAppify Action runtime changed; review before building.'
+          }
+          $actionText = [regex]::Replace($actionText, $runtimePattern, "  using: 'node24'")
+          [IO.File]::WriteAllText($actionFile, $actionText, [Text.UTF8Encoding]::new($false))
+          node --check .ci-tools/pyappify/dist/index.js
+          if ($LASTEXITCODE -ne 0) { throw 'PyAppify JavaScript syntax check failed.' }
+          [IO.File]::WriteAllText((Join-Path $env:RUNNER_TEMP 'pyappify-action-node24.yml'), $actionText, [Text.UTF8Encoding]::new($false))
       - name: Build online and bundled installers
-        uses: ok-oldking/pyappify-action@c5cc8fe5c9bd5c732969018694a2645474c48b7e
+        if: ${{ !inputs.verify_actions_only }}
+        uses: ./.ci-tools/pyappify
         with:
           version: 'v1.2.3'
       - name: Verify installers and write checksums
+        if: ${{ !inputs.verify_actions_only }}
         shell: pwsh
         run: |
           $expectedInstallers = @('ok-star-savior-win32-Global-setup.exe', 'ok-star-savior-win32-online-setup.exe')
@@ -48,9 +78,18 @@ jobs:
             ForEach-Object { '{0}  {1}' -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name } |
             Set-Content -LiteralPath pyappify_dist/SHA256SUMS.txt -Encoding utf8
       - name: Save installers for review
-        uses: actions/upload-artifact@v4
+        if: ${{ !inputs.verify_actions_only }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node.js 24
         with:
           name: ok-star-savior-installers-${{ github.ref_name }}
           path: pyappify_dist/*
           if-no-files-found: error
           retention-days: 14
+      - name: Save Action runtime verification
+        if: ${{ inputs.verify_actions_only }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node.js 24
+        with:
+          name: action-runtime-verification
+          path: ${{ runner.temp }}/pyappify-action-node24.yml
+          if-no-files-found: error
+          retention-days: 3
