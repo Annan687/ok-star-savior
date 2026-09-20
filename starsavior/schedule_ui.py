@@ -39,7 +39,7 @@ class ProfileDialog(MessageBoxBase):
         hint = QLabel("獨立儲存，不會改動首頁日課或其他排程。執行順序與日課相同。")
         hint.setWordWrap(True)
         self.viewLayout.addWidget(hint)
-        self.activity_label = QLabel(f"目前活動：{CURRENT_EVENT_NAME}（隨程式更新）")
+        self.activity_label = QLabel(f"目前活動：{CURRENT_EVENT_NAME}")
         self.viewLayout.addWidget(self.activity_label)
         actions = QHBoxLayout()
         self.checks = {}

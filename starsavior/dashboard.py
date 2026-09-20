@@ -339,7 +339,7 @@ class DailyPanel(QWidget):
             hint = "三種關卡共用免費票；選定後 MAX 用完剩餘票券。"
         elif name in ("活動襲擊", "活動任務"):
             inner.addWidget(self.label("目前活動", "fieldLabel"))
-            label = self.label(f"{CURRENT_EVENT_NAME}（隨程式更新，無需設定）", "detail")
+            label = self.label(CURRENT_EVENT_NAME, "detail")
             label.setWordWrap(True)
             self.event_labels.append(label)
             inner.addWidget(label)
