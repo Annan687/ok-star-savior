@@ -686,6 +686,11 @@ class WindowsScheduleManager:
 
             if xml_config:
                 import re
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(xml_config)
+                description = root.findtext(
+                    ".//{http://schemas.microsoft.com/windows/2004/02/mit/task}Description", description)
+                display_name = self._extract_original_name_from_description(description) or name
 
                 days_match = re.search(r"<DaysInterval>(\d+)</DaysInterval>", xml_config)
                 if days_match:
@@ -933,13 +938,14 @@ class WindowsScheduleManager:
             if current is None or current.read_only or not current.path:
                 return False
             old_path = current.path
+            existing_paths = {item.path for item in self.cache.get_all()}
             if not self.create_task(
-                    task_name, task_index, trigger_type, timeout_hours,
+                    current.name, task_index, trigger_type, timeout_hours,
                     start_hour, start_minute, auto_exit, enabled, description,
                     interval_days, interval_hours, task_identifier):
                 return False
             replacement = next((item for item in self.cache.get_all()
-                                if item.name == task_name and item.path != old_path), None)
+                                if item.name == current.name and item.path not in existing_paths), None)
             if replacement is None:
                 return False
             if self._delete_task_by_path(old_path):
@@ -1014,7 +1020,7 @@ class WindowsScheduleManager:
             return self._create_task_via_schtasks(
                 task_name, task_index, trigger_type, enabled,
                 task_path, timeout_hours, start_hour, start_minute,
-                auto_exit, interval_days, interval_hours)
+                auto_exit, interval_days, interval_hours, description, task_identifier)
 
     def _create_task_via_schtasks(self, task_name: str, task_index: int,
                                   trigger_type: TriggerType, enabled: bool,
@@ -1186,11 +1192,13 @@ class WindowsScheduleManager:
                 提供时 -t 使用该标识（对排序免疫）；缺省时使用 task_index（旧数字索引格式）。
         """
         import sys
+        from xml.sax.saxutils import escape
 
         python_exe = str(Path(sys.executable).resolve())
         working_directory = os.getcwd()
 
         current_user = self._resolve_current_user_id()
+        description = escape(description)
 
         # 构建命令行参数：优先用稳定标识，否则用旧数字索引
         if task_identifier:

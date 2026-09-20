@@ -32,7 +32,7 @@ class RuntimeBackend:
         from .tasks import DailyTask, InspectTask
         from ok.ui.qt.Communicate import communicate
         self.og = og
-        self.daily = next(t for t in og.executor.onetime_tasks if isinstance(t, DailyTask))
+        self.daily = next(t for t in og.executor.onetime_tasks if type(t) is DailyTask)
         self.inspect = next(t for t in og.executor.onetime_tasks if isinstance(t, InspectTask))
         self.pending = False
         self.error = ""
@@ -77,28 +77,38 @@ class RuntimeBackend:
         self.og.app.start_controller.start(self.inspect if inspect else self.daily)
 
     def pause(self):
-        if self.daily.enabled:
-            self.daily.unpause() if self.daily.paused else self.daily.pause()
+        task = self.running_daily()
+        if task.enabled:
+            task.unpause() if task.paused else task.pause()
+
+    def running_daily(self):
+        from .tasks import CustomDailyTask
+        other = self.other_task()
+        return other if isinstance(other, CustomDailyTask) else self.daily
 
     def stop(self):
         # StartController owns connection attempts; stop is enabled after a
         # task is running, not while that controller is still connecting.
-        for task in (self.daily, self.inspect):
+        daily = self.running_daily()
+        for task in (daily, self.inspect):
             if task.enabled:
                 task.disable()
                 task.unpause()
-        self.daily.info_set("執行狀態", "已停止")
+        daily.info_set("執行狀態", "已停止")
 
     def snapshot(self):
         window = getattr(self.og.device_manager, "hwnd_window", None)
         connected = bool(window and window.exists)
-        active = self.daily.enabled or self.inspect.enabled
-        info = dict(self.daily.info)
+        daily = self.running_daily()
+        active = daily.enabled or self.inspect.enabled
+        info = dict(daily.info)
         other = self.other_task()
         return {
             "connected": connected, "pending": self.pending, "busy": self.busy(),
-            "active": active, "paused": self.daily.paused and self.daily.enabled,
-            "daily_active": self.daily.enabled, "info": info,
+            "active": active, "paused": daily.paused and daily.enabled,
+            "daily_active": daily.enabled, "info": info,
+            "custom_active": daily is not self.daily,
+            "runtime_selected": list(daily.config.get("執行項目", [])) if daily is not self.daily else None,
             "inspection": dict(self.inspect.info), "error": self.error,
             "other_task": other.name if other else "",
         }
@@ -435,14 +445,14 @@ class DailyPanel(QWidget):
     def refresh(self):
         data = self.backend.snapshot()
         info = data["info"]
-        selected = self.selected()
+        selected = data.get("runtime_selected") if data.get("custom_active") else self.selected()
         done, state = status_summary(info, selected)
         if data["pending"]:
             state = "正在連線"
         elif data["paused"]:
             state = "已暫停"
         elif data["active"]:
-            state = "日課執行中" if data["daily_active"] else "畫面檢查中"
+            state = "自訂排程執行中" if data.get("custom_active") else "日課執行中" if data["daily_active"] else "畫面檢查中"
         elif data["error"]:
             state = "連線未完成"
         elif data.get("other_task"):

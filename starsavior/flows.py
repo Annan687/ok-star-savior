@@ -346,17 +346,46 @@ class DailyFlows(EventFlows, Engine):
             return False
         raise NeedsReview("特別禮包分頁或商品尚未辨識完整，未判定為無免費商品")
 
+    def open_special_category(self):
+        # Enter the permanent category first. Its three tabs and product limit
+        # distinguish a removed promotion from an incompletely loaded shop.
+        self.tap("普通禮包", area=LEFT)
+        area = (.015, .12, .16, .97)
+        previous, stable = None, 0
+        for _ in range(20):
+            v = self.see()
+            loaded = (v.has("付費商店", area=TOP, contains=False)
+                      and len(v.find("普通禮包", area=area, contains=False)) == 1
+                      and all(v.has(f"{p}禮包", area=(.17, .08, .96, .20), contains=False)
+                              for p in ("每日", "每週", "每月"))
+                      and v.has("每日購買", "每週購買", "每月購買", area=(.17, .20, .98, .99)))
+            target = None
+            if loaded:
+                target = v.one("特別販售禮包", area=area, required=False)
+                if target is None:
+                    target = self.reread_claim_button(v, area, ("特別販售禮包",))
+            state = (target is not None) if loaded else None
+            stable = stable + 1 if state is not None and state == previous else (1 if state is not None else 0)
+            previous = state
+            if state is True and stable >= 3:
+                self.click(target)
+                return True
+            if state is False and stable >= 5:
+                self.task.log_info("特別販售禮包分類已下架；繼續普通免費禮包")
+                return False
+            self.task.sleep(.4)
+        raise NeedsReview("付費商店分類尚未穩定，未判定限時禮包已下架")
+
     def paid_shop(self):
         self.menu("付費商店")
-        self.tap("特別販售禮包", area=LEFT)
-        special = self.open_special_free_tab()
+        special = self.open_special_category() and self.open_special_free_tab()
         n = int(self.free_card("免費裝備製作禮包")) if special else 0
         self.tap("普通禮包", area=LEFT)
         for period in ("每日", "每週", "每月"):
             self.tap(f"{period}禮包", area=(.17, .08, .96, .20))
             self.expect(f"{period}購買", area=(.17, .20, .98, .99))
             n += int(self.free_card(f"{period}免費禮包"))
-        detail = "已檢查特別、每日、每週與每月免費禮包" if special else "特別限時分頁未出現；已檢查每日、每週與每月免費禮包"
+        detail = "已檢查特別、每日、每週與每月免費禮包" if special else "特別限時分頁未出現或分類已下架；已檢查每日、每週與每月免費禮包"
         return f"{detail}，領取 {n} 個"
 
     def apocalypse(self):
@@ -417,25 +446,108 @@ class DailyFlows(EventFlows, Engine):
             self.expect(name, area=(.54, .25, .85, .86))
 
     def exploration(self):
-        reports = []
         self.exploration_overview()
-        stages = ("城市巡邏", "據點調查", "遺跡探索")
-        for index, stage in enumerate(stages):
-            v = self.expect(stage, area=(.54, .25, .85, .86))
-            row = v.one(stage, area=(.54, .25, .85, .86))
-            # Each card has its own free-ticket counter; do not use stamina.
-            count = v.count(3, area=(.89, row.cy-.03, .98, row.cy+.13), required=False)
-            if count is not None and count[1][0] == 0:
-                reports.append(f"{stage}：免費券已用完")
-                continue
-            self.click(row)
-            # Tiny counts over card artwork can be missed. The detail header
-            # exposes the same free ticket count on a plain background.
-            self.expect(stage, area=(.07, .50, .28, .80))
-            reports.append(f"{stage}：{self.sweep(stage)}")
-            if index < len(stages)-1:
-                self.exploration_overview()
-        return "；".join(reports)
+        # A missed/late label must not silently consume today's tickets via
+        # the retired per-stage route. Wait and re-read the observed bulk UI.
+        return self.exploration_bulk()
+
+    def exploration_bulk_button(self, v, area):
+        candidates = v.find("一鍵掃蕩", area=area, contains=False)
+        if len(candidates) > 1:
+            raise NeedsReview("探索一鍵掃蕩按鈕有多個候選，未提交")
+        return candidates[0] if candidates else self.reread_claim_button(v, area, ("一鍵掃蕩",))
+
+    def exploration_counts(self, v):
+        """Three independently scoped free-ticket counters on the overview."""
+        if not v.has("探索委託", area=(.07, .015, .38, .13), contains=False):
+            return None
+        counts = []
+        for stage in ("城市巡邏", "據點調查", "遺跡探索"):
+            rows = v.find(stage, area=(.54, .25, .85, .78), contains=False)
+            if len(rows) != 1:
+                return None
+            row = rows[0]
+            area = (.90, row.cy+.025, .955, row.cy+.10)
+            count = v.count(3, area=area, required=False)
+            if count is None:
+                # Re-read the observed counter, without the colored ticket.
+                values = [fraction(t.text, 3) for t in self.event_local_text(v, area)]
+                values = [n for n in values if n is not None and 0 <= n[0] <= 3]
+                if len(values) != 1:
+                    return None
+                remaining = values[0][0]
+            else:
+                remaining = count[1][0]
+            if not 0 <= remaining <= 3:
+                return None
+            counts.append(remaining)
+        return tuple(counts)
+
+    def exploration_bulk_cost(self, v):
+        """Validate the observed three-card modal, never a stamina sweep."""
+        if not (v.has("一鍵掃蕩", area=(.27, .24, .37, .31), contains=False)
+                and v.has("以下探索委託將一併掃蕩", area=(.41, .35, .59, .40))):
+            return None
+        costs = []
+        for stage, x0, x1 in (("城市巡邏", .34, .44), ("據點調查", .45, .55),
+                              ("遺跡探索", .56, .66)):
+            labels = [t for t in v.within((x0, .54, x1, .60)) if self.stage_label(t, stage)]
+            if len(labels) != 1:
+                return None
+            held = [re.fullmatch(r"持有([0-3])/3", t.key)
+                    for t in v.within((x0, .40, x1, .45))]
+            held = [int(m[1]) for m in held if m]
+            used = [re.fullmatch(r"[xX×]([0-3])", t.key)
+                    for t in v.within((x0, .60, x1, .65))]
+            used = [int(m[1]) for m in used if m]
+            if not used and v.has("使用", area=(x0, .59, x1, .65), contains=False):
+                # The colored ticket can merge into "1 x3". Crop it out;
+                # never remove a leading digit from the original OCR string.
+                crop = (x0+.068, .600, x0+.092, .644)
+                used = [re.fullmatch(r"[xX×]([0-3])", t.key)
+                        for t in self.event_local_text(v, crop)]
+                used = [int(m[1]) for m in used if m]
+            if len(held) != 1 or len(used) != 1 or held != used:
+                return None
+            costs.append(used[0])
+        return tuple(costs)
+
+    def exploration_bulk(self):
+        previous, stable = None, 0
+        for _ in range(30):
+            v = self.see()
+            counts = self.exploration_counts(v)
+            stable = stable + 1 if counts is not None and counts == previous else 0
+            previous = counts
+            if stable >= 3:
+                break
+            self.task.sleep(.4)
+        else:
+            raise NeedsReview("探索一鍵掃蕩：三關免費票未穩定辨識，未提交")
+        if not any(counts):
+            return "三關免費券皆已用完（一鍵掃蕩檢查）"
+        button = self.exploration_bulk_button(v, (.77, .77, .98, .86))
+        if button is None or not v.enabled(button):
+            raise NeedsReview("探索一鍵掃蕩按鈕未就緒")
+        self.click(button)
+        stable = 0
+        for _ in range(30):
+            v = self.see()
+            cost = self.exploration_bulk_cost(v)
+            button = self.exploration_bulk_button(v, (.42, .68, .58, .75)) if cost == counts else None
+            valid = cost == counts and button is not None and v.enabled(button)
+            stable = stable + 1 if valid else 0
+            if stable >= 3:
+                break
+            self.task.sleep(.4)
+        else:
+            raise NeedsReview("探索一鍵掃蕩：確認框關卡／持有票券／使用量不符，未提交")
+        self.save(f"探索一鍵掃蕩確認：三關免費票 {counts}")
+        self.click(button)
+        self.rewards(require_reward=True,
+                     return_when=lambda page: self.exploration_counts(page) == (0, 0, 0))
+        self.save("探索一鍵掃蕩完成：獎勵已關閉，三關免費票皆為 0/3")
+        return f"一鍵掃蕩完成：三關分別使用 {counts[0]}／{counts[1]}／{counts[2]} 張免費票，已核對歸零"
 
     def stamina(self):
         target = self.task.config["體力刷關"]
@@ -805,15 +917,16 @@ class DailyFlows(EventFlows, Engine):
             raise NeedsReview("公會商品列表未確認，未購買")
         if star and not v.has("SOLDOUT", "0/1", area=v.around(star, .11, .18)):
             self.click(star)
-            v = self.expect("購買商品", area=CENTER)
-            if not v.has("星光石", area=CENTER):
-                raise NeedsReview("公會商品名稱不符")
-            price = v.field("總購買價格")
-            if price.key != "10":
-                raise NeedsReview("公會星光石價格不符已示範的 10 活動證明")
-            self.tap("購買", area=(.3, .60, .8, .95), enabled=True)
-            self.expect("REWARD", "點擊以繼續")
-            self.rewards()
+            v = self.guild_star_purchase_ready()
+            if v is None:
+                self.close((.74, .20, .80, .29))
+            else:
+                price = v.field("總購買價格")
+                if price.key != "10":
+                    raise NeedsReview("公會星光石價格不符已示範的 10 活動證明")
+                self.tap("購買", area=(.3, .60, .8, .95), enabled=True)
+                self.expect("REWARD", "點擊以繼續")
+                self.rewards()
         self.close((.80, .15, .90, .28))
         self.tap("公會捐獻")
         for name in ("黃金", "公會活動證明"):
@@ -845,6 +958,31 @@ class DailyFlows(EventFlows, Engine):
         self.tap("公會任務", area=BOTTOM, contains=True)
         self.claim_all(require_button=True)
         return "公會商店、黃金／活動證明捐獻及任務已檢查"
+
+    def guild_star_purchase_ready(self):
+        previous, stable = None, 0
+        for _ in range(25):
+            v = self.see()
+            state = None
+            if (v.has("購買商品", area=(.20, .20, .40, .30))
+                    and v.has("星光石", area=(.35, .29, .65, .37), contains=False)):
+                count = v.count(1, area=(.25, .56, .35, .64), required=False)
+                button = v.one("購買", area=(.40, .70, .60, .78), required=False)
+                if count and button:
+                    remaining = count[1][0]
+                    enabled = v.enabled(button)
+                    if remaining == 0 and not enabled:
+                        state = "sold_out"
+                    elif remaining == 1 and enabled:
+                        state = "available"
+            stable = stable + 1 if state is not None and state == previous else (1 if state else 0)
+            previous = state
+            if state == "sold_out" and stable >= 5:
+                return None
+            if state == "available" and stable >= 3:
+                return v
+            self.task.sleep(.4)
+        raise NeedsReview("公會星光石購買次數與按鈕未穩定，未提交")
 
     @staticmethod
     def donation_button(v, column, name):

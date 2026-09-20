@@ -368,6 +368,14 @@ class Engine:
         return None
 
     def resolve_claim_button(self, v, labels=("一鍵領取",)):
+        if labels == ("任務一鍵領取",):
+            # At 900p the disabled label's OCR box alternates between the
+            # download icon + text and text alone, preventing stable geometry.
+            # Re-read the same text-only region on the verified pass page.
+            if not all(v.has(name, area=(.03, .18, .17, .38), contains=False)
+                       for name in ("啟示錄支援通行證", "旅程支援通行證", "聖鎧支援通行證")):
+                return None
+            return self.reread_claim_button(v, (.065, .90, .155, .96), labels)
         token = self.claim_button(v, labels)
         if token is not None:
             return token
@@ -406,6 +414,16 @@ class Engine:
 
     @staticmethod
     def claim_signature(v):
+        # Empty task lists have an explicit completion sentence. Point boxes
+        # still glow and remain claimable, so ignore their flickering tiny OCR
+        # only for this transition; claim_all rechecks the button afterwards.
+        mission_page = (v.has("每日任務", "每週任務", area=(.02, .10, .19, .28))
+                        and v.has("每日任務點數", "每週任務點數", area=(.26, .83, .41, .93)))
+        event_modal = v.has("每日任務", "特殊任務", area=(.36, .20, .59, .30), contains=False)
+        if mission_page or event_modal:
+            for label in ("已獲得全部每日獎勵", "已獲得全部每週獎勵"):
+                if v.has(label, area=(.36, .30, .85, .70)):
+                    return (norm(label),)
         # Ignore OCR box jitter, the resource bar, and countdowns: none prove
         # a claim succeeded. Button appearance is checked separately below.
         return tuple(sorted(t.key for t in v.items if t.cy > .18

@@ -449,7 +449,7 @@ class CreateScheduleTaskDialog(MessageBoxBase):
             return
 
         selected_task = self.tasks[selected_index]
-        task_name = selected_task.name
+        task_name = getattr(self, "schedule_name_value", selected_task.name)
         # -t N: N 为 onetime_tasks 的第 N 个（从 1 开始）
         task_index = og.executor.onetime_tasks.index(selected_task) + 1
         # 根据下拉框索引获取触发类型
@@ -497,7 +497,13 @@ class ModifyScheduleTaskDialog(MessageBoxBase):
             self.viewLayout.setSpacing(12)
             self.viewLayout.setContentsMargins(16, 12, 16, 12)
 
-            self.task_index, auto_exit_default = self._parse_args(task_info.actions)
+            actions = task_info.actions
+            if not actions and task_info.xml_config:
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(task_info.xml_config)
+                actions = root.findtext(
+                    ".//{http://schemas.microsoft.com/windows/2004/02/mit/task}Arguments", "")
+            self.task_index, auto_exit_default = self._parse_args(actions)
             if task_info.task_identifier:
                 self.task_index = resolve_schedule_task_index(
                     task_info.task_identifier, og.executor.onetime_tasks)
@@ -896,12 +902,19 @@ class ScheduleTaskTab(Tab):
 
     def setup_manager(self):
         """设置管理器"""
-        self.schedule_manager = WindowsScheduleManager(config=self.config)
+        self.schedule_manager = self.extension_class("ScheduleManager", WindowsScheduleManager)(config=self.config)
         self.schedule_manager.register_update_callback(self.on_task_updated)
 
         # 可选：后台同步（默认关闭）
         if self.enable_background_sync:
             self.schedule_manager.start_background_sync(interval=30)
+
+    def extension_class(self, name, default):
+        module = (self.config or {}).get("schedule_extension")
+        if module:
+            from importlib import import_module
+            return getattr(import_module(module), name, default)
+        return default
 
     def load_tasks(self):
         """Load without blocking construction or the Qt event loop."""
@@ -1078,8 +1091,9 @@ class ScheduleTaskTab(Tab):
                 self.show_error(self.tr("Task not found in cache"))
                 return
 
-            self._modify_dialog = ModifyScheduleTaskDialog(task_info, self)
-            self._modify_dialog.task_modified.connect(self.on_task_modified)
+            self._modify_dialog = self.extension_class("ModifyDialog", ModifyScheduleTaskDialog)(task_info, self)
+            self._modify_dialog.task_modified.connect(lambda *args: self.on_task_modified(
+                *args, description=getattr(self._modify_dialog, "schedule_description", None)))
             self._modify_dialog.exec()
         except Exception as e:
             logger.error(f"Failed to open modify dialog: {e}")
@@ -1096,6 +1110,7 @@ class ScheduleTaskTab(Tab):
             auto_exit: bool,
             interval_days: int = 0,
             interval_hours: int = 0,
+            description: str = None,
     ):
         """处理任务修改"""
         try:
@@ -1115,13 +1130,8 @@ class ScheduleTaskTab(Tab):
                 except Exception:
                     logger.exception("Failed to resolve task_identifier for modified task")
 
-            deleted = self.schedule_manager.delete_task(task_name)
-            if not deleted:
-                self.show_error(self.tr("Failed to modify task: cannot delete old task"))
-                return
-
-            success = self.schedule_manager.create_task(
-                task_name=current.name if current else task_name,
+            success = self.schedule_manager.replace_task(
+                task_name=task_name,
                 task_index=task_index,
                 trigger_type=trigger_type,
                 timeout_hours=timeout_hours,
@@ -1132,6 +1142,7 @@ class ScheduleTaskTab(Tab):
                 interval_days=interval_days,
                 interval_hours=interval_hours,
                 task_identifier=task_identifier,
+                description=description if description is not None else (current.description if current else ""),
             )
             if success:
                 self.load_tasks()
@@ -1182,8 +1193,9 @@ class ScheduleTaskTab(Tab):
 
     def on_create_task(self):
         """创建任务"""
-        dialog = CreateScheduleTaskDialog(self)
-        dialog.task_created.connect(self.on_task_created)
+        dialog = self.extension_class("CreateDialog", CreateScheduleTaskDialog)(self)
+        dialog.task_created.connect(lambda *args: self.on_task_created(
+            *args, description=getattr(dialog, "schedule_description", "")))
         dialog.exec()
 
     def on_task_created(
@@ -1197,6 +1209,7 @@ class ScheduleTaskTab(Tab):
             auto_exit: bool,
             interval_days: int = 0,
             interval_hours: int = 0,
+            description: str = "",
     ):
         """处理任务创建"""
         try:
@@ -1222,6 +1235,7 @@ class ScheduleTaskTab(Tab):
                 interval_days=interval_days,
                 interval_hours=interval_hours,
                 task_identifier=task_identifier,
+                description=description,
             )
             if success:
                 self.load_tasks()

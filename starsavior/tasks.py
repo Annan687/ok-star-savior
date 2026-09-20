@@ -135,3 +135,23 @@ class DailyTask(BaseTask):
                 raise
         self.info_set("執行狀態", "本輪已結束")
         self.log_info(f"勾選流程已走完，請查看各項結果：{engine.folder.resolve()}", notify=True)
+
+
+class CustomDailyTask(DailyTask):
+    """Run a schedule-owned snapshot without writing the home settings."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = "自訂任務（使用此排程的獨立設定）"
+        self.description = "在計劃任務建立或修改時，選擇這筆排程要執行的項目。"
+        self.default_config["執行項目"] = []
+
+    def run(self):
+        from .schedule_profile import profile_from_argv
+        profile = profile_from_argv()
+        original = self.config
+        self.config = {**self.default_config, **profile,
+                       "Exit After Task": original.get("Exit After Task", False)}
+        try:
+            return super().run()
+        finally:
+            self.config = original

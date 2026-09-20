@@ -29,29 +29,73 @@ class EventFlows:
                 and v.has("任務", "任務昌", "任務目", area=(.78, .61, .95, .72), contains=False))
 
     def open_event(self, kind):
-        if self.event_home(self.see(), kind):
+        v = self.see()
+        if self.event_home(v, kind):
             return True
-        if self.menu("事件") is False:
-            return False
+        # The four-square Event shortcut keeps the active event subpage.
+        # Leave recognized subpages through their observed back hierarchy.
+        for _ in range(3):
+            state = self.event_navigation_state(v)
+            if state not in ("stage", "onslaught", "gray"):
+                break
+            self.click(Text("返回活動列表上一層", .038, .055, .01, .025))
+            v = self.event_wait(lambda page: self.event_navigation_state(page) not in (None, state),
+                                "活動子頁返回後尚未穩定，未重複返回")
+            if self.event_home(v, kind):
+                return True
+        if self.event_navigation_state(v) != "list":
+            if self.menu("事件") is False:
+                return False
         def destination(v):
-            return self.event_home(v, kind) or (v.has("燭光廣場", area=(.08, 0, .28, .13))
-                   and v.has("事件", area=(.04, .8, .23, .97), contains=False))
+            return not self.is_menu(v) and (self.event_home(v, kind)
+                                           or self.event_navigation_state(v) == "list")
         v = self.event_wait(destination, "事件列表尚未載入")
         if self.event_home(v, kind):
             return True
+        v = self.event_wait(lambda page: len(self.event_card_targets(page, kind)) == 1,
+                            f"無法確認{'激戰委託' if kind == 'onslaught' else '灰色研究'}活動入口")
+        targets = self.event_card_targets(v, kind)
+        self.click(targets[0])
+        self.event_wait(lambda v: self.event_home(v, kind), "活動首頁尚未載入")
+        return True
+
+    def event_card_targets(self, v, kind):
+        if self.event_navigation_state(v) != "list":
+            return []
         if kind == "onslaught":
             targets = v.find("ONSLAUGHT", "QNSLAUGHT", area=(.35, .2, .95, .8))
         else:
             # This title is split across three lines by OCR. Require both
             # distinct words on the same card, not a guessed card index.
-            targets = [t for t in v.find("AStudy", area=(.35, .2, .95, .8))
-                       if any(abs(g.cx-t.cx) < .07 and 0 < g.cy-t.cy < .2
-                              for g in v.find("Gray", area=(.35, .2, .95, .82)))]
-        if len(targets) != 1:
-            raise NeedsReview(f"無法確認{'激戰委託' if kind == 'onslaught' else '灰色研究'}活動入口")
-        self.click(targets[0])
-        self.event_wait(lambda v: self.event_home(v, kind), "活動首頁尚未載入")
-        return True
+            targets = []
+            for t in v.find("AStudy", area=(.35, .2, .95, .8)):
+                gray = any(abs(g.cx-t.cx) < .07 and 0 < g.cy-t.cy < .2
+                           for g in v.find("Gray", area=(.35, .2, .95, .82)))
+                if not gray:
+                    area = (max(.35, t.cx-.08), t.cy+.035,
+                            min(.95, t.cx+.08), min(.82, t.cy+.16))
+                    gray = self.reread_claim_button(v, area, ("Gray",)) is not None
+                if gray:
+                    targets.append(t)
+        return targets
+
+    def event_navigation_state(self, v):
+        if self.is_menu(v):
+            return None
+        if self.event_home(v, "onslaught"):
+            return "onslaught"
+        if self.event_home(v, "gray"):
+            return "gray"
+        if (v.has("燭光廣場", area=(.08, 0, .28, .13))
+                and v.has("事件", area=(.04, .8, .23, .97), contains=False)):
+            return "list"
+        if (v.has("事件", area=(.08, 0, .28, .13), contains=False)
+                and not v.has("掃蕩次數", area=(.7, .7, .98, .93))
+                and v.has("掃蕩戰鬥", "掃蕩戰門", area=(.74, .84, .96, .92), contains=False)
+                and any(self.event_rows(v, stage, layout) for stage, layout in
+                        [*((name, "column") for name in ONSLAUGHT), ("名偵探消失的世界", "grid")])):
+            return "stage"
+        return None
 
     def event_local_text(self, v, area):
         import cv2
@@ -90,7 +134,13 @@ class EventFlows:
         patch = v.crop((x, row.cy+.032, x+.016, row.cy+.044))
         return bool(patch.size and np.mean(patch.min(axis=2) > 130) > .8)
 
-    def event_selected_level(self, v, stage):
+    def event_selected_level(self, v, stage, row=None, layout=None):
+        if row is not None and layout == "column":
+            # The header can lose strokes (III -> I). Read the large Arabic
+            # number of the highlighted card instead of reporting that guess.
+            area = (.276, row.cy-.025, .31, row.cy+.065)
+            numbers = [int(t.key) for t in self.event_local_text(v, area) if t.key.isdecimal()]
+            return numbers[0] if len(numbers) == 1 and 1 <= numbers[0] <= 99 else None
         headers = [t for t in v.within((.73, .16, .98, .28)) if self.stage_label(t, stage)]
         levels = [roman_value(t.key[len(norm(stage)):]) for t in headers]
         if len(levels) == 1 and levels[0]:
@@ -112,13 +162,24 @@ class EventFlows:
             row = matches[0]
             self.click(row)
             v = self.event_wait(lambda v: self.event_row_selected(v, row, layout)
-                                and self.event_selected_level(v, stage) is not None,
+                                and self.event_selected_level(v, stage, row, layout) is not None,
                                 "未確認活動選中關卡與難度")
-            sweep = v.one("掃蕩戰鬥", area=(.74, .84, .96, .92), required=False)
-            # Disabled text can be read as 戰門. A missing exact button is
-            # never evidence of eligibility, so continue to the lower stage.
-            if sweep and v.enabled(sweep):
-                return self.event_selected_level(v, stage)
+            previous, stable = None, 0
+            for _ in range(20):
+                v = self.see()
+                sweep = v.one("掃蕩戰鬥", "掃蕩戰門", area=(.74, .84, .96, .92), required=False)
+                state = v.enabled(sweep) if sweep and self.event_row_selected(v, row, layout) else None
+                stable = stable+1 if state is not None and state == previous else 0
+                previous = state
+                if stable >= (3 if state else 5):
+                    break
+                self.task.sleep(.35)
+            else:
+                raise NeedsReview("活動掃蕩按鈕狀態未穩定，未選較低關卡")
+            # Only a stable disabled button permits trying a lower stage.
+            # Missing OCR remains unknown and never means unavailable.
+            if state:
+                return self.event_selected_level(v, stage, row, layout)
         raise NeedsReview("目前可見活動關卡沒有可用掃蕩")
 
     def event_sweep(self, stage, layout):
@@ -207,14 +268,22 @@ class EventFlows:
 
     @staticmethod
     def orbital_board(v):
+        draw = v.find("全部抽取", area=(.82, .91, .90, .97), contains=False)
+        refresh = v.find("更新賓果盤", area=(.83, .91, .96, .97), contains=False)
         return (not v.has("每日任務", area=(.36, .20, .59, .30), contains=False)
                 and not v.has("REWARD", "LINK", area=(.30, .30, .66, .62), contains=False)
                 and v.has("灰色研究環形鏈路", area=(.04, .10, .24, .19))
                 and v.has("活動任務", area=(.58, .20, .66, .29), contains=False)
-                and v.has("全部抽取", area=(.82, .91, .90, .97), contains=False))
+                and ((len(draw) == 1 and not refresh)
+                     or (len(refresh) == 1 and not draw
+                         and v.has("賓果盤完成獎勵", area=(.81, .21, .91, .27), contains=False))))
 
     def orbital_tokens(self, v):
         tokens = [t for t in v.within((.916, .14, .96, .19)) if re.fullmatch(r"[\d,]+", t.key)]
+        if not tokens and self.orbital_board(v):
+            # The ticket icon can extend the full-frame box outside the counter.
+            tokens = [t for t in self.event_local_text(v, (.918, .14, .96, .18))
+                      if re.fullmatch(r"[\d,]+", t.key)]
         if len(tokens) != 1:
             raise NeedsReview("環形鏈路票券數不明確")
         return int(tokens[0].key.replace(",", ""))
@@ -227,10 +296,49 @@ class EventFlows:
             raise NeedsReview("環形鏈路抽取費用未確認，未提交")
         return int(costs[0].key.replace(",", ""))
 
+    def orbital_round(self, v):
+        rounds = [re.fullmatch(r"([1-9]\d*)LINK", t.key)
+                  for t in v.within((.675, .21, .74, .27))]
+        rounds = [int(m[1]) for m in rounds if m]
+        if len(rounds) == 1:
+            return rounds[0]
+        if not rounds and v.has("ILINK", area=(.675, .21, .74, .27), contains=False):
+            # First-round 1 LINK is sometimes read as I LINK; re-read pixels.
+            digits = [t.key for t in self.event_local_text(v, (.680, .218, .692, .255))
+                      if re.fullmatch(r"[1-9]", t.key)]
+            if digits == ["1"]:
+                return 1
+        raise NeedsReview("環形鏈路盤數不明確，未更新盤面")
+
+    def orbital_refresh(self, v):
+        button = v.one("更新賓果盤", area=(.83, .91, .96, .97))
+        if not self.orbital_board(v) or not v.enabled(button):
+            raise NeedsReview("環形鏈路更新按鈕尚未就緒")
+        before = self.orbital_tokens(v)
+        round_before = self.orbital_round(v)
+        self.click(button)
+        # Observed: one click, no confirmation and no cost. Never repeat an
+        # uncertain refresh; require the next round and unchanged balance.
+        def refreshed(page):
+            if (not self.orbital_board(page)
+                    or page.has("更新賓果盤", area=(.83, .91, .96, .97), contains=False)):
+                return False
+            try:
+                return (self.orbital_round(page) == round_before + 1
+                        and self.orbital_tokens(page) == before)
+            except NeedsReview:
+                return False
+        self.event_wait(refreshed, "更新賓果盤後盤數或票券未確認；未重試")
+        self.task.log_info(f"環形鏈路已更新：第{round_before}盤→第{round_before + 1}盤；剩餘{before}票")
+
     def orbital_draw_all(self):
         total = 0
         for _ in range(20):
             v = self.event_wait(self.orbital_board, "環形鏈路盤面尚未穩定")
+            # Refresh even when the last draw exhausted all tokens.
+            if v.has("更新賓果盤", area=(.83, .91, .96, .97), contains=False):
+                self.orbital_refresh(v)
+                continue
             before = self.orbital_tokens(v)
             button = v.one("全部抽取", area=(.82, .91, .90, .97))
             if before < 10:
