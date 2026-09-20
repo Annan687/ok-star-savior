@@ -63,7 +63,6 @@ class DailyTask(BaseTask):
             "執行項目": [s for s, _ in STEPS],
             "體力刷關": "不消耗體力",
             "限時據點關卡": "略過",
-            "活動名稱": "灰色研究",
             "激戰委託關卡": "略過",
             "Exit After Task": False,
         })
@@ -77,7 +76,6 @@ class DailyTask(BaseTask):
             "執行項目": "按示範順序執行勾選項目。今日已做完的項目可取消勾選。",
             "體力刷關": "選一種目標，MAX 使用現有意志力；不購買或使用回體道具。探索目標先耗免費券。",
             "限時據點關卡": "選一關使用當日剩餘票券；只在可掃蕩的滿星關卡執行。",
-            "活動名稱": "活動列表中的名稱；換活動時需更新。新活動版型仍需實測。",
             "激戰委託關卡": "三種關卡共用每日免費票，預設略過；只掃蕩已滿星關卡。",
             "Exit After Task": "全部勾選項目成功結束後，關閉遊戲與 OKSS；失敗或手動停止時不執行。",
         })
@@ -85,6 +83,8 @@ class DailyTask(BaseTask):
     def load_config(self):
         super().load_config()
         self.config["執行項目"] = migrate_event_selection(self.config["執行項目"])
+        # Old installations must not override the activity shipped in this build.
+        self.config.pop("活動名稱", None)
         if "活動掃蕩次數" in self.config:
             self.config.pop("活動掃蕩次數")
 

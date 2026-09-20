@@ -809,44 +809,12 @@ class DailyFlows(EventFlows, Engine):
         raise NeedsReview("策略戰超過處理上限")
 
     def event(self):
-        if self.task.config.get("活動名稱", "灰色研究") == "灰色研究":
-            return self.gray_assault()
-        if not self.open_legacy_event():
-            return "事件入口未開放，略過活動襲擊"
-        v = self.expect("襲擊")
-        if v.count(3, area=(.54, 0, .64, .15))[1][0] == 0:
-            result = "活動票券已用完"
-        else:
-            self.tap("襲擊", contains=False)
-            # Event names change: derive the prefix from the selected header.
-            v = self.expect("掃蕩戰鬥")
-            rows = [t for t in v.within(RIGHT) if re.search(r"[IVX]+$", t.key)]
-            prefixes = {re.sub(r"[IVX]+$", "", t.key).strip() for t in rows}
-            if len(prefixes) != 1:
-                raise NeedsReview("活動襲擊關卡名稱不明確")
-            result = self.sweep(prefixes.pop())
-            self.click(Text("返回活動", .032, .043, .015, .03))
-        self.expect("襲擊", "任務")
-        return result
-
-    def open_legacy_event(self):
-        if self.menu("事件") is False:
-            return False
-        if not self.see().has("襲擊"):
-            name = self.task.config["活動名稱"]
-            aliases = (name, "TheWitchsVeil", "TheWitch'sVeil") if name == "魔女的帷幕" else (name,)
-            self.tap(*aliases, contains=True)
-        self.expect("襲擊", "任務")
-        return True
+        # Activity support is shipped with the program, not selected by an old
+        # homepage config or a saved Windows schedule snapshot.
+        return self.gray_assault()
 
     def event_missions(self):
-        if self.task.config.get("活動名稱", "灰色研究") == "灰色研究":
-            return self.gray_missions()
-        if not self.open_legacy_event():
-            return "事件入口未開放，略過活動任務"
-        self.tap("任務")
-        self.claim_all()
-        return "活動任務與點數獎勵已檢查"
+        return self.gray_missions()
 
     def missions(self):
         self.menu("任務")

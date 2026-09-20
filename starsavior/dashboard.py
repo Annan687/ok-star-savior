@@ -4,11 +4,12 @@ from pathlib import Path
 from PySide6.QtCore import Qt, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices, QIcon
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QToolButton,
-    QLabel, QPushButton, QCheckBox, QComboBox, QLineEdit, QFrame, QProgressBar)
+    QLabel, QPushButton, QCheckBox, QComboBox, QFrame, QProgressBar)
 
 from .policy import FARM, TIMED
 from .tasks import STEPS
 from .events import ONSLAUGHT
+from .activity import CURRENT_EVENT_NAME
 
 ROOT = Path(__file__).resolve().parent.parent
 GROUPS = {
@@ -121,7 +122,7 @@ class PreviewBackend:
     """Only for rendering this widget offline. Does not construct a game driver."""
     def __init__(self):
         self.values = {"執行項目": [n for n, _ in STEPS], "體力刷關": "不消耗體力",
-                       "限時據點關卡": "略過", "活動名稱": "灰色研究", "激戰委託關卡": "略過",
+                       "限時據點關卡": "略過", "激戰委託關卡": "略過",
                        "Exit After Task": False}
 
     def settings(self):
@@ -194,7 +195,7 @@ class DailyPanel(QWidget):
         self.row_status = {}
         self.sections = {}
         self.task_options = {}
-        self.event_fields = []
+        self.event_labels = []
         self.settings_widgets = []
         values = backend.settings()
         root = QVBoxLayout(self)
@@ -338,16 +339,10 @@ class DailyPanel(QWidget):
             hint = "三種關卡共用免費票；選定後 MAX 用完剩餘票券。"
         elif name in ("活動襲擊", "活動任務"):
             inner.addWidget(self.label("目前活動", "fieldLabel"))
-            field = QLineEdit(values.get("活動名稱", "灰色研究"))
-            field.setMaximumWidth(480)
-            field.setPlaceholderText("輸入活動列表上的名稱")
-            field.textEdited.connect(self.sync_event_name)
-            field.editingFinished.connect(self.persist)
-            self.event_fields.append(field)
-            if name == "活動襲擊":
-                self.event_name = field
-            self.settings_widgets.append(field)
-            inner.addWidget(field)
+            label = self.label(f"{CURRENT_EVENT_NAME}（隨程式更新，無需設定）", "detail")
+            label.setWordWrap(True)
+            self.event_labels.append(label)
+            inner.addWidget(label)
             hint = ("MAX 用完剩餘免費票；活動任務可另外勾選。" if name == "活動襲擊"
                     else "只領取活動任務與點數獎勵，不進行襲擊掃蕩。與活動襲擊共用活動名稱。")
         else:
@@ -358,11 +353,6 @@ class DailyPanel(QWidget):
         layout.addWidget(container)
         self.task_options[name] = container
         container.setVisible(self.checks[name].isChecked())
-
-    def sync_event_name(self, text):
-        for field in self.event_fields:
-            if field.text() != text:
-                field.setText(text)
 
     def expand_all(self, expanded):
         for section in self.sections.values():
@@ -419,7 +409,7 @@ class DailyPanel(QWidget):
         if not hasattr(self, "exit_after"):
             return
         self.backend.save({"執行項目": self.selected(), "體力刷關": self.farm.currentText(),
-                           "限時據點關卡": self.timed.currentText(), "活動名稱": self.event_name.text().strip(),
+                           "限時據點關卡": self.timed.currentText(),
                            "激戰委託關卡": self.onslaught.currentText(),
                            "Exit After Task": self.exit_after.isChecked()})
         self.refresh()

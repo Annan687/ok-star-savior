@@ -12,8 +12,7 @@ MARKER = "OKSS_CUSTOM_V1:"
 FLAG = "--okss-profile"
 CHOICES = {"體力刷關": ["不消耗體力", *FARM],
            "限時據點關卡": ["略過", *TIMED],
-           "激戰委託關卡": ["略過", *ONSLAUGHT],
-           "活動名稱": ["灰色研究"]}
+           "激戰委託關卡": ["略過", *ONSLAUGHT]}
 
 
 def default_profile():
@@ -22,7 +21,12 @@ def default_profile():
 
 def validate_profile(value):
     from .tasks import STEPS, migrate_event_selection
-    if not isinstance(value, dict) or set(value) != set(default_profile()):
+    if not isinstance(value, dict):
+        raise NeedsReview("自訂排程設定不完整，請修改此排程並重新儲存")
+    # V1 snapshots already stored in Windows include the old event name.
+    # Ignore that retired field without changing the schedule's selected tasks.
+    value = {key: item for key, item in value.items() if key != "活動名稱"}
+    if set(value) != set(default_profile()):
         raise NeedsReview("自訂排程設定不完整，請修改此排程並重新儲存")
     selected = value["執行項目"]
     if not isinstance(selected, list) or not all(isinstance(item, str) for item in selected):
