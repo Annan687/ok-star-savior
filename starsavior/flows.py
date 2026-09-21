@@ -594,33 +594,46 @@ class DailyFlows(EventFlows, Engine):
         matches = v.find(stage, area=area, contains=True)
         if len(matches) == 1:
             return matches[0]
-        if matches or stage != "雷塔爾吉亞的魔術師":
+        return None
+
+    @staticmethod
+    def timed_fixed_entrance(v, stage):
+        """The observed magician card scrolls its title, not its position."""
+        if stage != "雷塔爾吉亞的魔術師" or Engine.is_menu(v):
             return None
         if not (v.has("限時據點", area=(.07, .015, .38, .13), contains=False)
-                and v.has("阿爾克那", area=(.2, .08, .96, .2), contains=False)):
+                and v.has("阿爾克那", area=(.45, .10, .68, .19), contains=False)):
             return None
-        # The card title scrolls horizontally: its tail and head can be visible
-        # on the same line while the full name never occurs in a single token.
-        tails = v.find("魔術師", area=area, contains=False)
-        heads = v.find("雷塔爾", "雷塔爾吉亞", area=area, contains=False)
-        pairs = [(tail, head) for tail in tails for head in heads
-                 if abs(tail.cy-head.cy) < .018
-                 and 0 <= head.x-(tail.x+tail.w) < .06
-                 and head.x+head.w-tail.x < .17]
-        return pairs[0][0] if len(pairs) == 1 else None
+        # Other fixed labels anchor the complete 4+2 overview. A detail page,
+        # moved grid or different category must never become a blind click.
+        anchors = [("虛空涅槃者", (.22, .36, .34, .43)),
+                   ("虛空抹殺者", (.39, .36, .51, .43)),
+                   ("虛空屠殺者", (.57, .36, .69, .43)),
+                   ("虛空蔑視者", (.74, .36, .87, .43)),
+                   ("虛空流亡者", (.22, .67, .34, .74))]
+        if not all(len(v.find(name, area=area, contains=False)) == 1 for name, area in anchors):
+            return None
+        if not v.has("任務", area=(.40, .73, .49, .81), contains=False):
+            return None
+        return Text("魔術師入口卡片", .47, .59, .01, .02)
 
     def open_timed_entrance(self, stage):
+        fixed_frames = 0
         for _ in range(20):
             v = self.see()
-            token = self.timed_entrance(v, stage)
+            fixed = self.timed_fixed_entrance(v, stage)
+            fixed_frames = fixed_frames + 1 if fixed is not None else 0
+            token = fixed if fixed_frames >= 3 else None
+            if stage != "雷塔爾吉亞的魔術師":
+                token = self.timed_entrance(v, stage)
             if token is not None:
                 self.click(token)
-                # Card fragments identify only the entrance. The destination
-                # must expose the full stage name in its detail header.
+                # The entrance is navigation only; verify the destination
+                # before permitting any sweep or ticket expenditure.
                 self.expect(stage, area=(.73, .14, .98, .35))
                 return
             self.task.sleep(.5)
-        raise NeedsReview(f"未能確認限時據點入口：{stage}（名稱可能正在捲動）")
+        raise NeedsReview(f"未能確認限時據點入口版面：{stage}")
 
     def timed(self):
         target = self.task.config["限時據點關卡"]
@@ -788,25 +801,44 @@ class DailyFlows(EventFlows, Engine):
                 return "已達本輪刷新上限，仍有鑰匙待處理"
             # This is navigation to a reviewed confirmation, not a purchase.
             self.click(Text("刷新列表", .887, .138, .012, .025))
-            v = self.expect("刷新對戰列表", area=CENTER)
-            if v.has("不足", "0/10", area=CENTER):
-                self.tap("取消", area=CENTER)
+            if not self.confirm_strategy_refresh():
                 return "刷新資源／次數不足，仍有鑰匙待處理"
-            # User authorized free and gold refresh, even on timer. Verify a
-            # paid icon against the actual gold icon in the top resource bar.
-            confirm = v.one("確認", area=CENTER)
-            if confirm.cy >= .68:
-                top_gold = [t for t in v.within((.69, .015, .77, .12))
-                            if re.fullmatch(r"[\d.,]+[KMB]?", t.key)]
-                costs = [t for t in v.within((.38, .48, .75, .68))
-                         if re.fullmatch(r"[\d,]+", t.key)]
-                if len(top_gold) != 1 or len(costs) != 1 or not v.same_currency(top_gold[0], costs[0]):
-                    raise NeedsReview("刷新費用未確認為黃金，未提交")
-            elif v.has("星光石", "消耗", "費用", area=(.27, .45, .77, .65)):
-                raise NeedsReview("免費刷新版型出現費用，未提交")
-            self.confirm("刷新對戰列表", "連勝")
             refreshes += 1
         raise NeedsReview("策略戰超過處理上限")
+
+    def confirm_strategy_refresh(self):
+        # The modal blurs the background balance. User-authorized refreshes
+        # must not depend on matching that obscured gold icon or its digits.
+        stable = 0
+        for _ in range(20):
+            v = self.see()
+            ready = (v.has("刷新對戰列表", area=CENTER, contains=False)
+                     and v.has("連勝", area=CENTER)
+                     and v.one("取消", area=CENTER, required=False) is not None)
+            if not ready:
+                stable = 0
+                self.task.sleep(.4)
+                continue
+            if v.has("不足", "0/10", area=CENTER):
+                self.tap("取消", area=CENTER)
+                return False
+            if any(re.fullmatch(re.escape(norm("今日剩餘次數")) + r"[|丨:：]?0", t.key) for t in v.within(CENTER)):
+                self.tap("取消", area=CENTER)
+                return False
+            if v.has("星光石", area=CENTER):
+                raise NeedsReview("刷新框出現星光石，未提交")
+            confirm = v.one("確認", area=CENTER, required=False)
+            stable = stable + 1 if confirm is not None and v.enabled(confirm) else 0
+            if stable >= 3:
+                self.click(confirm)
+                self.event_wait(lambda page: (
+                    page.has("策略戰", area=TOP, contains=False)
+                    and page.has("對戰列表", area=TOP, contains=False)
+                    and not page.has("刷新對戰列表", area=CENTER)),
+                    "刷新提交後尚未回到對戰列表，未重複提交")
+                return True
+            self.task.sleep(.4)
+        raise NeedsReview("刷新對戰列表確認框尚未穩定，未提交")
 
     def event(self):
         # Activity support is shipped with the program, not selected by an old
