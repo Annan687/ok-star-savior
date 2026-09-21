@@ -457,97 +457,48 @@ class DailyFlows(EventFlows, Engine):
             raise NeedsReview("探索一鍵掃蕩按鈕有多個候選，未提交")
         return candidates[0] if candidates else self.reread_claim_button(v, area, ("一鍵掃蕩",))
 
-    def exploration_counts(self, v):
-        """Three independently scoped free-ticket counters on the overview."""
-        if not v.has("探索委託", area=(.07, .015, .38, .13), contains=False):
+    def exploration_overview_button(self, v):
+        if not (v.has("探索委託", area=(.07, .015, .38, .13), contains=False)
+                and all(len(v.find(stage, area=(.54, .25, .85, .78), contains=False)) == 1
+                        for stage in ("城市巡邏", "據點調查", "遺跡探索"))):
             return None
-        counts = []
-        for stage in ("城市巡邏", "據點調查", "遺跡探索"):
-            rows = v.find(stage, area=(.54, .25, .85, .78), contains=False)
-            if len(rows) != 1:
-                return None
-            row = rows[0]
-            area = (.90, row.cy+.025, .955, row.cy+.10)
-            count = v.count(3, area=area, required=False)
-            if count is None:
-                # Re-read the observed counter, without the colored ticket.
-                values = [fraction(t.text, 3) for t in self.event_local_text(v, area)]
-                values = [n for n in values if n is not None and 0 <= n[0] <= 3]
-                if len(values) != 1:
-                    return None
-                remaining = values[0][0]
-            else:
-                remaining = count[1][0]
-            if not 0 <= remaining <= 3:
-                return None
-            counts.append(remaining)
-        return tuple(counts)
+        return self.exploration_bulk_button(v, (.77, .77, .98, .86))
 
-    def exploration_bulk_cost(self, v):
-        """Validate the observed three-card modal, never a stamina sweep."""
+    def exploration_confirm_button(self, v):
+        # Identify the exploration modal independently of ticket/count OCR.
         if not (v.has("一鍵掃蕩", area=(.27, .24, .37, .31), contains=False)
                 and v.has("以下探索委託將一併掃蕩", area=(.41, .35, .59, .40))):
             return None
-        costs = []
         for stage, x0, x1 in (("城市巡邏", .34, .44), ("據點調查", .45, .55),
                               ("遺跡探索", .56, .66)):
             labels = [t for t in v.within((x0, .54, x1, .60)) if self.stage_label(t, stage)]
             if len(labels) != 1:
                 return None
-            held = [re.fullmatch(r"持有([0-3])/3", t.key)
-                    for t in v.within((x0, .40, x1, .45))]
-            held = [int(m[1]) for m in held if m]
-            used = [re.fullmatch(r"[xX×]([0-3])", t.key)
-                    for t in v.within((x0, .60, x1, .65))]
-            used = [int(m[1]) for m in used if m]
-            if not used and v.has("使用", area=(x0, .59, x1, .65), contains=False):
-                # The colored ticket can merge into "1 x3". Crop it out;
-                # never remove a leading digit from the original OCR string.
-                crop = (x0+.068, .600, x0+.092, .644)
-                used = [re.fullmatch(r"[xX×]([0-3])", t.key)
-                        for t in self.event_local_text(v, crop)]
-                used = [int(m[1]) for m in used if m]
-            if len(held) != 1 or len(used) != 1 or held != used:
-                return None
-            costs.append(used[0])
-        return tuple(costs)
+        return self.exploration_bulk_button(v, (.42, .68, .58, .75))
+
+    def exploration_bulk_settled(self, v):
+        button = self.exploration_overview_button(v)
+        return button is not None and not v.enabled(button)
 
     def exploration_bulk(self):
-        previous, stable = None, 0
-        for _ in range(30):
-            v = self.see()
-            counts = self.exploration_counts(v)
-            stable = stable + 1 if counts is not None and counts == previous else 0
-            previous = counts
-            if stable >= 3:
-                break
-            self.task.sleep(.4)
-        else:
-            raise NeedsReview("探索一鍵掃蕩：三關免費票未穩定辨識，未提交")
-        if not any(counts):
-            return "三關免費券皆已用完（一鍵掃蕩檢查）"
-        button = self.exploration_bulk_button(v, (.77, .77, .98, .86))
-        if button is None or not v.enabled(button):
-            raise NeedsReview("探索一鍵掃蕩按鈕未就緒")
+        v, button = self.wait_claim_ready(
+            self.exploration_overview_button,
+            "探索一鍵掃蕩：列表或按鈕未穩定辨識，未提交")
+        if not v.enabled(button):
+            return "探索一鍵掃蕩已無可掃蕩項目（按鈕穩定停用）"
         self.click(button)
-        stable = 0
-        for _ in range(30):
-            v = self.see()
-            cost = self.exploration_bulk_cost(v)
-            button = self.exploration_bulk_button(v, (.42, .68, .58, .75)) if cost == counts else None
-            valid = cost == counts and button is not None and v.enabled(button)
-            stable = stable + 1 if valid else 0
-            if stable >= 3:
-                break
-            self.task.sleep(.4)
-        else:
-            raise NeedsReview("探索一鍵掃蕩：確認框關卡／持有票券／使用量不符，未提交")
-        self.save(f"探索一鍵掃蕩確認：三關免費票 {counts}")
+        v, button = self.wait_claim_ready(
+            self.exploration_confirm_button,
+            "探索一鍵掃蕩：確認框或按鈕未穩定辨識，未提交")
+        if not v.enabled(button):
+            raise NeedsReview("探索一鍵掃蕩：確認按鈕停用，未提交")
+        self.save("探索一鍵掃蕩確認：確認框與可用按鈕已穩定")
         self.click(button)
-        self.rewards(require_reward=True,
-                     return_when=lambda page: self.exploration_counts(page) == (0, 0, 0))
-        self.save("探索一鍵掃蕩完成：獎勵已關閉，三關免費票皆為 0/3")
-        return f"一鍵掃蕩完成：三關分別使用 {counts[0]}／{counts[1]}／{counts[2]} 張免費票，已核對歸零"
+        # rewards requires a real reward dismissal, then five consecutive
+        # settled overview frames. Missing labels never count as disabled.
+        self.rewards(require_reward=True, return_when=self.exploration_bulk_settled)
+        self.save("探索一鍵掃蕩完成：獎勵已關閉，一鍵掃蕩按鈕穩定停用")
+        return "一鍵掃蕩完成：已領取獎勵並確認無可掃蕩項目"
 
     def stamina(self):
         target = self.task.config["體力刷關"]
