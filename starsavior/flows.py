@@ -672,6 +672,8 @@ class DailyFlows(EventFlows, Engine):
         raise NeedsReview("星際迴廊載入後仍未辨識到完整的太陽／月亮／星辰入口")
 
     def strategy_keys(self, v):
+        if self.strategy_state(v) != "對戰列表":
+            raise NeedsReview("尚未進入策略戰對戰列表，未讀取鑰匙或刷新")
         count = v.count(6, area=TOP, required=False)
         if count is not None:
             return count[1][0]
@@ -689,35 +691,91 @@ class DailyFlows(EventFlows, Engine):
                 return value[0]
         raise NeedsReview("策略戰鑰匙放大重讀仍不明確")
 
+    @staticmethod
+    def strategy_state(v):
+        if v.has("聖鎧", area=TOP, contains=False):
+            return None
+        if v.has("週聯賽獎勵", area=(.2, .05, .8, .4), contains=False):
+            return "週聯賽獎勵"
+        if v.has("防禦紀錄資訊", area=CENTER, contains=False):
+            return "防禦紀錄資訊"
+        if (v.has("策略戰", area=TOP, contains=False)
+                and v.has("對戰列表", area=TOP, contains=False)
+                and not v.has("刷新對戰列表", area=CENTER, contains=False)):
+            return "對戰列表"
+        return None
+
+    @staticmethod
+    def strategy_entry(v):
+        if not (v.has("聖鎧", area=TOP, contains=False)
+                and v.has("排位戰", area=(.20, .74, .40, .85), contains=False)
+                and v.has("友誼賽", area=(.60, .74, .80, .85))):
+            return None
+        entries = v.find("策略戰", area=(.40, .74, .60, .85), contains=False)
+        return entries[0] if len(entries) == 1 else None
+
+    def open_strategy(self):
+        # Retrying is allowed only while the same complete entrance page is
+        # still visible. Never retry navigation over a dialog or loading frame.
+        card_frames = state_frames = attempts = 0
+        previous_state = None
+        for _ in range(60):
+            v = self.see()
+            state = self.strategy_state(v)
+            if state is not None or self.strategy_promotion(v):
+                state = state or "晉級"
+                state_frames = state_frames + 1 if state == previous_state else 1
+                previous_state = state
+                card_frames = 0
+                if state_frames >= 3:
+                    return True
+            else:
+                previous_state = None
+                state_frames = 0
+                entry = self.strategy_entry(v)
+                card_frames = card_frames + 1 if entry is not None else 0
+                if entry is not None and v.has("正在結算中", area=v.around(entry, .12, .12)):
+                    if card_frames >= 3:
+                        return False
+                elif card_frames >= (3 if attempts == 0 else 8):
+                    if attempts >= 3:
+                        break
+                    self.click(Text("策略戰卡片", entry.cx-.005, entry.cy-.25, .01, .01))
+                    attempts += 1
+                    card_frames = 0
+            self.task.sleep(.4)
+        raise NeedsReview("尚未進入策略戰對戰列表，入口未回應或仍在載入；未刷新")
+
     def strategy_screen(self, *labels, area=FULL, seconds=15):
-        # Promotion may appear after the battle reward handler has returned.
-        for _ in range(3):
-            v = self.expect(*labels, "晉級", area=area, seconds=seconds)
+        previous, stable, promotions = None, 0, 0
+        for _ in range(max(3, int(seconds/.4))):
+            v = self.see()
             if self.strategy_promotion(v):
+                promotions += 1
+                if promotions > 3:
+                    break
                 self.rewards(wait_initial=True)
+                previous, stable = None, 0
                 continue
-            if v.has("晉級", area=(.4, .23, .6, .36), contains=False):
-                raise NeedsReview("策略戰晉級畫面尚未辨識完整")
-            return v
-        raise NeedsReview("策略戰晉級後未回到對戰列表")
+            state = self.strategy_state(v)
+            valid = state is not None and state in labels
+            stable = stable + 1 if valid and state == previous else (1 if valid else 0)
+            previous = state if valid else None
+            if stable >= 3:
+                return v
+            self.task.sleep(.4)
+        raise NeedsReview("策略戰頁面尚未穩定到達對戰列表或結算通知；未挑戰或刷新")
 
     def strategy(self):
         v = self.see()
-        if self.strategy_promotion(v):
-            self.rewards(wait_initial=True)
-            v = self.strategy_screen("週聯賽獎勵", "防禦紀錄資訊", "對戰列表")
-        if not v.has("週聯賽獎勵", "防禦紀錄資訊", "對戰列表"):
-            self.menu("聖鎧")
-            v = self.expect("策略戰")
-            entry = v.one("策略戰", contains=True)
-            if v.has("正在結算中", area=v.around(entry, .12, .12)):
+        if not (self.strategy_state(v) or self.strategy_promotion(v)):
+            if self.strategy_entry(v) is None:
+                self.menu("聖鎧")
+            if not self.open_strategy():
                 return "策略戰正在結算，暫無法挑戰；鑰匙未使用"
-            # The text footer did not open the card in the live client;
-            # anchor to its label and click the illustrated body above it.
-            self.click(Text("策略戰卡片", entry.cx-.005, entry.cy-.25, .01, .01))
         refreshes = 0
         for _ in range(35):
-            v = self.strategy_screen("週聯賽獎勵", "防禦紀錄資訊", "對戰列表", "重新挑戰", "挑戰")
+            v = self.strategy_screen("週聯賽獎勵", "防禦紀錄資訊", "對戰列表")
             if v.has("防禦紀錄資訊", area=CENTER):
                 if not (v.has("戰鬥結果現況", area=CENTER)
                         and v.has("勝利次數", area=CENTER)
@@ -745,7 +803,7 @@ class DailyFlows(EventFlows, Engine):
             # Check the lower part before deciding every opponent was tried.
             self.task.scroll_relative(.83, .72, -3)
             self.task.sleep(.5)
-            v = self.see()
+            v = self.strategy_screen("對戰列表")
             if any(exact_challenge(t.text) and v.enabled(t) for t in v.within(RIGHT)):
                 continue
             if refreshes >= 10:
@@ -783,9 +841,7 @@ class DailyFlows(EventFlows, Engine):
             if stable >= 3:
                 self.click(confirm)
                 self.event_wait(lambda page: (
-                    page.has("策略戰", area=TOP, contains=False)
-                    and page.has("對戰列表", area=TOP, contains=False)
-                    and not page.has("刷新對戰列表", area=CENTER)),
+                    self.strategy_state(page) == "對戰列表"),
                     "刷新提交後尚未回到對戰列表，未重複提交")
                 return True
             self.task.sleep(.4)
