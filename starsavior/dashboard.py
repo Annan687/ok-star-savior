@@ -42,6 +42,7 @@ class RuntimeBackend:
     def on_start(self, done, error, seconds_left):
         self.pending = not done
         if error:
+            self.daily._home_resume_request = None
             self.error = str(error)
 
     def settings(self):
@@ -64,7 +65,7 @@ class RuntimeBackend:
         return next((task for task in getattr(executor, "onetime_tasks", ())
                      if task not in (self.daily, self.inspect) and (task.enabled or task.running)), None)
 
-    def start(self, inspect=False):
+    def start(self, inspect=False, resume=True):
         if self.busy():
             return
         self.error = ""
@@ -75,7 +76,14 @@ class RuntimeBackend:
                 self.error = "無法切到遊戲前台，請先點選遊戲視窗後再開始。"
                 return
         self.pending = True
-        self.og.app.start_controller.start(self.inspect if inspect else self.daily)
+        if not inspect:
+            self.daily._home_resume_request = resume
+        try:
+            self.og.app.start_controller.start(self.inspect if inspect else self.daily)
+        except Exception:
+            self.daily._home_resume_request = None
+            self.pending = False
+            raise
 
     def pause(self):
         task = self.running_daily()
@@ -103,6 +111,13 @@ class RuntimeBackend:
         daily = self.running_daily()
         active = daily.enabled or self.inspect.enabled
         info = dict(daily.info)
+        if not info and daily is self.daily and not active:
+            from .progress import HomeProgress
+            from .policy import NeedsReview
+            try:
+                info = HomeProgress(self.daily.config).info()
+            except NeedsReview as error:
+                info = {"執行狀態": str(error)}
         other = self.other_task()
         return {
             "connected": connected, "pending": self.pending, "busy": self.busy(),
@@ -136,7 +151,7 @@ class PreviewBackend:
                 "paused": False, "daily_active": False, "info": {}, "inspection": {},
                 "error": "", "preview": True}
 
-    def start(self, inspect=False):
+    def start(self, inspect=False, resume=True):
         pass
 
     def pause(self):
@@ -225,11 +240,14 @@ class DailyPanel(QWidget):
 
         toolbar = QHBoxLayout()
         self.start_button = self.button("開始日課", "primary", lambda: self.start(False))
+        self.restart_button = self.button("重新開始", "secondary", lambda: self.start(False, resume=False))
+        self.start_button.setToolTip("接續同日、相同設定的未完成日課；跳過上輪已處理項目")
+        self.restart_button.setToolTip("忽略上輪進度，重新執行全部勾選項目")
         self.inspect_button = self.button("檢查遊戲畫面", "secondary", lambda: self.start(True))
         self.pause_button = self.button("暫停", "secondary", self.backend.pause)
         self.stop_button = self.button("停止", "stop", self.backend.stop)
         self.device_button = self.button("遊戲連線", "secondary", self.backend.connection)
-        for button in (self.start_button, self.inspect_button, self.pause_button, self.stop_button):
+        for button in (self.start_button, self.restart_button, self.inspect_button, self.pause_button, self.stop_button):
             toolbar.addWidget(button)
         toolbar.addStretch()
         toolbar.addWidget(self.device_button)
@@ -421,9 +439,9 @@ class DailyPanel(QWidget):
             check.blockSignals(False)
         self.persist()
 
-    def start(self, inspect):
+    def start(self, inspect, resume=True):
         self.persist()
-        self.backend.start(inspect=inspect)
+        self.backend.start(inspect=inspect, resume=resume)
         self.refresh()
 
     def open_local(self, name):
@@ -455,6 +473,7 @@ class DailyPanel(QWidget):
         self.progress.setRange(0, max(1, len(selected)))
         self.progress.setValue(done)
         self.start_button.setEnabled(not data["busy"] and bool(selected) and not data.get("preview"))
+        self.restart_button.setEnabled(self.start_button.isEnabled())
         self.inspect_button.setEnabled(not data["busy"] and not data.get("preview"))
         self.pause_button.setEnabled(data["daily_active"] and not data["pending"])
         self.pause_button.setText("繼續" if data["paused"] else "暫停")

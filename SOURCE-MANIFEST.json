@@ -6,7 +6,7 @@
   "assets/icon.png": "39584670ff745c2b2f7e9e80adc74461da0cc212a98e0969ca8eebb04f179687",
   "assets/icon.svg": "a190c47d333a32903d4e725d27a73250a4a6b7abbdf555d7e89da88d9f8ca323",
   "BUILDING.md": "2f1d56261ff69accf76c27506e42edb7e260299518d13dfde8147e5ffd2e49b5",
-  "CHANGELOG.md": "42c7f979475d43d7976f3b863967876a7f6f34761c3f07cb9437acb3557ba064",
+  "CHANGELOG.md": "2c1ac3052bf570a092be20005d24b5fa66fe590d01ed1c0053b8ce6d1fd80f60",
   "icons/icon.ico": "31c210750d2a1d3b6e97fac48873b2aaff723d4907ed5642bbc446cb0437d643",
   "icons/icon.png": "39584670ff745c2b2f7e9e80adc74461da0cc212a98e0969ca8eebb04f179687",
   "licenses/certifi/licenses/LICENSE": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7",
@@ -71,7 +71,7 @@
   "licenses/urllib3/licenses/LICENSE.txt": "130e3a64d5fdd5d096a752694634a7d9df284469de86e5732100268041e3d686",
   "main.py": "ceee9f8e8ebad39bbbf6b399a229435795961ee9e3d47307281f6aea11f89f10",
   "pyappify.yml": "da2627553e4eec1d238a001fa5ddefb05b4c0366a7fc5bb451563cf57198cee9",
-  "README.md": "5b64fd1f1e8b7a1c7c62b3a87d38297c0a958b0b975ba764a62f1903e7038e63",
+  "README.md": "6ce30968680d0b6f46fff38d2223ef885c2ed2f3c854cba38a33c9361fddf9b1",
   "requirements.txt": "8ad9452b1aded0b89b0f2e83ced42a57566405fdeb0c907ab2e94ae26783f944",
   "starsavior/__init__.py": "986f0490a162a4747b66fcb5a2ea858a2ca53ff9825de6a1717a1573a61fcb4d",
   "starsavior/app.py": "42301196fe0221570a73c9eceda910d3155cc952ab57fd8e03291a4e37a51b8f",
@@ -97,7 +97,7 @@
   "starsavior/case_files/starsavior_core/scoring.py": "be3e21394a8fa99abfdf9fac0370e69fa3b5269734dc8011831df94b0ab36900",
   "starsavior/case_task.py": "aa0054c677012dfd69b6b697723a39a0e7edbb957ef0307468ff805a5991b4f4",
   "starsavior/config.py": "4a63a623cb9a003a33d4166fd0bfa2312e4c749a04762f09c625ef76d0b9912a",
-  "starsavior/dashboard.py": "4c7ab32a66ddf3a3cedadef4be526a0ac5e68fc9767453e44307e5682d78ce7a",
+  "starsavior/dashboard.py": "235cb90f6e70c69ed5d9ed41f1481390dc125847bc92352555ca32c0852df3e2",
   "starsavior/engine.py": "12478d181bc12109c4bc697b840b10a862963e62b3e7903e5a20aaea23a56bfb",
   "starsavior/events.py": "7e5911948b8a30d338b0a884d1a7aba5c68060af5b9d2263d97ca708dc4bc458",
   "starsavior/flows.py": "36cf4adbf590820fe0bc2884e8692b30f14519bce368996fa43fcada2707a4ee",
@@ -106,7 +106,7 @@
   "starsavior/policy.py": "f332f5840389f473bdfcb448fe9e45cae3f93bb03c3cc740d31176d64ca744db",
   "starsavior/schedule_profile.py": "82912c707694408bf5df0bad4fda495d0c6db51a09d055bcb265d7b763939160",
   "starsavior/schedule_ui.py": "ec63a8c19d642915e87de1904038a4e9af35e442385bd469de3567fb5beef84e",
-  "starsavior/tasks.py": "bf70dff1b7ceecb6fc1ab6aa7eaab175dcab4c071642bdd81973bd6e34387ecb",
+  "starsavior/tasks.py": "27d85c7d4e1546859f7aa50754d819979ef317134b0c696c149ec37ec0b81f55",
   "starsavior/ui.py": "af21caeb21de0151099fb9a540f80f26aed1ab2297c7f035dad1cd14390a354c",
   "starsavior/vision.py": "2809f4911466e306678f856389ed0e3d0de470135928ca5c83b27fb6387fd8b9",
   "THIRD-PARTY-NOTICES.md": "f45ffb46092ca4dbbec160ad7d76d2ba302ca0fd8186f3d92441038dbdce58e4",
@@ -405,5 +405,6 @@
   "vendor/ok-script/ok/util/windows_schedule.py": "9c4518f406e2216a6012bd50063e4e7419057367f713487de47fb4f5672d2080",
   "vendor/ok-script/README.md": "261d91fa3bdb23fbd46e2fb01c652b88d0a16c61cb6820c3a7f38612d6e11ea4",
   "vendor/ok-script-source.json": "1dc4154e563c04268c75f6af454955f6d1654f1504843bdc63560fb4dd789cbd",
-  "starsavior/activity.py": "326c72488bcebde6c724c6cc50ac555ecc5a9404466b0b5b0274572dbdaba44a"
+  "starsavior/activity.py": "326c72488bcebde6c724c6cc50ac555ecc5a9404466b0b5b0274572dbdaba44a",
+  "starsavior/progress.py": "6e028904c04339039cab3ccc38c4b935a3b0b11d01e1b9ce08b9a4a56d2b59bb"
 }

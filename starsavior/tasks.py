@@ -89,6 +89,9 @@ class DailyTask(BaseTask):
             self.config.pop("活動掃蕩次數")
 
     def run(self):
+        # Consume the one-shot UI request; scheduled/F9 starts never inherit it.
+        resume_request = getattr(self, "_home_resume_request", None)
+        self._home_resume_request = None
         engine = DailyFlows(self)
         self.info_clear()
         self.info_set("執行狀態", "執行中")
@@ -104,22 +107,36 @@ class DailyTask(BaseTask):
             raise NeedsReview("未知限時據點選項")
         if self.config.get("激戰委託關卡", "略過") not in ("略過", *ONSLAUGHT):
             raise NeedsReview("未知激戰委託關卡")
+        from .progress import HomeProgress
+        progress = HomeProgress(self.config) if type(self) is DailyTask else None
+        completed = progress.begin(resume=resume_request is True,
+                                   scope="home" if resume_request is not None else "schedule") if progress else {}
+        remaining = set(selected) - set(completed)
         prepared = False
         for index, (name, method) in enumerate(STEPS):
             engine.current = name
             if name not in selected:
                 engine.record("略過", "未勾選")
                 continue
+            if name in completed:
+                engine.record("已執行", "前輪已完成；" + completed[name])
+                continue
+            if progress:
+                progress.before(name)
             self.log_info(f"開始：{name}")
             self.info_set("目前項目", name)
             try:
                 if not prepared:
-                    engine.prepare_game(claim_login="登入彈窗" in selected)
+                    engine.prepare_game(claim_login="登入彈窗" in remaining)
                     prepared = True
                     self.info_set("目前項目", name)
                 detail = getattr(engine, method)()
                 engine.record("已執行", detail)
+                if progress:
+                    progress.completed(name, detail)
             except NeedsReview as error:
+                if progress:
+                    progress.interrupted(str(error))
                 self.info_set("執行狀態", "需要校正")
                 engine.save(str(error))
                 engine.record("需校正／尚未完成", str(error))
@@ -130,9 +147,13 @@ class DailyTask(BaseTask):
                 self.log_warning(f"停在 {name}：{error}。紀錄：{engine.folder.resolve()}", notify=True)
                 raise
             except Exception as error:
+                if progress:
+                    progress.interrupted(f"{type(error).__name__}: {error}")
                 self.info_set("執行狀態", "執行失敗" if self.enabled else "已停止")
                 engine.record("執行失敗", f"{type(error).__name__}: {error}")
                 raise
+        if progress:
+            progress.finish()
         self.info_set("執行狀態", "本輪已結束")
         self.log_info(f"勾選流程已走完，請查看各項結果：{engine.folder.resolve()}", notify=True)
 
