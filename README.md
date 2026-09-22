@@ -50,15 +50,15 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 
 
-**v0.2.4 測試版已發布**，新增獨立自訂排程、探索一鍵掃蕩與環形鏈路自動換盤，詳見 [更新紀錄](CHANGELOG.md)。安裝包已通過 SHA-256 校驗、內含來源比對與包內 Python 的離線載入及自訂排程介面檢查；各功能的實機驗證範圍見下方說明。
+**v0.2.5 測試版**：新增中斷後續跑，修正策略戰入口、探索一鍵掃蕩、刷新與魔術師入口辨識；活動名稱隨版本提供。詳見 [更新紀錄](CHANGELOG.md)。下載是否就緒以 Releases 附件為準；各功能的實機驗證範圍見下方說明。
 
 
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.4/ok-star-savior-win32-Global-setup.exe) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.5/ok-star-savior-win32-Global-setup.exe) ·
 
 
 
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.4) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.5) ·
 
 
 
@@ -158,7 +158,7 @@ OKSS 是第三方遊戲自動化工具：
 
 
 
-**[v0.2.4 測試版已公開發布](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.4)。一般使用者請下載 Global 安裝版。**
+**[v0.2.5 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.5)。一般使用者請下載 Global 安裝版。**
 
 
 
@@ -170,11 +170,11 @@ OKSS 是第三方遊戲自動化工具：
 
 
 
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.4/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.5/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
 
 
 
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.4/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.5/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 
 
 
@@ -410,7 +410,7 @@ v0.2.2 已加入以下功能，目前已完成離線驗證，仍待實際定時�
 
 激戰委託提供「封閉的心象、異形的攻勢、虛假的契約」三選一，預設略過。
 
-清單有獨立「活動」區，四項可各自勾選。灰色研究的襲擊與每日／點數／特殊任務分開選擇；活動名稱由新版程式提供，不需自行輸入；舊設定中的「魔女的帷幕」會自動忽略。此修正尚未包含在 v0.2.4 安裝器。只領獎時只勾「活動任務」，不會掃蕩。
+清單有獨立「活動」區，四項可各自勾選。灰色研究的襲擊與每日／點數／特殊任務分開選擇；活動名稱由新版程式提供，不需自行輸入；舊設定中的「魔女的帷幕」會自動忽略。v0.2.5 起包含此修正。只領獎時只勾「活動任務」，不會掃蕩。
 
 激戰委託與活動襲擊各自使用自己的免費票，固定 MAX 用完剩餘票券，不提供掃蕩次數選項。
 
@@ -1066,7 +1066,7 @@ Star Savior：目前遊戲版本
 
 
 
-| 日課流程 | v0.2.4 通過 280 項離線測試與 21 個子測試；單一帳號 1600×900 已實測探索三關一鍵掃蕩共 9 張免費票。完整日課包含分段修正續跑，非一次無人介入完成。[修正內容](CHANGELOG.md) |
+| 日課流程 | v0.2.5 通過 329 項離線測試與 21 個子測試；新版續跑與辨識修正尚待完整實機驗證。先前版本單一帳號 1600×900 已實測探索三關一鍵掃蕩共 9 張免費票。完整日課包含分段修正續跑，非一次無人介入完成。[修正內容](CHANGELOG.md) |
 
 | 自訂排程 | 本機原始碼版已實測 22:00 定時啟動 Steam 遊戲，只跑保存的五項設定，完成後關閉遊戲及 OKSS；首頁仍保留完整日課設定。 |
 
@@ -1310,7 +1310,7 @@ OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`�
 
 
 
-目前提供 `v0.2.4` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
+目前提供 `v0.2.5` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
 
 
 

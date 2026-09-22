@@ -10,7 +10,7 @@
 
 1. 使用整理好的乾淨來源建立 GitHub 倉庫。不要上傳原開發目錄的 `.venv`、`configs`、`screenshots`、`runs`、`logs` 或 `backups`。
 2. `pyappify.yml` 中的 `git_url` 必須指向朋友及建置器可讀取、具有版本標籤的來源倉庫。初版設定使用同一個公開 GitHub 倉庫；私人倉庫尚未整合登入憑證。
-3. 為已審查的來源建立版本標籤（目前來源為 `v0.2.4`）並推送。這會觸發 Build OKSS installers。也可以在標籤存在後手動執行該工作流程。
+3. 為已審查的來源建立版本標籤（目前來源為 `v0.2.5`）並推送。這會觸發 Build OKSS installers。也可以在標籤存在後手動執行該工作流程。
 4. 工作流程先驗證來源與 Python 相依套件，再編譯 PyAppify 和兩種安裝器。安裝檔會保存為 Actions artifact，**不會自動建立公開 Release**。
 5. 下載 artifact，先測試在乾淨的 Windows 環境安裝、開啟、OCR 與退出，再把安裝檔及校驗碼附到對應 Release。
 
