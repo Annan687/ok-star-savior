@@ -1,4 +1,4 @@
-"""Local checkpoints for an interrupted home run, isolated from schedules."""
+"""Local checkpoints for home/follow-daily runs; custom schedules stay isolated."""
 import hashlib
 import json
 from datetime import date
@@ -32,7 +32,7 @@ class HomeProgress:
             data = json.loads(self.path.read_text(encoding='utf-8'))
             if not isinstance(data, dict) or data.get('schema') != 1:
                 raise ValueError('schema')
-            if (data.get('day') != self.day or data.get('scope') != 'home'
+            if (data.get('day') != self.day or data.get('scope') not in ('home', 'schedule')
                     or data.get('signature') != self.signature or data.get('finished') is True):
                 return None
             if (data.get('finished') is not False or not isinstance(data.get('done'), dict)
