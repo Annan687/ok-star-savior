@@ -6,10 +6,14 @@ class Globals(QObject):
         super().__init__()
         self.window = None
         self._case_signals_connected = False
+        self.journey_overlay = None
 
     def on_show_main_window(self, window):
         from ok.ui.qt.Communicate import communicate
         self.window = window
+        if self.journey_overlay is None:
+            from .journey.overlay import JourneyOverlay
+            self.journey_overlay = JourneyOverlay(window)
         if not self._case_signals_connected:
             communicate.task.connect(self.sync_case_controls)
             communicate.task_list_updated.connect(self.sync_case_controls)
@@ -30,8 +34,9 @@ def lock_case_controls(window):
     """Keep the embedded helper's options fixed for its whole session."""
     from ok.ui.qt.tasks.TaskCard import TaskCard
     from .case_task import CaseFilesTask
+    from .journey.task import JourneyHelperTask
     for card in window.findChildren(TaskCard):
-        if isinstance(card.task, CaseFilesTask):
+        if isinstance(card.task, (CaseFilesTask, JourneyHelperTask)):
             editable = not (card.task.enabled or card.task.running)
             for widget in card.config_widgets:
                 widget.setEnabled(editable)

@@ -103,17 +103,39 @@ class EventFlows:
         return View(image, self.task.ocr(frame=image, threshold=.8)).items
 
     def event_tickets(self, v):
-        found = v.count(3, area=(.555, .025, .607, .10), required=False)
-        if found:
-            return found[1][0]
-        # Isolate the digits when the ticket icon or neighboring currency
-        # merged with the fraction. Never strip an apparent leading digit.
+        for attempt in range(8):
+            value = self.read_event_tickets(v)
+            if value is not None:
+                return value
+            if attempt < 7:
+                self.task.sleep(.4)
+                v = self.see()
+        raise NeedsReview("活動免費票券數辨識不明確（已局部重讀並等待）；未繼續操作")
+
+    def read_event_tickets(self, v):
+        # Only a whole fraction qualifies. A merged currency such as
+        # '3/38,050' must be re-read from pixels, never repaired as text.
         from .policy import fraction
-        values = [fraction(t.text, 3) for t in self.event_local_text(v, (.575, .04, .602, .079))]
-        values = [p[0] for p in values if p is not None]
-        if len(values) != 1:
-            raise NeedsReview("活動免費票券數辨識不明確")
-        return values[0]
+        def values(tokens):
+            readings = [fraction(t.key, 3) for t in tokens
+                        if re.fullmatch(r"\d+/\d+", t.key)]
+            return [p[0] for p in readings if p is not None]
+        direct = values(v.within((.555, .025, .617, .10)))
+        if len(direct) == 1:
+            return direct[0]
+        if len(direct) > 1:
+            return None
+        # The onslaught home resource bar places the fraction farther right
+        # than the previously recorded stage/gray bar. Do not clip its last 3.
+        areas = ((.587, .04, .616, .079),) if self.event_home(v, "onslaught") else (
+            (.575, .04, .602, .079), (.587, .04, .616, .079))
+        recovered = []
+        for area in areas:
+            readings = values(self.event_local_text(v, area))
+            if len(readings) > 1:
+                return None
+            recovered.extend(readings)
+        return recovered[0] if recovered and len(set(recovered)) == 1 else None
 
     @staticmethod
     def event_rows(v, stage, layout):

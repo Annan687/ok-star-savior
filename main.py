@@ -21,6 +21,9 @@ if __name__ == "__main__":
         from starsavior.tasks import DailyTask, InspectTask, CustomDailyTask
         from starsavior.schedule_ui import CreateDialog, ModifyDialog, ScheduleManager
         from starsavior.case_task import CaseFilesTask, verify_case_assets
+        from starsavior.journey.task import JourneyHelperTask
+        from starsavior.journey.model import load_events
+        load_events()
         verify_case_assets()
         from starsavior.config import config
         import cv2
@@ -30,7 +33,7 @@ if __name__ == "__main__":
             raise SystemExit(f"載入了錯誤的框架：{ok.__file__}")
         print(f"OK: Python {sys.version.split()[0]}, framework={RUNTIME}")
         print(f"Executable: {sys.executable}; package: {ok.__file__}")
-        print(f"Tasks: {DailyTask.__name__}, {InspectTask.__name__}, {CaseFilesTask.__name__}, {CustomDailyTask.__name__}; OpenCV {cv2.__version__}")
+        print(f"Tasks: {DailyTask.__name__}, {InspectTask.__name__}, {CaseFilesTask.__name__}, {CustomDailyTask.__name__}, {JourneyHelperTask.__name__}; OpenCV {cv2.__version__}")
     else:
         import logging
         from ok import OK

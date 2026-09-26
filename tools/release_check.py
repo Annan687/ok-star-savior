@@ -38,6 +38,10 @@ def check_source(root=ROOT, repository=None):
         if line and not line.startswith('#') and not re.fullmatch(r'[\w.-]+==[\w.+-]+', line):
             raise ValueError(f'Requirement is not a portable version pin: {line}')
     for relative in ('main.py', 'assets/icon.png', 'icons/icon.ico',
+                     'starsavior/journey/task.py', 'starsavior/journey/model.py',
+                     'starsavior/journey/overlay.py', 'starsavior/journey/events.json',
+                     'starsavior/journey/cards.json',
+                     *(f'starsavior/journey/card_tables/{i:02}.png' for i in range(1, 8)),
                      'starsavior/case_task.py', 'starsavior/case_files/source.json',
                      'starsavior/case_files/assets/CoreHost.exe',
                      'starsavior/case_files/assets/RouteSearch-v1.2.exe',

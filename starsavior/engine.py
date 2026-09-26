@@ -225,7 +225,13 @@ class Engine:
                 elif destination == "通行證":
                     token = v.one("支援通行證", area=(.39, .1, .52, .45), contains=True)
                 else:
-                    token = v.one(destination, area=(.52, .20, .94, .86))
+                    area = (.52, .20, .94, .86)
+                    hits = v.find(destination, area=area, contains=False)
+                    if len(hits) > 1:
+                        raise NeedsReview(f'四格選單「{destination}」有多個候選，未點擊')
+                    token = hits[0] if hits else self.reread_claim_button(v, area, (destination,))
+                    if token is None:
+                        raise NeedsReview(f'四格選單「{destination}」局部重讀仍未辨識完整')
                 self.click(token)
                 self.rewards()
                 current = self.see()
@@ -343,7 +349,7 @@ class Engine:
             raise NeedsReview(f"一鍵領取按鈕辨識不明確：{[t.text for t in hits]}")
         return None
 
-    def reread_claim_button(self, v, area, labels=("一鍵領取",)):
+    def reread_claim_button(self, v, area, labels=("一鍵領取",), threshold=.9):
         """Caller must establish the page and supply its observed button ROI."""
         import cv2
         patch = v.crop(area)
@@ -356,7 +362,7 @@ class Engine:
             if contrasted:
                 gray = cv2.cvtColor(large, cv2.COLOR_BGR2GRAY)
                 image = cv2.cvtColor(cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX), cv2.COLOR_GRAY2BGR)
-            local = View(image, self.task.ocr(frame=image, threshold=.9))
+            local = View(image, self.task.ocr(frame=image, threshold=threshold))
             hits = local.find(*labels, contains=False)
             if len(hits) > 1:
                 raise NeedsReview("一鍵領取局部重讀有多個候選，未點擊")

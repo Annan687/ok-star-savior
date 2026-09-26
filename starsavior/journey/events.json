@@ -1,0 +1,3735 @@
+{
+  "schema": 2,
+  "mode": "困難",
+  "source": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx",
+  "captured": "2026-09-27",
+  "sheets": [
+    {
+      "name": "三月上旬（固定事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=g0eh1a",
+      "events": 1
+    },
+    {
+      "name": "三月中旬（随机事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=36ta6i",
+      "events": 3
+    },
+    {
+      "name": "四月下旬（固定事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=iwfjwk",
+      "events": 1
+    },
+    {
+      "name": "五月中旬（随机事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1jbs0z",
+      "events": 5
+    },
+    {
+      "name": "六月下旬（固定事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=85gwm8",
+      "events": 1
+    },
+    {
+      "name": "七月初（固定事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=oc9c7c",
+      "events": 1
+    },
+    {
+      "name": "七月下旬（固定事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=c6yz83",
+      "events": 1
+    },
+    {
+      "name": "八月中旬（随机事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=bafmga",
+      "events": 1
+    },
+    {
+      "name": "九月下旬（随机事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1kpctr",
+      "events": 8
+    },
+    {
+      "name": "十月下旬（固定事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=ocz8t8",
+      "events": 1
+    },
+    {
+      "name": "十一月初（固定事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=6h51n7",
+      "events": 1
+    },
+    {
+      "name": "十一月中旬（随机事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=cflkah",
+      "events": 1
+    },
+    {
+      "name": "十一月下旬（固定事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=nxjc5c",
+      "events": 1
+    },
+    {
+      "name": "十二月中旬（随机事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=velmeo",
+      "events": 1
+    },
+    {
+      "name": "十一月初（固定事件）(副本)",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=w0tkqf",
+      "events": 1
+    },
+    {
+      "name": "十一月中旬（随机事件）(副本)",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=6869j3",
+      "events": 1
+    },
+    {
+      "name": "十一月下旬（固定事件）(副本)",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=a6uf92",
+      "events": 1
+    },
+    {
+      "name": "十二月中旬（随机事件）(副本)",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=5nngq0",
+      "events": 1
+    },
+    {
+      "name": "一月下旬（固定事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=qu820y",
+      "events": 1
+    },
+    {
+      "name": "一月下旬（随机事件）",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=mnm1vp",
+      "events": 7
+    },
+    {
+      "name": "晴朗",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=ry4pz2",
+      "events": 1
+    },
+    {
+      "name": "雷雨",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=h9hqxd",
+      "events": 1
+    },
+    {
+      "name": "大雾",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=f5uwh2",
+      "events": 1
+    },
+    {
+      "name": "训练失败",
+      "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1zos4w",
+      "events": 1
+    }
+  ],
+  "terminology": [
+    "命中 → 集中",
+    "命抗 → 保護",
+    "防禦 → 忍耐",
+    "生命 → 體力屬性",
+    "體力 → 跑馬體力"
+  ],
+  "events": [
+    {
+      "id": "g0eh1a-3",
+      "name": "训练的方向",
+      "periods": [
+        "三月上旬",
+        "3月上旬"
+      ],
+      "category": "固定",
+      "choices": [
+        {
+          "aliases": [
+            "对攻击有用的训练教科书"
+          ],
+          "lines": [
+            "下回合在力量 or 暴击 or 爆伤中选择装备"
+          ],
+          "source_lines": [
+            "下回合在力量 or 暴击 or 爆伤中选择装备"
+          ],
+          "source_cells": [
+            "B4",
+            "C4"
+          ]
+        },
+        {
+          "aliases": [
+            "提高生存能力的训练教科书"
+          ],
+          "lines": [
+            "下回合在生命 or 防御 or 速度中选择装备"
+          ],
+          "source_lines": [
+            "下回合在生命 or 防御 or 速度中选择装备"
+          ],
+          "source_cells": [
+            "B5",
+            "C5"
+          ]
+        },
+        {
+          "aliases": [
+            "为应对各种情况的训练教科书"
+          ],
+          "lines": [
+            "下回合在命中 or 命抗 or 吸血、最大韧性值、反击中选择装备"
+          ],
+          "source_lines": [
+            "下回合在命中 or 命抗 or 吸血、最大韧性值、反击中选择装备"
+          ],
+          "source_cells": [
+            "B6",
+            "C6"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=g0eh1a",
+        "sheet": "三月上旬（固定事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "训练的方向性"
+      ],
+      "name_references": [
+        {
+          "name": "训练的方向性",
+          "source": "使用者提供的四選項遊戲截圖（2026-09-27）",
+          "status": "實際畫面名稱已確認",
+          "difference": "實際畫面為四選項，原表僅三選項；第四選項效果尚未提供，不套用三選項提示。"
+        }
+      ]
+    },
+    {
+      "id": "36ta6i-3",
+      "name": "闲暇时间",
+      "periods": [
+        "三月中旬",
+        "3月中旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "咱们去吃个期间限定的甜点吧"
+          ],
+          "lines": [
+            "消耗旧硬币50｜心情+1或心情+2｜潜能点+10"
+          ],
+          "source_lines": [
+            "消耗旧硬币50",
+            "心情+1或心情+2",
+            "潜能点+10"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6"
+          ]
+        },
+        {
+          "aliases": [
+            "我们去看最新的电影吧"
+          ],
+          "lines": [
+            "消耗旧硬币30｜潜能点+37｜获得「特别海报」"
+          ],
+          "source_lines": [
+            "消耗旧硬币30",
+            "潜能点+37",
+            "获得「特别海报」"
+          ],
+          "source_cells": [
+            "B7",
+            "C7",
+            "C8",
+            "C9"
+          ]
+        },
+        {
+          "aliases": [
+            "拿个三明治去野餐吧"
+          ],
+          "lines": [
+            "体力 -20｜力量/生命/耐力+10 or +20｜命中/命抗+5 or +10"
+          ],
+          "source_lines": [
+            "体力 -20",
+            "力量/生命/耐力+10 or +20",
+            "命中/命抗+5 or +10"
+          ],
+          "source_cells": [
+            "B10",
+            "C10",
+            "C11",
+            "C12"
+          ]
+        },
+        {
+          "aliases": [
+            "今天就这样休息吧"
+          ],
+          "lines": [
+            "体力+5 or +10"
+          ],
+          "source_lines": [
+            "体力+5 or +10"
+          ],
+          "source_cells": [
+            "B13",
+            "C13"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=36ta6i",
+        "sheet": "三月中旬（随机事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "休闲时间",
+        "自由时间"
+      ],
+      "name_references": [
+        {
+          "name": "休闲时间",
+          "source": "使用者另提供的事件表圖片 1（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "看電影潛能點：原困難表 +37；圖片 +15 或 +30。"
+        },
+        {
+          "name": "闲暇时间",
+          "source": "使用者遊戲截圖 2026-09-27，3月中旬，四選項含第一項鎖定",
+          "status": "實機名稱及選項順序確認",
+          "difference": "看電影潛能點：原困難表 +37；另表 +15 或 +30。此次只更新名稱。"
+        }
+      ],
+      "confirmed_name": "闲暇时间"
+    },
+    {
+      "id": "36ta6i-19",
+      "name": "拯救集团供应",
+      "periods": [
+        "三月中旬",
+        "3月中旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "让我们选择食物。"
+          ],
+          "lines": [
+            "力量 +10｜获得「满意度问卷」"
+          ],
+          "source_lines": [
+            "力量 +10",
+            "获得「满意度问卷」"
+          ],
+          "source_cells": [
+            "B20",
+            "C20",
+            "C21"
+          ]
+        },
+        {
+          "aliases": [
+            "让我们选择一个蓬松的枕头"
+          ],
+          "lines": [
+            "生命 +10｜获得「满意度问卷」"
+          ],
+          "source_lines": [
+            "生命 +10",
+            "获得「满意度问卷」"
+          ],
+          "source_cells": [
+            "B22",
+            "C22",
+            "C23"
+          ]
+        },
+        {
+          "aliases": [
+            "让我们选择辛辣食物"
+          ],
+          "lines": [
+            "耐力 +10｜获得「满意度问卷」"
+          ],
+          "source_lines": [
+            "耐力 +10",
+            "获得「满意度问卷」"
+          ],
+          "source_cells": [
+            "B24",
+            "C24",
+            "C25"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=36ta6i",
+        "sheet": "三月中旬（随机事件）",
+        "cell": "B19"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "救世军团分发"
+      ],
+      "name_references": [
+        {
+          "name": "救世军团分发",
+          "source": "使用者另提供的事件表圖片 1（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": ""
+        }
+      ]
+    },
+    {
+      "id": "36ta6i-34",
+      "name": "神秘石像",
+      "periods": [
+        "三月中旬",
+        "3月中旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "我向剑祈祷。"
+          ],
+          "lines": [
+            "力量 +20｜生命 -20｜获得「石像之剑」"
+          ],
+          "source_lines": [
+            "力量 +20",
+            "生命 -20",
+            "获得「石像之剑」"
+          ],
+          "source_cells": [
+            "B35",
+            "C35",
+            "C36",
+            "C37"
+          ]
+        },
+        {
+          "aliases": [
+            "为鲜花祈祷。"
+          ],
+          "lines": [
+            "力量 -20｜生命 +20｜获得「石像之花」"
+          ],
+          "source_lines": [
+            "力量 -20",
+            "生命 +20",
+            "获得「石像之花」"
+          ],
+          "source_cells": [
+            "B38",
+            "C38",
+            "C39",
+            "C40"
+          ]
+        },
+        {
+          "aliases": [
+            "我不祈祷。"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B41",
+            "C41"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=36ta6i",
+        "sheet": "三月中旬（随机事件）",
+        "cell": "B34"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "神秘的石雕"
+      ],
+      "name_references": [
+        {
+          "name": "神秘的石雕",
+          "source": "使用者另提供的事件表圖片 1（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "道具名稱不同；圖片第二項仍寫石像劍，原表為石像之花。"
+        }
+      ]
+    },
+    {
+      "id": "iwfjwk-3",
+      "name": "莉赛特的日常",
+      "periods": [
+        "四月下旬",
+        "4月下旬"
+      ],
+      "category": "固定",
+      "choices": [
+        {
+          "aliases": [
+            "我们来帮忙吧"
+          ],
+          "lines": [
+            "体力 -20｜旧硬币 +30",
+            "buff：商店打折（1回合）｜心情概率 +1"
+          ],
+          "source_lines": [
+            "体力 -20",
+            "以下结果的其中之一：",
+            "旧硬币 +30",
+            "buff：商店打折（1回合）",
+            "旧硬币 +30",
+            "心情 +1",
+            "buff：商店打折（1回合）"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8",
+            "C9",
+            "C10"
+          ]
+        },
+        {
+          "aliases": [
+            "我们稍等片刻"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B11",
+            "C11"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=iwfjwk",
+        "sheet": "四月下旬（固定事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "Reset的例行公事",
+        "蕾塞特例程"
+      ],
+      "name_references": [
+        {
+          "name": "Reset的例行公事",
+          "source": "使用者另提供的事件表圖片 1（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "增益名稱不同：原表為商店打折；圖片寫每日兼職學生。"
+        },
+        {
+          "name": "莉赛特的日常",
+          "source": "使用者實際遊戲截圖（2026-09-27）",
+          "status": "實機名稱確認",
+          "difference": "增益名稱不同：原表為商店打折；圖片寫每日兼職學生。"
+        }
+      ],
+      "confirmed_name": "莉赛特的日常",
+      "display_corrections": {
+        "0": [
+          "体力 -20｜旧硬币 +30",
+          "buff：商店打折（1回合）｜心情概率 +1"
+        ]
+      },
+      "correction": "2026-09-27 使用者確認心情為概率 +1；保留原表增益名稱及新版表名稱差異，來源原文不變。"
+    },
+    {
+      "id": "1jbs0z-3",
+      "name": "身份不明的商人",
+      "periods": [
+        "五月中旬",
+        "5月中旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "有助于攻击的秘术书"
+          ],
+          "lines": [
+            "消耗旧硬币30｜【攻击的技巧】10% or 20%打折 攻击增加2%，最高1级"
+          ],
+          "source_lines": [
+            "消耗旧硬币30",
+            "【攻击的技巧】10% or 20%打折 攻击增加2%，最高1级"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5"
+          ]
+        },
+        {
+          "aliases": [
+            "有助于生存的秘术书"
+          ],
+          "lines": [
+            "消耗旧硬币30｜【生命的技巧】10% or 20%打折 生命增加2%，最高1级"
+          ],
+          "source_lines": [
+            "消耗旧硬币30",
+            "【生命的技巧】10% or 20%打折 生命增加2%，最高1级"
+          ],
+          "source_cells": [
+            "B6",
+            "C6",
+            "C7"
+          ]
+        },
+        {
+          "aliases": [
+            "也有在任何情况下都能使用的秘术书吗？"
+          ],
+          "lines": [
+            "消耗旧硬币50｜【速度的技巧】10% or 20%折扣 速度增加2，最高1级"
+          ],
+          "source_lines": [
+            "消耗旧硬币50",
+            "【速度的技巧】10% or 20%折扣 速度增加2，最高1级"
+          ],
+          "source_cells": [
+            "B8",
+            "C8",
+            "C9"
+          ]
+        },
+        {
+          "aliases": [
+            "什么也不需要"
+          ],
+          "lines": [
+            "【命中的技巧】 or 【命抗的技巧】10%折扣 命中 or 命抗增加4%，最高1级"
+          ],
+          "source_lines": [
+            "【命中的技巧】 or 【命抗的技巧】10%折扣 命中 or 命抗增加4%，最高1级"
+          ],
+          "source_cells": [
+            "B10",
+            "C10"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1jbs0z",
+        "sheet": "五月中旬（随机事件）",
+        "cell": "B3"
+      },
+      "warnings": []
+    },
+    {
+      "id": "1jbs0z-16",
+      "name": "武器工坊的营销策略",
+      "periods": [
+        "五月中旬",
+        "5月中旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "花钱购买"
+          ],
+          "lines": [
+            "消费旧硬币50｜道具：「传说之剑的复制品」｜体力 +10 or +15"
+          ],
+          "source_lines": [
+            "消费旧硬币50",
+            "道具：「传说之剑的复制品」",
+            "体力 +10 or +15"
+          ],
+          "source_cells": [
+            "B17",
+            "C17",
+            "C18",
+            "C19"
+          ]
+        },
+        {
+          "aliases": [
+            "寻找弱点进行攻击"
+          ],
+          "lines": [
+            "需要命中 70｜心情 +1｜道具：「传说之剑的复制品」｜力量 +15"
+          ],
+          "source_lines": [
+            "需要命中 70",
+            "心情 +1",
+            "道具：「传说之剑的复制品」",
+            "力量 +15"
+          ],
+          "source_cells": [
+            "B20",
+            "C20",
+            "C21",
+            "C22",
+            "C23"
+          ]
+        },
+        {
+          "aliases": [
+            "用力量将其拔出"
+          ],
+          "lines": [
+            "体力 -20｜道具：「传说之剑的复制品」｜力量 +20｜buff：「传说的救援者」（3回合） 训练时获得的潜力点提升"
+          ],
+          "source_lines": [
+            "体力 -20",
+            "道具：「传说之剑的复制品」",
+            "力量 +20",
+            "buff：「传说的救援者」（3回合） 训练时获得的潜力点提升"
+          ],
+          "source_cells": [
+            "B24",
+            "C24",
+            "C25",
+            "C26",
+            "C27"
+          ]
+        },
+        {
+          "aliases": [
+            "直接路过"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B28",
+            "C28"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1jbs0z",
+        "sheet": "五月中旬（随机事件）",
+        "cell": "B16"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "工业厂房推广策略"
+      ],
+      "name_references": [
+        {
+          "name": "工业厂房推广策略",
+          "source": "使用者另提供的事件表圖片 1（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "離開選項：原表無效果；圖片耐力 +5 或 +10。圖片列出多組能力門檻，難度未註明。"
+        }
+      ]
+    },
+    {
+      "id": "1jbs0z-34",
+      "name": "偶然的发现",
+      "periods": [
+        "五月中旬",
+        "5月中旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "虽然需要费点力气……还是挖一下吧！"
+          ],
+          "lines": [
+            "体力 -10",
+            "【成功】｜潜能点 +25｜道具：「可疑的盒子」",
+            "【失败】｜无"
+          ],
+          "source_lines": [
+            "体力 -10",
+            "【成功】",
+            "潜能点 +25",
+            "道具：「可疑的盒子」",
+            "【失败】",
+            "无"
+          ],
+          "source_cells": [
+            "B35",
+            "C35",
+            "C36",
+            "C37",
+            "C38",
+            "C39",
+            "C40"
+          ]
+        },
+        {
+          "aliases": [
+            "没必要在这种地方浪费体力！"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B41",
+            "C41"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1jbs0z",
+        "sheet": "五月中旬（随机事件）",
+        "cell": "B34"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "偶然发现",
+        "意外的发现"
+      ],
+      "name_references": [
+        {
+          "name": "偶然发现",
+          "source": "使用者另提供的事件表圖片 2（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "原表潛能點 +25，且分成功／失敗；圖片只寫 +10 與道具。"
+        },
+        {
+          "name": "偶然的发现",
+          "source": "使用者實際遊戲截圖（2026-09-27）",
+          "status": "實機名稱確認",
+          "difference": "原表潛能點 +25，且分成功／失敗；圖片只寫 +10 與道具。"
+        }
+      ],
+      "confirmed_name": "偶然的发现"
+    },
+    {
+      "id": "1jbs0z-47",
+      "name": "试作强化药剂",
+      "periods": [
+        "五月中旬",
+        "5月中旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "不祥地泛着红色的药剂"
+          ],
+          "lines": [
+            "消费旧硬币20",
+            "【成功】｜道具：「空药瓶」｜全属性+20",
+            "【失败】｜道具：「空药瓶」｜体力 -20｜全属性 -10｜debuff：「魔力消耗」（5回合） 训练时失败率大幅提高"
+          ],
+          "source_lines": [
+            "消费旧硬币20",
+            "【成功】",
+            "道具：「空药瓶」",
+            "全属性+20",
+            "【失败】",
+            "道具：「空药瓶」",
+            "体力 -20",
+            "全属性 -10",
+            "debuff：「魔力消耗」（5回合） 训练时失败率大幅提高"
+          ],
+          "source_cells": [
+            "B48",
+            "C48",
+            "C49",
+            "C50",
+            "C51",
+            "C52",
+            "C53",
+            "C54",
+            "C55",
+            "C56"
+          ]
+        },
+        {
+          "aliases": [
+            "散发冰冷蓝光的药剂"
+          ],
+          "lines": [
+            "消费旧硬币20",
+            "【成功】｜道具：「空药瓶」｜体力 +10｜心情 +1｜buff：「戈尔迪乌斯之剑」（5回合） 训练时失败率降低",
+            "【失败】｜道具：「空药瓶」｜体力 -20｜心情 -1"
+          ],
+          "source_lines": [
+            "消费旧硬币20",
+            "【成功】",
+            "道具：「空药瓶」",
+            "体力 +10",
+            "心情 +1",
+            "buff：「戈尔迪乌斯之剑」（5回合） 训练时失败率降低",
+            "【失败】",
+            "道具：「空药瓶」",
+            "体力 -20",
+            "心情 -1"
+          ],
+          "source_cells": [
+            "B57",
+            "C57",
+            "C58",
+            "C59",
+            "C60",
+            "C61",
+            "C62",
+            "C63",
+            "C64",
+            "C65",
+            "C66"
+          ]
+        },
+        {
+          "aliases": [
+            "发出耀眼黄色光芒的药剂"
+          ],
+          "lines": [
+            "消费旧硬币20",
+            "【成功】｜道具：「空药瓶」｜体力 +10｜旧硬币+30｜潜能点+30",
+            "【失败】｜道具：「空药瓶」｜debuff：「严重低迷」（5回合） 训练时失败率提高"
+          ],
+          "source_lines": [
+            "消费旧硬币20",
+            "【成功】",
+            "道具：「空药瓶」",
+            "体力 +10",
+            "旧硬币+30",
+            "潜能点+75",
+            "【失败】",
+            "道具：「空药瓶」",
+            "debuff：「严重低迷」（5回合） 训练时失败率提高"
+          ],
+          "source_cells": [
+            "B67",
+            "C67",
+            "C68",
+            "C69",
+            "C70",
+            "C71",
+            "C72",
+            "C73",
+            "C74",
+            "C75"
+          ]
+        },
+        {
+          "aliases": [
+            "旁边放着的普通饮料"
+          ],
+          "lines": [
+            "体力 +10"
+          ],
+          "source_lines": [
+            "体力 +10"
+          ],
+          "source_cells": [
+            "B76",
+            "C76"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1jbs0z",
+        "sheet": "五月中旬（随机事件）",
+        "cell": "B47"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "起始增强器"
+      ],
+      "name_references": [
+        {
+          "name": "起始增强器",
+          "source": "使用者另提供的事件表圖片 1（2026-09-27）",
+          "status": "使用者指定潛能點 +30",
+          "difference": ""
+        }
+      ],
+      "correction": "2026-09-27 使用者指定起始增強器潛能點統一 +30；source_lines 保留原表以供追溯。",
+      "display_corrections": {
+        "2": [
+          "消费旧硬币20",
+          "【成功】｜道具：「空药瓶」｜体力 +10｜旧硬币+30｜潜能点+30",
+          "【失败】｜道具：「空药瓶」｜debuff：「严重低迷」（5回合） 训练时失败率提高"
+        ]
+      }
+    },
+    {
+      "id": "1jbs0z-82",
+      "name": "秘密的地狱特训",
+      "periods": [
+        "五月中旬",
+        "5月中旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "如何打好拳击机"
+          ],
+          "lines": [
+            "消费旧硬币20｜buff：「克服限制」（3回合） 训练获得力量提升｜道具：「力量特训认证书」"
+          ],
+          "source_lines": [
+            "消费旧硬币20",
+            "buff：「克服限制」（3回合） 训练获得力量提升",
+            "道具：「力量特训认证书」"
+          ],
+          "source_cells": [
+            "B83",
+            "C83",
+            "C84",
+            "C85"
+          ]
+        },
+        {
+          "aliases": [
+            "如何不疲倦地奔跑"
+          ],
+          "lines": [
+            "消费旧硬币20｜buff：「鲁莽挑战」（3回合） 训练获得生命提升｜道具：「生命特训认证书」"
+          ],
+          "source_lines": [
+            "消费旧硬币20",
+            "buff：「鲁莽挑战」（3回合） 训练获得生命提升",
+            "道具：「生命特训认证书」"
+          ],
+          "source_cells": [
+            "B86",
+            "C86",
+            "C87",
+            "C88"
+          ]
+        },
+        {
+          "aliases": [
+            "现在还不用"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B89",
+            "C89"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1jbs0z",
+        "sheet": "五月中旬（随机事件）",
+        "cell": "B82"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "秘密地狱特别训练"
+      ],
+      "name_references": [
+        {
+          "name": "秘密地狱特别训练",
+          "source": "使用者另提供的事件表圖片 2（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": ""
+        }
+      ]
+    },
+    {
+      "id": "85gwm8-3",
+      "name": "莉赛特的诱惑",
+      "periods": [
+        "六月下旬",
+        "6月下旬"
+      ],
+      "category": "固定",
+      "choices": [
+        {
+          "aliases": [
+            "干脆买下来吧"
+          ],
+          "lines": [
+            "金币 -30｜随机获得：",
+            "命中 +10｜月光润唇膏小样",
+            "命抗 +10｜月光水小样",
+            "命中 +5、命抗 +5｜月光精华小样"
+          ],
+          "source_lines": [
+            "以下结果的其中之一：",
+            "消费旧硬币30",
+            "命中 +10",
+            "道具：「月光润唇膏小样」",
+            "消费旧硬币30",
+            "命抗 +10",
+            "道具：「月光水小样」",
+            "消费旧硬币30",
+            "命中命抗 +5",
+            "道具：「月光精华小样」"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8",
+            "C9",
+            "C10",
+            "C11",
+            "C12",
+            "C13"
+          ]
+        },
+        {
+          "aliases": [
+            "为旅途攒钱"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B14",
+            "C14"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=85gwm8",
+        "sheet": "六月下旬（固定事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "重置的诱惑",
+        "蕾塞特的诱惑"
+      ],
+      "name_references": [
+        {
+          "name": "重置的诱惑",
+          "source": "使用者另提供的事件表圖片 6（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "圖片使用「重置」，同組其他標題也出現 Reset、利塞特、莉塞特；尚未經遊戲畫面確認。"
+        },
+        {
+          "name": "莉赛特的诱惑",
+          "source": "使用者實際遊戲截圖（2026-09-27）",
+          "status": "實機名稱確認",
+          "difference": "原表依分支獲得不同月光小樣；新版表統稱月光香水樣品，保留原表效果。"
+        }
+      ],
+      "confirmed_name": "莉赛特的诱惑",
+      "display_corrections": {
+        "0": [
+          "金币 -30｜随机获得：",
+          "命中 +10｜月光润唇膏小样",
+          "命抗 +10｜月光水小样",
+          "命中 +5、命抗 +5｜月光精华小样"
+        ]
+      },
+      "correction": "2026-09-27 使用者要求簡化冗長提示與重複消耗；金幣 -30 只顯示一次，三種隨機結果的數值及道具分開保留。source_lines 保留原文。"
+    },
+    {
+      "id": "oc9c7c-3",
+      "name": "迷宫探勘",
+      "periods": [
+        "七月初",
+        "7月初",
+        "七月中旬",
+        "7月中旬"
+      ],
+      "category": "固定",
+      "choices": [
+        {
+          "aliases": [
+            "让我们用钱来解决这个问题"
+          ],
+          "lines": [
+            "消费旧硬币50｜体力 +10 or +15｜道具：「来历不明的遗物」"
+          ],
+          "source_lines": [
+            "消费旧硬币50",
+            "体力 +10 or +15",
+            "道具：「来历不明的遗物」"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6"
+          ]
+        },
+        {
+          "aliases": [
+            "如果自己驾驶起重机呢？"
+          ],
+          "lines": [
+            "需要命抗 90｜防御 +15 or +20｜潜能点 +37"
+          ],
+          "source_lines": [
+            "需要命抗 90",
+            "防御 +15 or +20",
+            "潜能点 +37"
+          ],
+          "source_cells": [
+            "B7",
+            "C7",
+            "C8",
+            "C9"
+          ]
+        },
+        {
+          "aliases": [
+            "我需要找条绕路"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B10",
+            "C10"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=oc9c7c",
+        "sheet": "七月初（固定事件）",
+        "cell": "B3"
+      },
+      "warnings": [
+        "原表分頁名稱與內文日期不同；保留兩者，待遊戲畫面核對。"
+      ],
+      "name_aliases": [
+        "探索迷宫",
+        "迷宫探索"
+      ],
+      "name_references": [
+        {
+          "name": "探索迷宫",
+          "source": "使用者另提供的事件表圖片 3（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "付費選項回體：原表 +10 或 +15；圖片耐力 +15 或 +20。日期原表分頁寫七月初、內文寫中旬；圖片寫七月初。"
+        },
+        {
+          "name": "迷宫探勘",
+          "source": "使用者實際遊戲截圖（2026-09-27）",
+          "status": "實機名稱確認；截圖為七月中旬",
+          "difference": "付費選項回體：原表 +10 或 +15；另一表 +15 或 +20，保留原表數值。"
+        }
+      ],
+      "confirmed_name": "迷宫探勘"
+    },
+    {
+      "id": "july-late-attack",
+      "name": "袭击",
+      "periods": [
+        "七月下旬",
+        "7月下旬"
+      ],
+      "category": "固定",
+      "choices": [
+        {
+          "aliases": [
+            "让我们利用地形绕过他们",
+            "利用地形甩開它"
+          ],
+          "lines": [
+            "體力 -20｜命中 +10｜命抗 +10｜潛能點 +50",
+            "「速度的感覺」20% 折扣（速度 +1，最高 5 級）"
+          ],
+          "source_lines": [
+            "体力 -20",
+            "命中 +10",
+            "命抗 +10",
+            "潜能点 +50",
+            "【速度的感觉】20%打折 速度增加1，最高5级"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8"
+          ]
+        },
+        {
+          "aliases": [
+            "保持冷静，巩固防御",
+            "沉著加強防禦"
+          ],
+          "lines": [
+            "需要防禦 175｜命中 +10｜命抗 +10",
+            "潛能點 +50｜心情 +1"
+          ],
+          "source_lines": [
+            "需要防御 175",
+            "命中 +10",
+            "命抗 +10",
+            "潜能点 +50",
+            "心情 +1"
+          ],
+          "source_cells": [
+            "B9",
+            "C9",
+            "C10",
+            "C11",
+            "C12",
+            "C13"
+          ]
+        },
+        {
+          "aliases": [
+            "我们逃到楼上去吧",
+            "逃往上層"
+          ],
+          "lines": [
+            "無額外效果"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B14",
+            "C14"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=c6yz83",
+        "sheet": "七月下旬（固定事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "verified_game_aliases": "使用者提供的七月下旬襲擊截圖",
+      "name_aliases": [
+        "突袭"
+      ],
+      "name_references": [
+        {
+          "name": "突袭",
+          "source": "使用者另提供的事件表圖片 3（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "圖片列出 125／150／175 韌性；原困難表防禦 175。使用者實機繁體標題為「襲擊」，不可移除。"
+        }
+      ]
+    },
+    {
+      "id": "bafmga-3",
+      "name": "突袭 - 史莱姆",
+      "periods": [
+        "八月中旬",
+        "8月中旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "我们来清除黏液"
+          ],
+          "lines": [
+            "需要命中或 or 命抗100｜力量 +5｜生命 +5｜防御 +5｜潜能点 +25"
+          ],
+          "source_lines": [
+            "需要命中或 or 命抗100",
+            "力量 +5",
+            "生命 +5",
+            "防御 +5",
+            "潜能点 +25"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8"
+          ]
+        },
+        {
+          "aliases": [
+            "让我们一起协助疏散"
+          ],
+          "lines": [
+            "体力 -10｜旧硬币+30"
+          ],
+          "source_lines": [
+            "体力 -10",
+            "旧硬币+30"
+          ],
+          "source_cells": [
+            "B9",
+            "C9",
+            "C10"
+          ]
+        },
+        {
+          "aliases": [
+            "不要卷入其中"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B11",
+            "C11"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=bafmga",
+        "sheet": "八月中旬（随机事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "突遇——史莱姆"
+      ],
+      "name_references": [
+        {
+          "name": "突遇——史莱姆",
+          "source": "使用者另提供的事件表圖片 3（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "圖片列出 60／80／100 門檻；原困難表為 100。"
+        }
+      ]
+    },
+    {
+      "id": "1kpctr-3",
+      "name": "试作强化药剂",
+      "periods": [
+        "九月下旬",
+        "9月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "不祥地泛着红色的药剂"
+          ],
+          "lines": [
+            "消费旧硬币20",
+            "【成功】｜道具：「空药瓶」｜全属性+20",
+            "【失败】｜道具：「空药瓶」｜体力 -20｜全属性 -10｜debuff：「魔力消耗」（5回合） 训练时失败率大幅提高"
+          ],
+          "source_lines": [
+            "消费旧硬币20",
+            "【成功】",
+            "道具：「空药瓶」",
+            "全属性+20",
+            "【失败】",
+            "道具：「空药瓶」",
+            "体力 -20",
+            "全属性 -10",
+            "debuff：「魔力消耗」（5回合） 训练时失败率大幅提高"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8",
+            "C9",
+            "C10",
+            "C11",
+            "C12"
+          ]
+        },
+        {
+          "aliases": [
+            "散发冰冷蓝光的药剂"
+          ],
+          "lines": [
+            "消费旧硬币20",
+            "【成功】｜道具：「空药瓶」｜体力 +10｜心情 +1｜buff：「戈尔迪乌斯之剑」（5回合） 训练时失败率降低",
+            "【失败】｜道具：「空药瓶」｜体力 -20｜心情 -1"
+          ],
+          "source_lines": [
+            "消费旧硬币20",
+            "【成功】",
+            "道具：「空药瓶」",
+            "体力 +10",
+            "心情 +1",
+            "buff：「戈尔迪乌斯之剑」（5回合） 训练时失败率降低",
+            "【失败】",
+            "道具：「空药瓶」",
+            "体力 -20",
+            "心情 -1"
+          ],
+          "source_cells": [
+            "B13",
+            "C13",
+            "C14",
+            "C15",
+            "C16",
+            "C17",
+            "C18",
+            "C19",
+            "C20",
+            "C21",
+            "C22"
+          ]
+        },
+        {
+          "aliases": [
+            "发出耀眼黄色光芒的药剂"
+          ],
+          "lines": [
+            "消费旧硬币20",
+            "【成功】｜道具：「空药瓶」｜体力 +10｜旧硬币+30｜潜能点+30",
+            "【失败】｜道具：「空药瓶」｜debuff：「严重低迷」（5回合） 训练时失败率提高"
+          ],
+          "source_lines": [
+            "消费旧硬币20",
+            "【成功】",
+            "道具：「空药瓶」",
+            "体力 +10",
+            "旧硬币+30",
+            "潜能点+30",
+            "【失败】",
+            "道具：「空药瓶」",
+            "debuff：「严重低迷」（5回合） 训练时失败率提高"
+          ],
+          "source_cells": [
+            "B23",
+            "C23",
+            "C24",
+            "C25",
+            "C26",
+            "C27",
+            "C28",
+            "C29",
+            "C30",
+            "C31"
+          ]
+        },
+        {
+          "aliases": [
+            "旁边放着的普通饮料"
+          ],
+          "lines": [
+            "体力 +10"
+          ],
+          "source_lines": [
+            "体力 +10"
+          ],
+          "source_cells": [
+            "B32",
+            "C32"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1kpctr",
+        "sheet": "九月下旬（随机事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "起始增强器"
+      ],
+      "name_references": [
+        {
+          "name": "起始增强器",
+          "source": "使用者另提供的事件表圖片 1（2026-09-27）",
+          "status": "使用者指定潛能點 +30",
+          "difference": ""
+        }
+      ],
+      "correction": "2026-09-27 使用者指定起始增強器潛能點統一 +30；source_lines 保留原表以供追溯。",
+      "display_corrections": {
+        "2": [
+          "消费旧硬币20",
+          "【成功】｜道具：「空药瓶」｜体力 +10｜旧硬币+30｜潜能点+30",
+          "【失败】｜道具：「空药瓶」｜debuff：「严重低迷」（5回合） 训练时失败率提高"
+        ]
+      }
+    },
+    {
+      "id": "1kpctr-38",
+      "name": "莉赛特的好运",
+      "periods": [
+        "九月下旬",
+        "9月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "将抽奖券放入左侧的盒子中"
+          ],
+          "lines": [
+            "消耗一张蕾塞特彩票",
+            "【成功】｜旧硬币 +150｜心情 +1",
+            "【失败】｜无"
+          ],
+          "source_lines": [
+            "消耗一张蕾塞特彩票",
+            "【成功】",
+            "旧硬币 +150",
+            "心情 +1",
+            "【失败】",
+            "无"
+          ],
+          "source_cells": [
+            "B39",
+            "C39",
+            "C40",
+            "C41",
+            "C42",
+            "C43",
+            "C44"
+          ]
+        },
+        {
+          "aliases": [
+            "将抽奖券放入右侧的盒子中"
+          ],
+          "lines": [
+            "消耗一张蕾塞特彩票",
+            "【成功】｜旧硬币 +150｜体力 +10",
+            "【失败】｜无"
+          ],
+          "source_lines": [
+            "消耗一张蕾塞特彩票",
+            "【成功】",
+            "旧硬币 +150",
+            "体力 +10",
+            "【失败】",
+            "无"
+          ],
+          "source_cells": [
+            "B45",
+            "C45",
+            "C46",
+            "C47",
+            "C48",
+            "C49",
+            "C50"
+          ]
+        },
+        {
+          "aliases": [
+            "寻找下一个机会"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B51",
+            "C51"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1kpctr",
+        "sheet": "九月下旬（随机事件）",
+        "cell": "B38"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "重置的运气",
+        "蕾塞特的运气"
+      ],
+      "name_references": [
+        {
+          "name": "重置的运气",
+          "source": "使用者另提供的事件表圖片 6（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "右箱成功：原表回體 +10；圖片心情 +1。"
+        },
+        {
+          "name": "莉赛特的好运",
+          "source": "使用者遊戲截圖 2026-09-27，1月下旬，三選項含兩個鎖定選項",
+          "status": "實機名稱確認；同名同效果的九月資料共用名稱",
+          "difference": "右箱成功：原表回體 +10；另表心情 +1；此次只確認名稱，不改數值。"
+        }
+      ],
+      "confirmed_name": "莉赛特的好运"
+    },
+    {
+      "id": "1kpctr-57",
+      "name": "教团的失物",
+      "periods": [
+        "九月下旬",
+        "9月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "赶紧打开吧"
+          ],
+          "lines": [
+            "消耗「可疑的盒子」｜力量 +10｜生命 +10｜防御 +10"
+          ],
+          "source_lines": [
+            "消耗「可疑的盒子」",
+            "力量 +10",
+            "生命 +10",
+            "防御 +10"
+          ],
+          "source_cells": [
+            "B58",
+            "C58",
+            "C59",
+            "C60",
+            "C61"
+          ]
+        },
+        {
+          "aliases": [
+            "以后再打开吧"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B62",
+            "C62"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1kpctr",
+        "sheet": "九月下旬（随机事件）",
+        "cell": "B57"
+      },
+      "warnings": []
+    },
+    {
+      "id": "1kpctr-68",
+      "name": "教团的提议",
+      "periods": [
+        "九月下旬",
+        "9月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "将遗物卖给教团"
+          ],
+          "lines": [
+            "消耗「来历不明的遗物」｜旧硬币 +80"
+          ],
+          "source_lines": [
+            "消耗「来历不明的遗物」",
+            "旧硬币 +80"
+          ],
+          "source_cells": [
+            "B69",
+            "C69",
+            "C70"
+          ]
+        },
+        {
+          "aliases": [
+            "先留着看看"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B71",
+            "C71"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1kpctr",
+        "sheet": "九月下旬（随机事件）",
+        "cell": "B68"
+      },
+      "warnings": []
+    },
+    {
+      "id": "1kpctr-77",
+      "name": "力量特训的成果",
+      "periods": [
+        "九月下旬",
+        "9月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "我不会忘记至今所学的内容"
+          ],
+          "lines": [
+            "消耗「力量特训认证书」｜获得「力量训练结业证」"
+          ],
+          "source_lines": [
+            "消耗「力量特训认证书」",
+            "获得「力量训练结业证」"
+          ],
+          "source_cells": [
+            "B78",
+            "C78",
+            "C79"
+          ]
+        },
+        {
+          "aliases": [
+            "还需要更多学习"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B80",
+            "C80"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1kpctr",
+        "sheet": "九月下旬（随机事件）",
+        "cell": "B77"
+      },
+      "warnings": []
+    },
+    {
+      "id": "1kpctr-82",
+      "name": "生命特训的成果",
+      "periods": [
+        "九月下旬",
+        "9月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "我不会忘记至今所学的内容"
+          ],
+          "lines": [
+            "消耗「生命特训认证书」｜获得「生命训练结业证」"
+          ],
+          "source_lines": [
+            "消耗「生命特训认证书」",
+            "获得「生命训练结业证」"
+          ],
+          "source_cells": [
+            "B83",
+            "C83",
+            "C84"
+          ]
+        },
+        {
+          "aliases": [
+            "还需要更多学习"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B85",
+            "C85"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1kpctr",
+        "sheet": "九月下旬（随机事件）",
+        "cell": "B82"
+      },
+      "warnings": []
+    },
+    {
+      "id": "1kpctr-91",
+      "name": "意外的鼓励",
+      "periods": [
+        "九月下旬",
+        "9月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "相信付出就会有成果！"
+          ],
+          "lines": [
+            "体力 -10",
+            "【成功】｜力量 or 生命 or 防御 +10｜buff：「截止压力效果」（5回合） 训练中获得的潜力点增加",
+            "【失败】｜力量 or 生命 or 防御 +5｜debuff：「过度贪心」（5回合） 训练失败率上升"
+          ],
+          "source_lines": [
+            "体力 -10",
+            "【成功】",
+            "力量 or 生命 or 防御 +10",
+            "buff：「截止压力效果」（5回合） 训练中获得的潜力点增加",
+            "【失败】",
+            "力量 or 生命 or 防御 +5",
+            "debuff：「过度贪心」（5回合） 训练失败率上升"
+          ],
+          "source_cells": [
+            "B92",
+            "C92",
+            "C93",
+            "C94",
+            "C95",
+            "C96",
+            "C97",
+            "C98"
+          ]
+        },
+        {
+          "aliases": [
+            "再稍微努力一下吧"
+          ],
+          "lines": [
+            "体力 -10｜力量 or 生命 or 防御 +5"
+          ],
+          "source_lines": [
+            "体力 -10",
+            "力量 or 生命 or 防御 +5"
+          ],
+          "source_cells": [
+            "B99",
+            "C99",
+            "C100"
+          ]
+        },
+        {
+          "aliases": [
+            "现在这样已经足够了"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B101",
+            "C101"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1kpctr",
+        "sheet": "九月下旬（随机事件）",
+        "cell": "B91"
+      },
+      "warnings": []
+    },
+    {
+      "id": "1kpctr-107",
+      "name": "为了未来的选择",
+      "periods": [
+        "九月下旬",
+        "9月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "先留着看看"
+          ],
+          "lines": [
+            "道具：「古老的沙漏」 首次进入战斗时自身速度-30"
+          ],
+          "source_lines": [
+            "道具：「古老的沙漏」 首次进入战斗时自身速度-30"
+          ],
+          "source_cells": [
+            "B108",
+            "C108"
+          ]
+        },
+        {
+          "aliases": [
+            "拒绝"
+          ],
+          "lines": [
+            "潜能点 +10"
+          ],
+          "source_lines": [
+            "潜能点 +10"
+          ],
+          "source_cells": [
+            "B109",
+            "C109"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1kpctr",
+        "sheet": "九月下旬（随机事件）",
+        "cell": "B107"
+      },
+      "warnings": []
+    },
+    {
+      "id": "ocz8t8-3",
+      "name": "蕾塞特的假期",
+      "periods": [
+        "十月下旬",
+        "10月下旬"
+      ],
+      "category": "固定",
+      "choices": [
+        {
+          "aliases": [
+            "我们一起找个地方买吧"
+          ],
+          "lines": [
+            "体力 -20｜命中 +30 命抗 +15 or 命抗 +30 专注 +15｜道具：「古董钥匙」｜buff：「和蕾塞特的回忆」（5回合） 训练失败率降低"
+          ],
+          "source_lines": [
+            "体力 -20",
+            "命中 +30 命抗 +15 or 命抗 +30 专注 +15",
+            "道具：「古董钥匙」",
+            "buff：「和蕾塞特的回忆」（5回合） 训练失败率降低"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7"
+          ]
+        },
+        {
+          "aliases": [
+            "请告诉我它的销售地点"
+          ],
+          "lines": [
+            "命中+8 or 命抗+8"
+          ],
+          "source_lines": [
+            "命中+8 or 命抗+8"
+          ],
+          "source_cells": [
+            "B8",
+            "C8"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=ocz8t8",
+        "sheet": "十月下旬（固定事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "利塞特的假期",
+        "莉赛特的假期"
+      ],
+      "name_references": [
+        {
+          "name": "利塞特的假期",
+          "source": "使用者另提供的事件表圖片 6（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "原表第二組屬性含專注，圖片寫集中；術語有差異。"
+        },
+        {
+          "name": "莉赛特的假期",
+          "source": "使用者提供的十月下旬遊戲截圖（2026-09-27）",
+          "status": "實際畫面確認名稱及兩選項；效果沿用原表",
+          "difference": "原表第二組屬性含專注，新表寫集中；術語有差異。"
+        }
+      ]
+    },
+    {
+      "id": "6h51n7-3",
+      "name": "沙滩排球锦标赛预赛",
+      "periods": [
+        "十一月初",
+        "11月初",
+        "十一月中旬",
+        "11月中旬"
+      ],
+      "category": "固定",
+      "choices": [
+        {
+          "aliases": [
+            "利用对手的弱点"
+          ],
+          "lines": [
+            "需要力量500｜生命 +10｜命中 +10｜心情 +1｜潜能点 +50"
+          ],
+          "source_lines": [
+            "需要力量500",
+            "生命 +10",
+            "命中 +10",
+            "心情 +1",
+            "潜能点 +50"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8"
+          ]
+        },
+        {
+          "aliases": [
+            "发挥我们团队的优势"
+          ],
+          "lines": [
+            "需要命中150｜生命 +20 or +30｜潜能点 +50"
+          ],
+          "source_lines": [
+            "需要命中150",
+            "生命 +20 or +30",
+            "潜能点 +50"
+          ],
+          "source_cells": [
+            "B9",
+            "C9",
+            "C10",
+            "C11"
+          ]
+        },
+        {
+          "aliases": [
+            "乘势而上"
+          ],
+          "lines": [
+            "体力 -20｜命中 +20 or +30｜潜能点 +50"
+          ],
+          "source_lines": [
+            "体力 -20",
+            "命中 +20 or +30",
+            "潜能点 +50"
+          ],
+          "source_cells": [
+            "B12",
+            "C12",
+            "C13",
+            "C14"
+          ]
+        },
+        {
+          "aliases": [
+            "…总会有办法解决的！"
+          ],
+          "lines": [
+            "体力+5 or +10"
+          ],
+          "source_lines": [
+            "体力+5 or +10"
+          ],
+          "source_cells": [
+            "B15",
+            "C15"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=6h51n7",
+        "sheet": "十一月初（固定事件）",
+        "cell": "B3"
+      },
+      "warnings": [
+        "原表分頁名稱與內文日期不同；保留兩者，待遊戲畫面核對。"
+      ],
+      "name_aliases": [
+        "沙滩排球锦标赛资格赛"
+      ],
+      "name_references": [
+        {
+          "name": "沙滩排球锦标赛资格赛",
+          "source": "使用者另提供的事件表圖片 4（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "圖片十一月初，原表內文十一月中旬；圖片列出多組能力门檻。"
+        }
+      ]
+    },
+    {
+      "id": "cflkah-3",
+      "name": "今日天气・热带夜晚",
+      "periods": [
+        "十一月中旬",
+        "11月中旬"
+      ],
+      "category": "天氣",
+      "choices": [
+        {
+          "aliases": [
+            "使用手持小风扇"
+          ],
+          "lines": [
+            "消耗「便携风扇」｜力量 or 生命 or 防御 +20｜命中 or 命抗 +20｜心情 +1｜体力 +10"
+          ],
+          "source_lines": [
+            "消耗「便携风扇」",
+            "力量 or 生命 or 防御 +20",
+            "命中 or 命抗 +20",
+            "心情 +1",
+            "体力 +10"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8"
+          ]
+        },
+        {
+          "aliases": [
+            "想办法硬撑过去"
+          ],
+          "lines": [
+            "力量 or 生命 or 防御 +10｜命中 or 命抗 +10｜心情 -1｜移除所有正面buff"
+          ],
+          "source_lines": [
+            "力量 or 生命 or 防御 +10",
+            "命中 or 命抗 +10",
+            "心情 -1",
+            "移除所有正面buff"
+          ],
+          "source_cells": [
+            "B9",
+            "C9",
+            "C10",
+            "C11",
+            "C12"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=cflkah",
+        "sheet": "十一月中旬（随机事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "今天天气—热带夜晚",
+        "今天的天气 - 热带",
+        "热带夜晚"
+      ],
+      "name_references": [
+        {
+          "name": "今天天气—热带夜晚",
+          "source": "使用者另提供的事件表圖片 7（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "原表有命中／命抗加成；圖片第一項未列。"
+        }
+      ],
+      "confirmed_name": "今日天气・热带夜晚",
+      "confirmed_category": "天氣"
+    },
+    {
+      "id": "nxjc5c-3",
+      "name": "沙滩排球锦标赛半决赛",
+      "periods": [
+        "十一月下旬",
+        "11月下旬"
+      ],
+      "category": "固定",
+      "choices": [
+        {
+          "aliases": [
+            "我们应该先填饱肚子吗？"
+          ],
+          "lines": [
+            "消费旧硬币80｜体力 +30 or +40｜潜能点 +25"
+          ],
+          "source_lines": [
+            "消费旧硬币80",
+            "体力 +30 or +40",
+            "潜能点 +25"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6"
+          ]
+        },
+        {
+          "aliases": [
+            "深呼吸放松"
+          ],
+          "lines": [
+            "需要命中200｜心情+1｜力量+30｜潜能点+50"
+          ],
+          "source_lines": [
+            "需要命中200",
+            "心情+1",
+            "力量+30",
+            "潜能点+50"
+          ],
+          "source_cells": [
+            "B7",
+            "C7",
+            "C8",
+            "C9",
+            "C10"
+          ]
+        },
+        {
+          "aliases": [
+            "一如既往，让我们尽力而为"
+          ],
+          "lines": [
+            "潜能点+25"
+          ],
+          "source_lines": [
+            "潜能点+25"
+          ],
+          "source_cells": [
+            "B11",
+            "C11"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=nxjc5c",
+        "sheet": "十一月下旬（固定事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "沙滩排球锦标赛半决赛"
+      ],
+      "name_references": [
+        {
+          "name": "沙滩排球锦标赛半决赛",
+          "source": "使用者另提供的事件表圖片 4（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "圖片列出 125／150／200 專注門檻；原困難表命中 200。"
+        }
+      ]
+    },
+    {
+      "id": "velmeo-3",
+      "name": "突袭 - 掠夺者",
+      "periods": [
+        "十二月中旬",
+        "12月中旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "我们来试一试！"
+          ],
+          "lines": [
+            "需要力量600｜生命 +10｜潜能点 +25"
+          ],
+          "source_lines": [
+            "需要力量600",
+            "生命 +10",
+            "潜能点 +25"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6"
+          ]
+        },
+        {
+          "aliases": [
+            "我们来谈谈吧"
+          ],
+          "lines": [
+            "消耗10潜能点｜体力 -10｜命抗 +10"
+          ],
+          "source_lines": [
+            "消耗10潜能点",
+            "体力 -10",
+            "命抗 +10"
+          ],
+          "source_cells": [
+            "B7",
+            "C7",
+            "C8",
+            "C9"
+          ]
+        },
+        {
+          "aliases": [
+            "这是一具普通的尸体"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B10",
+            "C10"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=velmeo",
+        "sheet": "十二月中旬（随机事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "突发遭遇—掠夺者"
+      ],
+      "name_references": [
+        {
+          "name": "突发遭遇—掠夺者",
+          "source": "使用者另提供的事件表圖片 4（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "第二項原表為命抗 +10，圖片為集中 +10；不可直接混用屬性。"
+        }
+      ]
+    },
+    {
+      "id": "w0tkqf-3",
+      "name": "温泉节的准备工作",
+      "periods": [
+        "十一月初",
+        "11月初",
+        "十一月上旬",
+        "11月上旬"
+      ],
+      "category": "固定",
+      "choices": [
+        {
+          "aliases": [
+            "一座可以骑熊的房子！"
+          ],
+          "lines": [
+            "需要生命500｜力量 +10｜命抗 +10｜心情 +1｜潜能点 +50"
+          ],
+          "source_lines": [
+            "需要生命500",
+            "力量 +10",
+            "命抗 +10",
+            "心情 +1",
+            "潜能点 +50"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8"
+          ]
+        },
+        {
+          "aliases": [
+            "一家提供美味传统美食的餐厅！"
+          ],
+          "lines": [
+            "需要命抗150｜力量 +20 or +30｜潜能点 +50"
+          ],
+          "source_lines": [
+            "需要命抗150",
+            "力量 +20 or +30",
+            "潜能点 +50"
+          ],
+          "source_cells": [
+            "B9",
+            "C9",
+            "C10",
+            "C11"
+          ]
+        },
+        {
+          "aliases": [
+            "继续住在你现有的住处"
+          ],
+          "lines": [
+            "体力 -20｜命抗 +20 or +30｜潜能点 +50"
+          ],
+          "source_lines": [
+            "体力 -20",
+            "命抗 +20 or +30",
+            "潜能点 +50"
+          ],
+          "source_cells": [
+            "B12",
+            "C12",
+            "C13",
+            "C14"
+          ]
+        },
+        {
+          "aliases": [
+            "两个都不喜欢"
+          ],
+          "lines": [
+            "体力+5 or +10"
+          ],
+          "source_lines": [
+            "体力+5 or +10"
+          ],
+          "source_cells": [
+            "B15",
+            "C15"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=w0tkqf",
+        "sheet": "十一月初（固定事件）(副本)",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "准备温泉节",
+        "温泉庆典准备"
+      ],
+      "name_references": [
+        {
+          "name": "准备温泉节",
+          "source": "使用者另提供的事件表圖片 5（2026-09-27）",
+          "status": "使用者指定為十一月初事件",
+          "difference": ""
+        },
+        {
+          "name": "温泉庆典准备",
+          "source": "使用者提供的十一月上旬遊戲截圖（2026-09-27）",
+          "status": "實際畫面確認名稱及四選項（含一鎖定選項）",
+          "difference": ""
+        }
+      ],
+      "confirmed_periods": [
+        "十一月初",
+        "11月初",
+        "十一月上旬",
+        "11月上旬"
+      ]
+    },
+    {
+      "id": "6869j3-3",
+      "name": "今日天气・暴雪",
+      "periods": [
+        "十一月中旬",
+        "11月中旬"
+      ],
+      "category": "天氣",
+      "choices": [
+        {
+          "aliases": [
+            "使用暖宝宝"
+          ],
+          "lines": [
+            "消耗「暖宝宝」｜力量 or 生命 or 防御 +20｜命中 or 命抗 +20｜心情 +1｜体力 +10"
+          ],
+          "source_lines": [
+            "消耗「暖宝宝」",
+            "力量 or 生命 or 防御 +20",
+            "命中 or 命抗 +20",
+            "心情 +1",
+            "体力 +10"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8"
+          ]
+        },
+        {
+          "aliases": [
+            "想办法硬撑过去"
+          ],
+          "lines": [
+            "力量 or 生命 or 防御 +10｜命中 or 命抗 +10｜心情 -1｜移除所有正面buff"
+          ],
+          "source_lines": [
+            "力量 or 生命 or 防御 +10",
+            "命中 or 命抗 +10",
+            "心情 -1",
+            "移除所有正面buff"
+          ],
+          "source_cells": [
+            "B9",
+            "C9",
+            "C10",
+            "C11",
+            "C12"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=6869j3",
+        "sheet": "十一月中旬（随机事件）(副本)",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "今天天气—暴雪",
+        "今天的天气 - 大雪",
+        "暴雪"
+      ],
+      "name_references": [
+        {
+          "name": "今天天气—暴雪",
+          "source": "使用者另提供的事件表圖片 7（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "原表第二項心情 -1；圖片耐力 -10，另有部分屬性差異。"
+        }
+      ],
+      "confirmed_name": "今日天气・暴雪",
+      "confirmed_category": "天氣"
+    },
+    {
+      "id": "a6uf92-3",
+      "name": "庆典的不速之客",
+      "periods": [
+        "十二月上旬",
+        "12月上旬"
+      ],
+      "category": "固定",
+      "choices": [
+        {
+          "aliases": [
+            "提供经济援助"
+          ],
+          "lines": [
+            "消费旧硬币80｜体力 +30 or +40｜潜能点 +25"
+          ],
+          "source_lines": [
+            "消费旧硬币80",
+            "体力 +30 or +40",
+            "潜能点 +25"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6"
+          ]
+        },
+        {
+          "aliases": [
+            "自己动手试试"
+          ],
+          "lines": [
+            "需要命抗200｜心情+1｜生命+30｜潜能点+50"
+          ],
+          "source_lines": [
+            "需要命抗200",
+            "心情+1",
+            "生命+30",
+            "潜能点+50"
+          ],
+          "source_cells": [
+            "B7",
+            "C7",
+            "C8",
+            "C9",
+            "C10"
+          ]
+        },
+        {
+          "aliases": [
+            "放弃"
+          ],
+          "lines": [
+            "潜能点+25"
+          ],
+          "source_lines": [
+            "潜能点+25"
+          ],
+          "source_cells": [
+            "B11",
+            "C11"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=a6uf92",
+        "sheet": "十一月下旬（固定事件）(副本)",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "节日里的不速之客",
+        "庆典的不速之客"
+      ],
+      "name_references": [
+        {
+          "name": "庆典的不速之客",
+          "source": "使用者提供的十二月上旬遊戲截圖（2026-09-27）",
+          "status": "實際畫面確認名称、日期及三選項（含一鎖定選項）；效果沿用原表",
+          "difference": ""
+        }
+      ],
+      "confirmed_name": "庆典的不速之客",
+      "confirmed_periods": [
+        "十二月上旬",
+        "12月上旬"
+      ]
+    },
+    {
+      "id": "5nngq0-3",
+      "name": "突发遭遇－强盗骑士",
+      "periods": [
+        "十二月中旬",
+        "12月中旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "让我们孵化它吧！"
+          ],
+          "lines": [
+            "需要生命600｜力量 +10｜潜能点 +25"
+          ],
+          "source_lines": [
+            "需要生命600",
+            "力量 +10",
+            "潜能点 +25"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6"
+          ]
+        },
+        {
+          "aliases": [
+            "我期待未来与您合作"
+          ],
+          "lines": [
+            "消耗10潜能点｜体力 -10｜命中 +10"
+          ],
+          "source_lines": [
+            "消耗10潜能点",
+            "体力 -10",
+            "命中 +10"
+          ],
+          "source_cells": [
+            "B7",
+            "C7",
+            "C8",
+            "C9"
+          ]
+        },
+        {
+          "aliases": [
+            "作战撤退！"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B10",
+            "C10"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=5nngq0",
+        "sheet": "十二月中旬（随机事件）(副本)",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "突袭—抢劫骑士",
+        "突袭 - 强盗骑士"
+      ],
+      "name_references": [
+        {
+          "name": "突袭—抢劫骑士",
+          "source": "使用者另提供的事件表圖片 5（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "第二項原表消耗潛能點及體力；圖片消耗 20 硬幣，效果也不同。"
+        },
+        {
+          "name": "突发遭遇－强盗骑士",
+          "source": "使用者實際遊戲截圖（2026-09-27）",
+          "status": "實機名稱確認",
+          "difference": "第二項原表消耗潛能點及體力；圖片消耗 20 硬幣，效果也不同。"
+        }
+      ],
+      "confirmed_name": "突发遭遇－强盗骑士"
+    },
+    {
+      "id": "qu820y-3",
+      "name": "莉赛特的忧郁",
+      "periods": [
+        "一月下旬",
+        "1月下旬"
+      ],
+      "category": "固定",
+      "choices": [
+        {
+          "aliases": [
+            "就这些吗？"
+          ],
+          "lines": [
+            "消耗「古董钥匙」｜潜能点 +37｜道具：「蕾塞特的存钱罐」"
+          ],
+          "source_lines": [
+            "消耗「古董钥匙」",
+            "潜能点 +37",
+            "道具：「蕾塞特的存钱罐」"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6"
+          ]
+        },
+        {
+          "aliases": [
+            "打电话给技术人员"
+          ],
+          "lines": [
+            "潜能点 +15"
+          ],
+          "source_lines": [
+            "潜能点 +15"
+          ],
+          "source_cells": [
+            "B7",
+            "C7"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=qu820y",
+        "sheet": "一月下旬（固定事件）",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "重置的忧郁",
+        "蕾塞特的忧郁"
+      ],
+      "name_references": [
+        {
+          "name": "重置的忧郁",
+          "source": "使用者另提供的事件表圖片 6（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "第一項潛能點：原表 +37 且消耗古董鑰匙；圖片 +15，未寫消耗。"
+        },
+        {
+          "name": "莉赛特的忧郁",
+          "source": "使用者遊戲截圖 2026-09-27，1月下旬，兩選項",
+          "status": "實機名稱確認",
+          "difference": "第一項潛能點原表 +37、另表 +15；此次只確認名稱，不改數值。"
+        }
+      ],
+      "confirmed_name": "莉赛特的忧郁"
+    },
+    {
+      "id": "mnm1vp-3",
+      "name": "新设部门正在努力中！",
+      "periods": [
+        "一月下旬",
+        "1月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "问卷评价：好"
+          ],
+          "lines": [
+            "旧硬币 +10｜心情 +1"
+          ],
+          "source_lines": [
+            "旧硬币 +10",
+            "心情 +1"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5"
+          ]
+        },
+        {
+          "aliases": [
+            "问卷评价：一般"
+          ],
+          "lines": [
+            "体力 -10｜旧硬币 +30｜生命 +10"
+          ],
+          "source_lines": [
+            "体力 -10",
+            "旧硬币 +30",
+            "生命 +10"
+          ],
+          "source_cells": [
+            "B6",
+            "C6",
+            "C7",
+            "C8"
+          ]
+        },
+        {
+          "aliases": [
+            "问卷评价：差"
+          ],
+          "lines": [
+            "心情 -1｜旧硬币 +20｜潜能点 +50"
+          ],
+          "source_lines": [
+            "心情 -1",
+            "旧硬币 +20",
+            "潜能点 +50"
+          ],
+          "source_cells": [
+            "B9",
+            "C9",
+            "C10",
+            "C11"
+          ]
+        },
+        {
+          "aliases": [
+            "今天就算了…"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B12",
+            "C12"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=mnm1vp",
+        "sheet": "一月下旬（随机事件）",
+        "cell": "B3"
+      },
+      "warnings": [
+        "分頁標為隨機事件，內文標為固定事件；依分頁分類保存。"
+      ]
+    },
+    {
+      "id": "mnm1vp-18",
+      "name": "剑中隐藏的力量",
+      "periods": [
+        "一月下旬",
+        "1月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "拿起石像的剑"
+          ],
+          "lines": [
+            "消耗「石像之剑」",
+            "【成功】｜力量 +20｜生命 +20",
+            "【失败】｜力量 +20｜生命 +10｜debuff：「力量的养分」（3回合） 训练中获得的生命减少"
+          ],
+          "source_lines": [
+            "消耗「石像之剑」",
+            "【成功】",
+            "力量 +20",
+            "生命 +20",
+            "【失败】",
+            "力量 +20",
+            "生命 +10",
+            "debuff：「力量的养分」（3回合） 训练中获得的生命减少"
+          ],
+          "source_cells": [
+            "B19",
+            "C19",
+            "C20",
+            "C21",
+            "C22",
+            "C23",
+            "C24",
+            "C25",
+            "C26"
+          ]
+        },
+        {
+          "aliases": [
+            "就这样放着不管"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B27",
+            "C27"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=mnm1vp",
+        "sheet": "一月下旬（随机事件）",
+        "cell": "B18"
+      },
+      "warnings": [
+        "分頁標為隨機事件，內文標為固定事件；依分頁分類保存。"
+      ],
+      "name_aliases": [
+        "刀中隐藏的力量"
+      ],
+      "confirmed_name": "剑中隐藏的力量",
+      "name_references": [
+        {
+          "name": "剑中隐藏的力量",
+          "source": "使用者實際遊戲截圖及效果表（2026-09-27）",
+          "status": "實機名稱確認；效果沿用原表",
+          "difference": ""
+        }
+      ]
+    },
+    {
+      "id": "mnm1vp-29",
+      "name": "花中隐藏的力量",
+      "periods": [
+        "一月下旬",
+        "1月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "拿起石像的花"
+          ],
+          "lines": [
+            "消耗「石像之花」",
+            "【成功】｜力量 +20｜生命 +20",
+            "【失败】｜力量 +10｜生命 +20｜debuff：「生命的养分」（3回合） 训练中获得的力量减少"
+          ],
+          "source_lines": [
+            "消耗「石像之花」",
+            "【成功】",
+            "力量 +20",
+            "生命 +20",
+            "【失败】",
+            "力量 +10",
+            "生命 +20",
+            "debuff：「生命的养分」（3回合） 训练中获得的力量减少"
+          ],
+          "source_cells": [
+            "B30",
+            "C30",
+            "C31",
+            "C32",
+            "C33",
+            "C34",
+            "C35",
+            "C36",
+            "C37"
+          ]
+        },
+        {
+          "aliases": [
+            "就这样放着不管"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B38",
+            "C38"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=mnm1vp",
+        "sheet": "一月下旬（随机事件）",
+        "cell": "B29"
+      },
+      "warnings": [
+        "分頁標為隨機事件，內文標為固定事件；依分頁分類保存。"
+      ]
+    },
+    {
+      "id": "mnm1vp-44",
+      "name": "完成型强化剂？",
+      "periods": [
+        "一月下旬",
+        "1月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "都到这一步了，喝下去吧！"
+          ],
+          "lines": [
+            "消费旧硬币20",
+            "【成功】｜心情 +1｜力量 +10｜生命 +10｜防御 +10",
+            "【失败】｜心情 -1｜力量 -10｜生命 -10｜防御 -10"
+          ],
+          "source_lines": [
+            "消费旧硬币20",
+            "【成功】",
+            "心情 +1",
+            "力量 +10",
+            "生命 +10",
+            "防御 +10",
+            "【失败】",
+            "心情 -1",
+            "力量 -10",
+            "生命 -10",
+            "防御 -10"
+          ],
+          "source_cells": [
+            "B45",
+            "C45",
+            "C46",
+            "C47",
+            "C48",
+            "C49",
+            "C50",
+            "C51",
+            "C52",
+            "C53",
+            "C54",
+            "C55"
+          ]
+        },
+        {
+          "aliases": [
+            "还是喝普通饮料吧"
+          ],
+          "lines": [
+            "体力 +10"
+          ],
+          "source_lines": [
+            "体力 +10"
+          ],
+          "source_cells": [
+            "B56",
+            "C56"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=mnm1vp",
+        "sheet": "一月下旬（随机事件）",
+        "cell": "B44"
+      },
+      "warnings": [
+        "分頁標為隨機事件，內文標為固定事件；依分頁分類保存。"
+      ]
+    },
+    {
+      "id": "mnm1vp-62",
+      "name": "收藏家来了",
+      "periods": [
+        "一月下旬",
+        "1月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "同意交换"
+          ],
+          "lines": [
+            "消耗「特典海报」｜随机获得以下其中一个道具：｜「贤者之手」｜「小型绿洲」｜「狙击手的外套」｜旧硬币+50"
+          ],
+          "source_lines": [
+            "消耗「特典海报」",
+            "随机获得以下其中一个道具：",
+            "「贤者之手」",
+            "「小型绿洲」",
+            "「狙击手的外套」",
+            "旧硬币+50"
+          ],
+          "source_cells": [
+            "B63",
+            "C63",
+            "C64",
+            "C65",
+            "C66",
+            "C67",
+            "C68"
+          ]
+        },
+        {
+          "aliases": [
+            "不想进行交易"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B69",
+            "C69"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=mnm1vp",
+        "sheet": "一月下旬（随机事件）",
+        "cell": "B62"
+      },
+      "warnings": [
+        "分頁標為隨機事件，內文標為固定事件；依分頁分類保存。"
+      ]
+    },
+    {
+      "id": "mnm1vp-75",
+      "name": "简单测试",
+      "periods": [
+        "一月下旬",
+        "1月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "用适当的力量施加冲击"
+          ],
+          "lines": [
+            "消耗「来历不明的遗物」",
+            "【成功】｜力量 or 生命 or 防御 +20｜命中 or 命抗+20｜心情 +1",
+            "【失败】｜心情 -1"
+          ],
+          "source_lines": [
+            "消耗「来历不明的遗物」",
+            "【成功】",
+            "力量 or 生命 or 防御 +20",
+            "命中 or 命抗+20",
+            "心情 +1",
+            "【失败】",
+            "心情 -1"
+          ],
+          "source_cells": [
+            "B76",
+            "C76",
+            "C77",
+            "C78",
+            "C79",
+            "C80",
+            "C81",
+            "C82"
+          ]
+        },
+        {
+          "aliases": [
+            "发动强力攻击"
+          ],
+          "lines": [
+            "消耗「来历不明的遗物」｜力量 or 生命 or 防御 +10｜命中 or 命抗 +10"
+          ],
+          "source_lines": [
+            "消耗「来历不明的遗物」",
+            "力量 or 生命 or 防御 +10",
+            "命中 or 命抗 +10"
+          ],
+          "source_cells": [
+            "B83",
+            "C83",
+            "C84",
+            "C85"
+          ]
+        },
+        {
+          "aliases": [
+            "还是好好保存遗物吧"
+          ],
+          "lines": [
+            "潜能点 +10"
+          ],
+          "source_lines": [
+            "潜能点 +10"
+          ],
+          "source_cells": [
+            "B86",
+            "C86"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=mnm1vp",
+        "sheet": "一月下旬（随机事件）",
+        "cell": "B75"
+      },
+      "warnings": [
+        "分頁標為隨機事件，內文標為固定事件；依分頁分類保存。"
+      ]
+    },
+    {
+      "id": "mnm1vp-92",
+      "name": "莉赛特的好运",
+      "periods": [
+        "一月下旬",
+        "1月下旬"
+      ],
+      "category": "隨機",
+      "choices": [
+        {
+          "aliases": [
+            "将抽奖券放入左侧的盒子中"
+          ],
+          "lines": [
+            "消耗一张蕾塞特彩票",
+            "【成功】｜旧硬币 +150｜心情 +1",
+            "【失败】｜无"
+          ],
+          "source_lines": [
+            "消耗一张蕾塞特彩票",
+            "【成功】",
+            "旧硬币 +150",
+            "心情 +1",
+            "【失败】",
+            "无"
+          ],
+          "source_cells": [
+            "B93",
+            "C93",
+            "C94",
+            "C95",
+            "C96",
+            "C97",
+            "C98"
+          ]
+        },
+        {
+          "aliases": [
+            "将抽奖券放入右侧的盒子中"
+          ],
+          "lines": [
+            "消耗一张蕾塞特彩票",
+            "【成功】｜旧硬币 +150｜体力 +10",
+            "【失败】｜无"
+          ],
+          "source_lines": [
+            "消耗一张蕾塞特彩票",
+            "【成功】",
+            "旧硬币 +150",
+            "体力 +10",
+            "【失败】",
+            "无"
+          ],
+          "source_cells": [
+            "B99",
+            "C99",
+            "C100",
+            "C101",
+            "C102",
+            "C103",
+            "C104"
+          ]
+        },
+        {
+          "aliases": [
+            "寻找下一个机会"
+          ],
+          "lines": [
+            "无"
+          ],
+          "source_lines": [
+            "无"
+          ],
+          "source_cells": [
+            "B105",
+            "C105"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=mnm1vp",
+        "sheet": "一月下旬（随机事件）",
+        "cell": "B92"
+      },
+      "warnings": [
+        "分頁標為隨機事件，內文標為固定事件；依分頁分類保存。"
+      ],
+      "name_aliases": [
+        "重置的运气",
+        "蕾塞特的运气"
+      ],
+      "name_references": [
+        {
+          "name": "重置的运气",
+          "source": "使用者另提供的事件表圖片 6（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "右箱成功：原表回體 +10；圖片心情 +1。"
+        },
+        {
+          "name": "莉赛特的好运",
+          "source": "使用者遊戲截圖 2026-09-27，1月下旬，三選項含兩個鎖定選項",
+          "status": "實機名稱確認；同名同效果的九月資料共用名稱",
+          "difference": "右箱成功：原表回體 +10；另表心情 +1；此次只確認名稱，不改數值。"
+        }
+      ],
+      "confirmed_name": "莉赛特的好运"
+    },
+    {
+      "id": "ry4pz2-3",
+      "name": "今日天气・晴朗",
+      "periods": [],
+      "category": "天氣",
+      "choices": [
+        {
+          "aliases": [
+            "悠闲地度过时光"
+          ],
+          "lines": [
+            "【成功】｜命中+20 命抗+10 or 命中+10 命抗+20 or 潜能点+75｜体力 +10｜心情 +1",
+            "【失败】｜命中+10 or 命抗+10 or 潜能点+37｜心情 -1"
+          ],
+          "source_lines": [
+            "【成功】",
+            "命中+20 命抗+10 or 命中+10 命抗+20 or 潜能点+75",
+            "体力 +10",
+            "心情 +1",
+            "【失败】",
+            "命中+10 or 命抗+10 or 潜能点+37",
+            "心情 -1"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8",
+            "C9",
+            "C10"
+          ]
+        },
+        {
+          "aliases": [
+            "按照原计划度过时间"
+          ],
+          "lines": [
+            "全属性随机1项 +5｜潜能点 +37"
+          ],
+          "source_lines": [
+            "全属性随机1项 +5",
+            "潜能点 +37"
+          ],
+          "source_cells": [
+            "B11",
+            "C11",
+            "C12"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=ry4pz2",
+        "sheet": "晴朗",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "今天天气—晴朗"
+      ],
+      "name_references": [
+        {
+          "name": "今天天气—晴朗",
+          "source": "使用者另提供的事件表圖片 7（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "原表成功潛能點 +75、失敗 +37；圖片成功 +30、失敗 +15，其他分支亦不同。"
+        }
+      ]
+    },
+    {
+      "id": "h9hqxd-3",
+      "name": "今日天气・打雷",
+      "periods": [],
+      "category": "天氣",
+      "choices": [
+        {
+          "aliases": [
+            "继续训练"
+          ],
+          "lines": [
+            "【成功】｜潜能点 +75｜心情 +1",
+            "【失败】｜潜能点 +75｜心情 -1"
+          ],
+          "source_lines": [
+            "【成功】",
+            "潜能点 +75",
+            "心情 +1",
+            "【失败】",
+            "潜能点 +75",
+            "心情 -1"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8",
+            "C9"
+          ]
+        },
+        {
+          "aliases": [
+            "回旅馆休息"
+          ],
+          "lines": [
+            "心情 -1 体力 +10｜or 体力 +10"
+          ],
+          "source_lines": [
+            "心情 -1 体力 +10",
+            "or 体力 +10"
+          ],
+          "source_cells": [
+            "B10",
+            "C10",
+            "C11"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=h9hqxd",
+        "sheet": "雷雨",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "今天天气—闪电",
+        "今日天气・雷雨"
+      ],
+      "name_references": [
+        {
+          "name": "今天天气—闪电",
+          "source": "使用者另提供的事件表圖片 7（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "圖片出現兩個同名「閃電」：一個有選項，另一個直接獲得增益；不能僅憑日期和標題分辨。"
+        },
+        {
+          "name": "今日天气・打雷",
+          "source": "使用者實際遊戲截圖（2026-09-27）",
+          "status": "實機名稱確認；原稱雷雨",
+          "difference": ""
+        }
+      ],
+      "ambiguous_aliases": [
+        "今天天气—闪电"
+      ],
+      "confirmed_name": "今日天气・打雷"
+    },
+    {
+      "id": "f5uwh2-3",
+      "name": "今日天气・浓雾",
+      "periods": [],
+      "category": "天氣",
+      "choices": [
+        {
+          "aliases": [
+            "继续训练"
+          ],
+          "lines": [
+            "【成功】｜命中 +20｜命抗 +20｜潜能点 +75",
+            "【失败】｜体力 -10｜命中 +10｜命抗 +10"
+          ],
+          "source_lines": [
+            "【成功】",
+            "命中 +20",
+            "命抗 +20",
+            "潜能点 +75",
+            "【失败】",
+            "体力 -10",
+            "命中 +10",
+            "命抗 +10"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8",
+            "C9",
+            "C10",
+            "C11"
+          ]
+        },
+        {
+          "aliases": [
+            "回旅馆休息"
+          ],
+          "lines": [
+            "体力 +10"
+          ],
+          "source_lines": [
+            "体力 +10"
+          ],
+          "source_cells": [
+            "B12",
+            "C12"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=f5uwh2",
+        "sheet": "大雾",
+        "cell": "B3"
+      },
+      "warnings": [],
+      "name_aliases": [
+        "今天天气—雾",
+        "今日天气・大雾"
+      ],
+      "name_references": [
+        {
+          "name": "今天天气—雾",
+          "source": "使用者另提供的事件表圖片 7（2026-09-27）",
+          "status": "表格對照；尚非實機確認",
+          "difference": "原表成功命中／命抗各 +20、潛能點 +75；圖片集中／保護各 +30、潛質點 +30。"
+        },
+        {
+          "name": "今日天气・浓雾",
+          "source": "使用者實際遊戲截圖（2026-09-27）",
+          "status": "實機名稱確認；原稱大霧",
+          "difference": ""
+        }
+      ],
+      "confirmed_name": "今日天气・浓雾"
+    },
+    {
+      "id": "1zos4w-3",
+      "name": "训练失败",
+      "periods": [],
+      "category": "訓練",
+      "choices": [
+        {
+          "aliases": [
+            "今天就先休息吧"
+          ],
+          "lines": [
+            "【成功】｜体力 +5",
+            "【失败】｜体力 +5｜心情 -1"
+          ],
+          "source_lines": [
+            "【成功】",
+            "体力 +5",
+            "【失败】",
+            "体力 +5",
+            "心情 -1"
+          ],
+          "source_cells": [
+            "B4",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8"
+          ]
+        },
+        {
+          "aliases": [
+            "安全地进行训练"
+          ],
+          "lines": [
+            "体力 -20",
+            "【成功】｜潜能点 +15｜buff：「聪慧的旅团成员」（5回合） 训练失败率会略微降低",
+            "【失败】｜潜能点 +15"
+          ],
+          "source_lines": [
+            "体力 -20",
+            "【成功】",
+            "潜能点 +15",
+            "buff：「聪慧的旅团成员」（5回合） 训练失败率会略微降低",
+            "【失败】",
+            "潜能点 +15"
+          ],
+          "source_cells": [
+            "B9",
+            "C9",
+            "C10",
+            "C11",
+            "C12",
+            "C13",
+            "C14"
+          ]
+        },
+        {
+          "aliases": [
+            "递上活力药水"
+          ],
+          "lines": [
+            "消耗「活力药水」｜体力 +30｜潜能点 +10"
+          ],
+          "source_lines": [
+            "消耗「活力药水」",
+            "体力 +30",
+            "潜能点 +10"
+          ],
+          "source_cells": [
+            "B15",
+            "C15",
+            "C16",
+            "C17"
+          ]
+        }
+      ],
+      "source": {
+        "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=1zos4w",
+        "sheet": "训练失败",
+        "cell": "B3"
+      },
+      "warnings": []
+    }
+  ],
+  "name_policy": "後提供圖片作為新譯名參考；保留已驗證實機名稱。數值仍採原困難表，差異明示，不混用。"
+}

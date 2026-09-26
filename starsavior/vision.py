@@ -10,9 +10,24 @@ from .policy import compact, fraction, NeedsReview
 
 _cc = OpenCC("t2s")
 
+# Exact UI translations observed in the simplified-Chinese game. Keep these
+# separate from OCR typo recovery: never replace arbitrary substrings.
+UI_TRANSLATIONS = {
+    'NOA支持金': 'NOA支援金',
+    '紧急支持': '紧急支援',
+    '虚空涅盘者': '虚空涅槃者',
+    '防御纪录信息': '防御纪录资讯',
+    '地区派遣信息': '地区派遣资讯',
+    '支持通行证': '支援通行证',
+    '启示录支持路条': '启示录支援通行证',
+    '旅程支持路条': '旅程支援通行证',
+    '圣铠支持路条': '圣铠支援通行证',
+}
+
 
 def norm(text):
-    return compact(_cc.convert(str(text))).replace("廻", "回")
+    value = compact(_cc.convert(str(text))).replace("廻", "回")
+    return UI_TRANSLATIONS.get(value, value)
 
 
 @dataclass(frozen=True)

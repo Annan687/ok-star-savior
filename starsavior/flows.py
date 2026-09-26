@@ -203,7 +203,10 @@ class DailyFlows(EventFlows, Engine):
         if self.is_menu(v):
             self.click(Text("大廳空白", .32, .5, .01, .01))
             v = self.see()
-        self.open_support(v)
+        # Resume a stopped run already inside the verified support panel.
+        if not (v.has('NOA支援金', area=CENTER, contains=False)
+                and v.has('緊急支援', area=BOTTOM, contains=False)):
+            self.open_support(v)
         if self.tap("獲得獎勵", area=BOTTOM, optional=True, enabled=True):
             self.expect("點擊以繼續", "點擊以確認", "點擊已確認", "點擊以跳過", area=BOTTOM)
             self.rewards()
@@ -333,7 +336,7 @@ class DailyFlows(EventFlows, Engine):
             if shop and v.find("特別販售禮包", area=area, contains=False):
                 target = v.one("特別販售禮包", area=area)
                 self.click(target)
-                self.expect("每個帳號購買", "免費裝備製作禮包", "SOLDOUT",
+                self.expect("每個帳號購買", "每日購買", "SOLDOUT",
                             area=(.17, .20, .98, .99))
                 return True
             tabs = tuple(t.key for t in v.within(area) if len(t.key) >= 3)
@@ -376,10 +379,74 @@ class DailyFlows(EventFlows, Engine):
             self.task.sleep(.4)
         raise NeedsReview("付費商店分類尚未穩定，未判定限時禮包已下架")
 
+    def special_free_prices(self, v):
+        """Read card footers, not promotional badges or scrolling names."""
+        if not (v.has("付費商店", area=TOP, contains=False)
+                and v.has("特別販售禮包", area=(.17, .08, .96, .20), contains=False)
+                and not v.has("購買商品", area=CENTER, contains=False)):
+            return None
+        limits = v.find("每個帳號購買", "每日購買", "每週購買", "每月購買",
+                        area=(.17, .20, .98, .87), contains=True)
+        if not limits:
+            return None
+        candidates, states = [], []
+        for limit in sorted(limits, key=lambda t: (round(t.cy, 1), t.cx)):
+            # Observed 900p cards: price is below the purchase limit and name.
+            # Follow each card's position, including the leftmost column.
+            area = (limit.cx-.065, limit.cy+.065, limit.cx+.065, min(.99, limit.cy+.125))
+            card = (limit.cx-.065, max(.20, limit.cy-.26), limit.cx+.065, area[3])
+            key = (round(limit.cx, 2), round(limit.cy, 2))
+            if v.has("SOLDOUT", area=card, contains=False) or re.search(norm("購買") + r"0/\d", limit.key):
+                states.append((key, "sold"))
+                continue
+            prices = v.find("免費", "FREE", area=area, contains=False)
+            paid = [t for t in v.within(area) if re.fullmatch(r"(?:US|NT|HK)?\$[\d,.]+", t.key)]
+            if not prices and not paid:
+                recovered = self.reread_claim_button(v, area, ("免費", "FREE", "SOLDOUT"))
+                if recovered is not None:
+                    if recovered.key == "SOLDOUT":
+                        states.append((key, "sold"))
+                        continue
+                    prices = [recovered]
+            if len(prices) + len(paid) != 1:
+                return None  # Missing/ambiguous price is not proof of no free gift.
+            if prices:
+                candidates.append((key, prices[0]))
+            states.append((key, "free" if prices else "paid"))
+        return tuple(states), candidates
+
+    def claim_special_free_cards(self):
+        claimed = set()
+        for _ in range(11):
+            previous, stable = None, 0
+            for _ in range(30):
+                result = self.special_free_prices(self.see())
+                signature, candidates = result if result is not None else (None, [])
+                stable = stable + 1 if signature is not None and signature == previous else (1 if signature else 0)
+                previous = signature
+                # Wait for the claimed card to settle; never submit it twice.
+                pending = any(key in claimed for key, _ in candidates)
+                if signature is not None and not pending and stable >= (3 if candidates else 5):
+                    break
+                self.task.sleep(.4)
+            else:
+                raise NeedsReview("特別禮包價格或領取結果尚未穩定，未重複購買")
+            if not candidates:
+                return len(claimed)
+            if len(claimed) >= 10:
+                raise NeedsReview("特別免費禮包超過本輪上限，請檢查商品列表")
+            key, price = candidates[0]
+            # The observed footer did not open the modal reliably; the body of
+            # that same verified card does. Position follows its free price.
+            self.click(Text("免費禮包卡片", price.cx-.005, price.cy-.185, .01, .01))
+            self.free_purchase()  # Independently checks the modal's total price.
+            claimed.add(key)
+        raise NeedsReview("特別免費禮包尚未確認領取完成")
+
     def paid_shop(self):
         self.menu("付費商店")
         special = self.open_special_category() and self.open_special_free_tab()
-        n = int(self.free_card("免費裝備製作禮包")) if special else 0
+        n = self.claim_special_free_cards() if special else 0
         self.tap("普通禮包", area=LEFT)
         for period in ("每日", "每週", "每月"):
             self.tap(f"{period}禮包", area=(.17, .08, .96, .20))
@@ -707,12 +774,22 @@ class DailyFlows(EventFlows, Engine):
 
     @staticmethod
     def strategy_entry(v):
-        if not (v.has("聖鎧", area=TOP, contains=False)
-                and v.has("排位戰", area=(.20, .74, .40, .85), contains=False)
-                and v.has("友誼賽", area=(.60, .74, .80, .85))):
+        if not v.has("聖鎧", area=TOP, contains=False):
             return None
         entries = v.find("策略戰", area=(.40, .74, .60, .85), contains=False)
         return entries[0] if len(entries) == 1 else None
+
+    def resolve_strategy_entry(self, v):
+        entry = self.strategy_entry(v)
+        if entry is not None or not v.has("聖鎧", area=TOP, contains=False):
+            return entry
+        if v.find("策略戰", area=(.40, .74, .60, .85), contains=False):
+            # Multiple exact candidates are ambiguous, not missing text.
+            return None
+        token = self.reread_claim_button(v, (.482, .773, .535, .830), ("策略戰",), threshold=.8)
+        if token is not None:
+            v.items.append(token)
+        return self.strategy_entry(v)
 
     def open_strategy(self):
         # Retrying is allowed only while the same complete entrance page is
@@ -732,7 +809,7 @@ class DailyFlows(EventFlows, Engine):
             else:
                 previous_state = None
                 state_frames = 0
-                entry = self.strategy_entry(v)
+                entry = self.resolve_strategy_entry(v)
                 card_frames = card_frames + 1 if entry is not None else 0
                 if entry is not None and v.has("正在結算中", area=v.around(entry, .12, .12)):
                     if card_frames >= 3:
@@ -744,6 +821,8 @@ class DailyFlows(EventFlows, Engine):
                     attempts += 1
                     card_frames = 0
             self.task.sleep(.4)
+        if attempts == 0:
+            raise NeedsReview("策略戰入口標籤放大重讀仍不完整，未點擊卡片；未刷新")
         raise NeedsReview("尚未進入策略戰對戰列表，入口未回應或仍在載入；未刷新")
 
     def strategy_screen(self, *labels, area=FULL, seconds=15):
@@ -769,7 +848,7 @@ class DailyFlows(EventFlows, Engine):
     def strategy(self):
         v = self.see()
         if not (self.strategy_state(v) or self.strategy_promotion(v)):
-            if self.strategy_entry(v) is None:
+            if self.resolve_strategy_entry(v) is None:
                 self.menu("聖鎧")
             if not self.open_strategy():
                 return "策略戰正在結算，暫無法挑戰；鑰匙未使用"
@@ -1007,7 +1086,7 @@ class DailyFlows(EventFlows, Engine):
         self.claim_all(labels=("任務一鍵領取",))
         for name in ("啟示錄支援通行證", "旅程支援通行證", "聖鎧支援通行證"):
             self.claim_pass(name)
-        self.tap("突破通行證", area=LEFT)
+        self.open_breakthrough_pass()
         self.task.sleep(.5)
         v = self.see()
         names = [t.text for t in v.within((.035, .25, .17, .75))
@@ -1017,6 +1096,20 @@ class DailyFlows(EventFlows, Engine):
         for name in names:
             self.claim_pass(name)
         return "三種支援通行證與所有可見突破通行證已檢查"
+
+    def open_breakthrough_pass(self):
+        v = self.see()
+        if not all(v.has(name, area=(.03, .18, .17, .38), contains=False)
+                   for name in ("啟示錄支援通行證", "旅程支援通行證", "聖鎧支援通行證")):
+            raise NeedsReview("支援通行證分頁尚未完整，未切換突破通行證")
+        area = (.055, .397, .165, .445)
+        hits = v.find("突破通行證", area=area, contains=False)
+        if len(hits) > 1:
+            raise NeedsReview("突破通行證入口不唯一")
+        target = hits[0] if hits else self.reread_claim_button(v, area, ("突破通行證",))
+        if target is None:
+            raise NeedsReview("突破通行證入口局部重讀仍無法確認")
+        self.click(target)
 
     def claim_pass(self, name):
         self.tap(name, area=LEFT)
