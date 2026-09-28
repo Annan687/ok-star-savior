@@ -102,8 +102,8 @@ def title_candidates(v, data):
 def weather_name(text):
     # OCR read the observed dash as Chinese 一. Only the known weather prefix
     # may be dropped; never use unrestricted substring/fuzzy weather matching.
-    match = re.fullmatch(r'(?:(?:今日|今天|今天的)天气一?)?(晴朗|打雷|雷雨|浓雾|大雾|热带夜晚|暴雪)', key(text))
-    return {'雷雨': '打雷', '大雾': '浓雾'}.get(match[1], match[1]) if match else ''
+    match = re.fullmatch(r'(?:(?:今日|今天|今天的)天气一?)?(晴朗|打雷|雷雨|浓雾|大雾|热带夜晚|热带夜|暴雪)', key(text))
+    return {'雷雨': '打雷', '大雾': '浓雾', '热带夜晚': '热带夜'}.get(match[1], match[1]) if match else ''
 
 
 def matched_names(event, headers):
@@ -146,18 +146,18 @@ def match_event(v, data):
         return Advice('', '跑馬小幫手', (), '來源表有同名不同事件，暫不顯示效果')
     if group == 'card_events' and len({effect_signature(e) for e in possible}) > 1:
         labels = {c['id']: c.get('short_name', '') for c in data['cards']}
-        count = getattr(v, 'option_count', len(possible[0]['choices']))
         if (len(possible) != 2 or any(e.get('unresolved') or not labels[e['card_id']]
-                                     or len(e['choices']) != count for e in possible)):
-            return Advice('', '', (), '同名卡片資料或畫面選項數不符，暫不顯示效果')
+                                     for e in possible)):
+            return Advice('', '', (), '同名卡片資料不完整，暫不顯示效果')
         hints = []
         for column, event in enumerate(possible):
-            positions = getattr(v, 'option_positions', ())
+            positions = layout_positions(v, event)
             for i, hint in enumerate(fixed_hints(event)):
                 x, y = positions[i] if positions else (hint.x, hint.y)
                 hints.append(ChoiceHint(hint.index, x, y, hint.lines, column))
         return Advice('|'.join(e['id'] for e in possible), possible[0]['name'], tuple(hints),
-                      '同名卡片並排顯示；依所帶卡片查看', '效果依新版卡片表',
+                      '同名卡片並排顯示；依所帶卡片查看',
+                      '獎勵依新版卡片表；作用說明另據資料庫' if any(c.get('effect_detail_refs') for e in possible for c in e['choices']) else '效果依新版卡片表',
                       tuple(labels[e['card_id']] for e in possible))
     dates = {key(t.text) for t in v.within(DATE_AREA)}
     dates = {d for d in dates if re.fullmatch(r'(?:[1-9]|1[0-2]|[一二三四五六七八九十]{1,3})月(?:上旬|中旬|下旬|初)', d)}
@@ -173,9 +173,7 @@ def match_event(v, data):
     event = possible[0]
     if event.get('unresolved'):
         return Advice('', event['name'], (), event['unresolved'])
-    if getattr(v, 'option_count', len(event['choices'])) != len(event['choices']):
-        return Advice('', event['name'], (), '畫面選項數與資料不同，待補齊效果後才能顯示')
-    positions = getattr(v, 'option_positions', ())
+    positions = layout_positions(v, event)
     hints = (tuple(ChoiceHint(i+1, x, y, tuple(choice['lines']))
                    for i, ((x, y), choice) in enumerate(zip(positions, event['choices'])))
              if positions else fixed_hints(event))
@@ -183,7 +181,9 @@ def match_event(v, data):
     references = [r for r in event.get('name_references', []) if key(r['name']) == key(name)]
     warning = '數值依原困難表，新表有差異' if any(r['difference'] for r in references) else ''
     if group == 'card_events':
-        warning = '效果依使用者提供的新版卡片表'
+        warning = ('獎勵依新版卡片表；作用說明另據資料庫'
+                   if any(c.get('effect_detail_refs') for c in event['choices'])
+                   else '效果依使用者提供的新版卡片表')
     title = f"{next(iter(dates))} · {name}" if dated else name
     if event.get('category') == '天氣':
         title = weather_name(name)
@@ -191,6 +191,15 @@ def match_event(v, data):
             warning = '數值依原困難表，新表有差異'
     return Advice(event['id'], title, tuple(hints),
                   '已對照事件；效果依原表選項順序', warning)
+
+
+def layout_positions(view, event):
+    """Observed rows are optional layout hints, never an effect-display gate."""
+    positions = getattr(view, 'option_positions', ())
+    if (len(positions) == len(event['choices'])
+            and all(52 <= (b[1]-a[1])*900 <= 100 for a,b in zip(positions,positions[1:]))):
+        return positions
+    return ()
 
 
 def fixed_hints(event):
@@ -204,8 +213,8 @@ def fixed_hints(event):
 def option_positions(frame):
     """Find aligned white choice stars without reading option text.
 
-    Wrapped text changes row centers and spacing. Inspect a narrow vertical
-    strip, retaining the observed bottom area, spacing and star shape guards.
+    A single valid icon is enough to confirm choices are present. Partial or
+    extra detections do not suppress title recognition or source effects.
     """
     height, width = frame.shape[:2]
     patch = frame[round(360*height/900):round(710*height/900),
@@ -217,9 +226,8 @@ def option_positions(frame):
     mask = ((low > 185) & (patch.max(axis=2).astype(np.int16)-low < 45)).astype(np.uint8)
     _, _, stats, centers = cv2.connectedComponentsWithStats(mask)
     positions = []
-    stars = 0
     for (x, y, w, h, area), (cx, cy) in zip(stats[1:], centers[1:]):
-        if abs(cx-16) > 4:
+        if abs(cx-16) > 4 or not 400 <= 360+cy <= 660:
             continue
         if 9 <= w <= 20 and 12 <= h <= 24 and .23 <= area/(w*h) <= .55:
             shape = mask[y:y+h, x:x+w]
@@ -231,7 +239,6 @@ def option_positions(frame):
                     or shape[h//2-1:h//2+2].mean() <= .5):
                 continue
             positions.append((1080+cx, 360+cy))
-            stars += 1
         elif 12 <= w <= 18 and 18 <= h <= 24 and .55 < area/(w*h) < .8:
             # Locked options replace the star with a padlock. Require the open
             # shackle, filled body edges and dark keyhole; do not fill gaps by guess.
@@ -241,9 +248,6 @@ def option_positions(frame):
                     and lock[18:20,4:11].mean() > .8):
                 positions.append((1080+cx, 360+y+(h-1)/2))
     positions.sort(key=lambda p: p[1])
-    if (not stars or not 2 <= len(positions) <= 4 or not 620 <= positions[-1][1] <= 660
-            or any(not 52 <= b[1]-a[1] <= 100 for a, b in zip(positions, positions[1:]))):
-        return ()
     return tuple((x/1600, y/900) for x, y in positions)
 
 
@@ -300,7 +304,9 @@ class StableAdvice:
         self.count = 0
 
     def update(self, advice):
-        signature = (advice.event_id, tuple((h.index, round(h.y, 2)) for h in advice.hints)) if advice and advice.hints else None
+        # Partial icon readings may change only placement. Do not repeatedly
+        # hide the same confirmed event while observed/fallback rows alternate.
+        signature = (advice.event_id, tuple((h.index, h.column, h.lines) for h in advice.hints)) if advice and advice.hints else None
         self.count = self.count + 1 if signature and signature == self.previous else 1
         self.previous = signature
         if not signature:

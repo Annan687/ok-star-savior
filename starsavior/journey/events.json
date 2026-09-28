@@ -135,7 +135,7 @@
   "events": [
     {
       "id": "g0eh1a-3",
-      "name": "训练的方向",
+      "name": "训练的方向性",
       "periods": [
         "三月上旬",
         "3月上旬"
@@ -144,67 +144,215 @@
       "choices": [
         {
           "aliases": [
-            "对攻击有用的训练教科书"
+            "对攻击有帮助的训练声援"
           ],
           "lines": [
-            "下回合在力量 or 暴击 or 爆伤中选择装备"
+            "装备三选一：AX 攻击手套／EX 暴击头盔／FX 爆伤项链"
           ],
           "source_lines": [
-            "下回合在力量 or 暴击 or 爆伤中选择装备"
+            "AX攻击手套 EX爆击头盔 FX爆伤项链"
           ],
-          "source_cells": [
-            "B4",
-            "C4"
-          ]
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-09-27",
+            "description": "使用者確認四選項分組與代號；遊戲截圖及潛力說明，並明確更正為固定選擇而非隨機。"
+          }
         },
         {
           "aliases": [
-            "提高生存能力的训练教科书"
+            "对生存有帮助的训练声援"
           ],
           "lines": [
-            "下回合在生命 or 防御 or 速度中选择装备"
+            "装备三选一：BX 生命衣服／CX 防御裤子／DX 速度鞋子"
           ],
           "source_lines": [
-            "下回合在生命 or 防御 or 速度中选择装备"
+            "BX生命衣服 CX防御裤子 DX速度鞋子"
           ],
-          "source_cells": [
-            "B5",
-            "C5"
-          ]
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-09-27",
+            "description": "使用者確認四選項分組與代號；遊戲截圖及潛力說明，並明確更正為固定選擇而非隨機。"
+          }
         },
         {
           "aliases": [
-            "为应对各种情况的训练教科书"
+            "有助于应对各种状况的训练声援"
           ],
           "lines": [
-            "下回合在命中 or 命抗 or 吸血、最大韧性值、反击中选择装备"
+            "装备二选一：GX 命中眼镜／HX 抗性披风"
           ],
           "source_lines": [
-            "下回合在命中 or 命抗 or 吸血、最大韧性值、反击中选择装备"
+            "GX命中眼镜 HX抗性披风"
           ],
-          "source_cells": [
-            "B6",
-            "C6"
-          ]
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-09-27",
+            "description": "使用者確認四選項分組與代號；遊戲截圖及潛力說明，並明確更正為固定選擇而非隨機。"
+          }
+        },
+        {
+          "aliases": [
+            "有助于战术运用的声援"
+          ],
+          "lines": [
+            "特殊潜力三选一：",
+            "XX1 反击：反击概率 +20%",
+            "XX2 吸血：获得 15% 生命吸取",
+            "XX3 韧性：最大护盾 +3"
+          ],
+          "source_lines": [
+            "XX1反击 XX2吸血 XX3韧性；不是随机，现在是固定三选一。XX1反击概率提升20%；XX2获得15%生命吸取；XX3最大护盾提升3。"
+          ],
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-09-27",
+            "description": "使用者確認四選項分組與代號；遊戲截圖及潛力說明，並明確更正為固定選擇而非隨機。"
+          }
         }
       ],
       "source": {
         "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=g0eh1a",
         "sheet": "三月上旬（固定事件）",
-        "cell": "B3"
+        "cell": "B3",
+        "original_choices": [
+          {
+            "aliases": [
+              "对攻击有用的训练教科书"
+            ],
+            "lines": [
+              "下回合在力量 or 暴击 or 爆伤中选择装备"
+            ],
+            "source_lines": [
+              "下回合在力量 or 暴击 or 爆伤中选择装备"
+            ],
+            "source_cells": [
+              "B4",
+              "C4"
+            ]
+          },
+          {
+            "aliases": [
+              "提高生存能力的训练教科书"
+            ],
+            "lines": [
+              "下回合在生命 or 防御 or 速度中选择装备"
+            ],
+            "source_lines": [
+              "下回合在生命 or 防御 or 速度中选择装备"
+            ],
+            "source_cells": [
+              "B5",
+              "C5"
+            ]
+          },
+          {
+            "aliases": [
+              "为应对各种情况的训练教科书"
+            ],
+            "lines": [
+              "下回合在命中 or 命抗 or 吸血、最大韧性值、反击中选择装备"
+            ],
+            "source_lines": [
+              "下回合在命中 or 命抗 or 吸血、最大韧性值、反击中选择装备"
+            ],
+            "source_cells": [
+              "B6",
+              "C6"
+            ]
+          }
+        ]
       },
       "warnings": [],
       "name_aliases": [
-        "训练的方向性"
+        "训练的方向"
       ],
       "name_references": [
         {
           "name": "训练的方向性",
-          "source": "使用者提供的四選項遊戲截圖（2026-09-27）",
-          "status": "實際畫面名稱已確認",
-          "difference": "實際畫面為四選項，原表僅三選項；第四選項效果尚未提供，不套用三選項提示。"
+          "source": "使用者遊戲截圖與四選項補充（2026-09-27）",
+          "status": "實際名稱、四組效果及固定選擇已確認",
+          "difference": ""
         }
-      ]
+      ],
+      "confirmed_name": "训练的方向性",
+      "confirmed_choices": [
+        {
+          "aliases": [
+            "对攻击有帮助的训练声援"
+          ],
+          "lines": [
+            "装备三选一：AX 攻击手套／EX 暴击头盔／FX 爆伤项链"
+          ],
+          "source_lines": [
+            "AX攻击手套 EX爆击头盔 FX爆伤项链"
+          ],
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-09-27",
+            "description": "使用者確認四選項分組與代號；遊戲截圖及潛力說明，並明確更正為固定選擇而非隨機。"
+          }
+        },
+        {
+          "aliases": [
+            "对生存有帮助的训练声援"
+          ],
+          "lines": [
+            "装备三选一：BX 生命衣服／CX 防御裤子／DX 速度鞋子"
+          ],
+          "source_lines": [
+            "BX生命衣服 CX防御裤子 DX速度鞋子"
+          ],
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-09-27",
+            "description": "使用者確認四選項分組與代號；遊戲截圖及潛力說明，並明確更正為固定選擇而非隨機。"
+          }
+        },
+        {
+          "aliases": [
+            "有助于应对各种状况的训练声援"
+          ],
+          "lines": [
+            "装备二选一：GX 命中眼镜／HX 抗性披风"
+          ],
+          "source_lines": [
+            "GX命中眼镜 HX抗性披风"
+          ],
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-09-27",
+            "description": "使用者確認四選項分組與代號；遊戲截圖及潛力說明，並明確更正為固定選擇而非隨機。"
+          }
+        },
+        {
+          "aliases": [
+            "有助于战术运用的声援"
+          ],
+          "lines": [
+            "特殊潜力三选一：",
+            "XX1 反击：反击概率 +20%",
+            "XX2 吸血：获得 15% 生命吸取",
+            "XX3 韧性：最大护盾 +3"
+          ],
+          "source_lines": [
+            "XX1反击 XX2吸血 XX3韧性；不是随机，现在是固定三选一。XX1反击概率提升20%；XX2获得15%生命吸取；XX3最大护盾提升3。"
+          ],
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-09-27",
+            "description": "使用者確認四選項分組與代號；遊戲截圖及潛力說明，並明確更正為固定選擇而非隨機。"
+          }
+        }
+      ],
+      "correction": "2026-09-27 使用者確認新版四選項：攻擊三選一、生存三選一、GX/HX二選一、XX1/XX2/XX3三選一；非隨機發放。舊三選項保留於 source.original_choices。"
     },
     {
       "id": "36ta6i-3",
@@ -645,7 +793,7 @@
     },
     {
       "id": "1jbs0z-16",
-      "name": "武器工坊的营销策略",
+      "name": "工坊的宣传策略",
       "periods": [
         "五月中旬",
         "5月中旬"
@@ -736,6 +884,7 @@
       },
       "warnings": [],
       "name_aliases": [
+        "武器工坊的营销策略",
         "工业厂房推广策略"
       ],
       "name_references": [
@@ -744,8 +893,15 @@
           "source": "使用者另提供的事件表圖片 1（2026-09-27）",
           "status": "表格對照；尚非實機確認",
           "difference": "離開選項：原表無效果；圖片耐力 +5 或 +10。圖片列出多組能力門檻，難度未註明。"
+        },
+        {
+          "name": "工坊的宣传策略",
+          "source": "使用者提供的五月中旬四選項遊戲截圖（2026-09-27）",
+          "status": "實機名稱及四選項順序已確認；金幣50、專注70、體力20與原困難表對應",
+          "difference": "離開選項：原表無效果；圖片耐力 +5 或 +10。圖片列出多組能力門檻，難度未註明。"
         }
-      ]
+      ],
+      "confirmed_name": "工坊的宣传策略"
     },
     {
       "id": "1jbs0z-34",
@@ -2080,7 +2236,7 @@
     },
     {
       "id": "6h51n7-3",
-      "name": "沙滩排球锦标赛预赛",
+      "name": "沙滩排球比赛预赛",
       "periods": [
         "十一月初",
         "11月初",
@@ -2175,6 +2331,7 @@
         "原表分頁名稱與內文日期不同；保留兩者，待遊戲畫面核對。"
       ],
       "name_aliases": [
+        "沙滩排球锦标赛预赛",
         "沙滩排球锦标赛资格赛"
       ],
       "name_references": [
@@ -2183,12 +2340,19 @@
           "source": "使用者另提供的事件表圖片 4（2026-09-27）",
           "status": "表格對照；尚非實機確認",
           "difference": "圖片十一月初，原表內文十一月中旬；圖片列出多組能力门檻。"
+        },
+        {
+          "name": "沙滩排球比赛预赛",
+          "source": "使用者十一月中旬四選項遊戲截圖（2026-09-27）",
+          "status": "實機名稱與四選項順序確認，門檻力量500／專注150／體力20",
+          "difference": "圖片十一月初，原表內文十一月中旬；圖片列出多組能力门檻。"
         }
-      ]
+      ],
+      "confirmed_name": "沙滩排球比赛预赛"
     },
     {
       "id": "cflkah-3",
-      "name": "今日天气・热带夜晚",
+      "name": "今日天气・热带夜",
       "periods": [
         "十一月中旬",
         "11月中旬"
@@ -2247,6 +2411,7 @@
       },
       "warnings": [],
       "name_aliases": [
+        "今日天气・热带夜晚",
         "今天天气—热带夜晚",
         "今天的天气 - 热带",
         "热带夜晚"
@@ -2257,17 +2422,23 @@
           "source": "使用者另提供的事件表圖片 7（2026-09-27）",
           "status": "表格對照；尚非實機確認",
           "difference": "原表有命中／命抗加成；圖片第一項未列。"
+        },
+        {
+          "name": "今日天气・热带夜",
+          "source": "使用者遊戲截圖（2026-09-27）",
+          "status": "實機名稱與選項順序確認",
+          "difference": "原表有命中／命抗加成；圖片第一項未列。"
         }
       ],
-      "confirmed_name": "今日天气・热带夜晚",
+      "confirmed_name": "今日天气・热带夜",
       "confirmed_category": "天氣"
     },
     {
       "id": "nxjc5c-3",
-      "name": "沙滩排球锦标赛半决赛",
+      "name": "沙滩排球比赛准决赛",
       "periods": [
-        "十一月下旬",
-        "11月下旬"
+        "十二月上旬",
+        "12月上旬"
       ],
       "category": "固定",
       "choices": [
@@ -2342,7 +2513,18 @@
           "source": "使用者另提供的事件表圖片 4（2026-09-27）",
           "status": "表格對照；尚非實機確認",
           "difference": "圖片列出 125／150／200 專注門檻；原困難表命中 200。"
+        },
+        {
+          "name": "沙滩排球比赛准决赛",
+          "source": "使用者遊戲截圖（2026-09-27）",
+          "status": "實機名稱與選項順序確認",
+          "difference": "圖片列出 125／150／200 專注門檻；原困難表命中 200。"
         }
+      ],
+      "confirmed_name": "沙滩排球比赛准决赛",
+      "confirmed_periods": [
+        "十二月上旬",
+        "12月上旬"
       ]
     },
     {
@@ -3173,7 +3355,19 @@
     },
     {
       "id": "mnm1vp-62",
-      "name": "收藏家来了",
+      "name": "收藏家来访",
+      "confirmed_name": "收藏家来访",
+      "name_aliases": [
+        "收藏家来了"
+      ],
+      "name_references": [
+        {
+          "name": "收藏家来访",
+          "source": "使用者實際遊戲截圖及效果表（2026-09-27）",
+          "status": "實機名稱確認；效果沿用原表",
+          "difference": ""
+        }
+      ],
       "periods": [
         "一月下旬",
         "1月下旬"

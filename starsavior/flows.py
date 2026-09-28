@@ -762,6 +762,15 @@ class DailyFlows(EventFlows, Engine):
     def strategy_state(v):
         if v.has("聖鎧", area=TOP, contains=False):
             return None
+        # Automatic list-clear reward shares its title with the paid refresh.
+        # Require both result sentences and the single-button layout.
+        if (v.has("刷新對戰列表", area=(.24, .25, .76, .36), contains=False)
+                and v.has("已戰勝對戰列表中的所有對手，列表已重新整理。",
+                          area=(.30, .49, .72, .57), contains=False)
+                and v.has("獲得了額外的勝利獎勵。", area=(.30, .54, .72, .61), contains=False)
+                and v.one("確認", area=(.40, .64, .60, .74), required=False) is not None
+                and not v.has("取消", "連勝", "星光石", area=CENTER)):
+            return "全勝獎勵"
         if v.has("週聯賽獎勵", area=(.2, .05, .8, .4), contains=False):
             return "週聯賽獎勵"
         if v.has("防禦紀錄資訊", area=CENTER, contains=False):
@@ -825,8 +834,9 @@ class DailyFlows(EventFlows, Engine):
             raise NeedsReview("策略戰入口標籤放大重讀仍不完整，未點擊卡片；未刷新")
         raise NeedsReview("尚未進入策略戰對戰列表，入口未回應或仍在載入；未刷新")
 
-    def strategy_screen(self, *labels, area=FULL, seconds=15):
+    def strategy_screen(self, *labels, area=FULL, seconds=15, key_rewards=None):
         previous, stable, promotions = None, 0, 0
+        clear_stable, clear_submitted = 0, False
         for _ in range(max(3, int(seconds/.4))):
             v = self.see()
             if self.strategy_promotion(v):
@@ -835,14 +845,31 @@ class DailyFlows(EventFlows, Engine):
                     break
                 self.rewards(wait_initial=True)
                 previous, stable = None, 0
+                clear_stable = 0
                 continue
             state = self.strategy_state(v)
-            valid = state is not None and state in labels
+            if state == "全勝獎勵":
+                confirm = v.one("確認", area=(.40, .64, .60, .74))
+                clear_stable = clear_stable + 1 if v.enabled(confirm) else 0
+                if clear_stable >= 3 and not clear_submitted:
+                    self.click(confirm)
+                    clear_submitted = True
+                previous, stable = None, 0
+                self.task.sleep(.4)
+                continue
+            clear_stable = 0
+            valid = state is not None and state in labels and (not clear_submitted or state == "對戰列表")
             stable = stable + 1 if valid and state == previous else (1 if valid else 0)
             previous = state if valid else None
             if stable >= 3:
+                if clear_submitted and key_rewards is not None:
+                    # Observed list-clear reward: one Saint Armor key. Credit
+                    # only after the confirmation has returned to the list.
+                    key_rewards.append(1)
                 return v
             self.task.sleep(.4)
+        if clear_submitted:
+            raise NeedsReview("策略戰全勝獎勵已確認，但尚未回到對戰列表；未重複點擊")
         raise NeedsReview("策略戰頁面尚未穩定到達對戰列表或結算通知；未挑戰或刷新")
 
     def strategy(self):
@@ -876,7 +903,9 @@ class DailyFlows(EventFlows, Engine):
             if targets:
                 self.click(targets[0])
                 self.skip_battle(strategy=True)
-                if self.strategy_keys(self.strategy_screen("對戰列表")) != before-1:
+                key_rewards = []
+                after = self.strategy_keys(self.strategy_screen("對戰列表", key_rewards=key_rewards))
+                if after != before-1+sum(key_rewards):
                     raise NeedsReview("策略戰後未確認鑰匙扣除")
                 continue
             # Check the lower part before deciding every opponent was tried.

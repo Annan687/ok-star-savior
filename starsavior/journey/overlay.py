@@ -13,6 +13,9 @@ _traditional = OpenCC('s2t')
 
 
 def display_text(value, language='繁體'):
+    # Omit ownership/class labels in both measurement and painting; retain the
+    # source and meaningful parentheses such as duration, discount and caps.
+    value = re.sub(r'[（(][^（）()\n]*(?:专用|專用|专属|專屬)[）)]', '', value)
     value = value.replace('实力', '力量').replace('實力', '力量')
     value = value.replace('命中', '专注').replace('命抗', '保护')
     return (_simplify if language == '简体' else _traditional).convert(value)

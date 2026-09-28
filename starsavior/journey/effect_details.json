@@ -1,0 +1,581 @@
+{
+  "version": 1,
+  "policy": "仅补作用说明，保留奖励、折扣、回合与原始来源；未确认的上限不猜。",
+  "effects": [
+    {
+      "id": "potential-23011",
+      "kind": "battle_potential",
+      "aliases": [
+        "速度星痕"
+      ],
+      "description": "速度 +8",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Stigmata of Speed",
+        "id": 23011,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-22001",
+      "kind": "battle_potential",
+      "aliases": [
+        "攻击天赋"
+      ],
+      "description": "攻击力 +3%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Talent of Attack",
+        "id": 22001,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-22002",
+      "kind": "battle_potential",
+      "aliases": [
+        "生命天赋"
+      ],
+      "description": "最大生命 +3%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Talent of Life",
+        "id": 22002,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-20003",
+      "kind": "battle_potential",
+      "aliases": [
+        "防御感知"
+      ],
+      "description": "每级防御力 +1%，最高5级",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Sense of Defense",
+        "id": 20003,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-21001",
+      "kind": "battle_potential",
+      "aliases": [
+        "攻击技巧"
+      ],
+      "description": "攻击力 +2%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Skill of Attack",
+        "id": 21001,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-11043",
+      "kind": "battle_potential",
+      "aliases": [
+        "准备好了！"
+      ],
+      "description": "使用技能时，每个自身强化效果使专注 +10%，最多 +30%",
+      "source": {
+        "kind": "user_provided_table",
+        "title": "成为人气的装束／准备就绪！",
+        "checked": "2026-09-27",
+        "reference": "使用者補充表格截圖 52e0009e-08a1-47a0-800f-450c864b9fa3",
+        "note": "依使用者本次補充表格，成功及失敗均為每個強化效果專注+10%、最多30%；不混入外部資料庫的傷害加成。"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照",
+      "superseded_reference": {
+        "source": {
+          "url": "https://starsavior-db.pages.dev/potentials/",
+          "name": "Ready and Willing!",
+          "id": 11043,
+          "checked": "2026-09-27"
+        },
+        "description": "使用技能时，每个自身增益使专注 +10%、伤害 +5%（计算上限待核对）",
+        "uncertainty": "來源描述為最多5個增益，條件欄為3個；先保留一致的每個增益效果，不猜上限。"
+      }
+    },
+    {
+      "id": "potential-23050",
+      "kind": "battle_potential",
+      "aliases": [
+        "坚固的破坏"
+      ],
+      "description": "暴击伤害 +12%、最大生命 +4%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Unyielding Destruction",
+        "id": 23050,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-20006",
+      "kind": "battle_potential",
+      "aliases": [
+        "破坏感知"
+      ],
+      "description": "每级暴击伤害 +2%，最高5级",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Sense of Destruction",
+        "id": 20006,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-11029",
+      "kind": "battle_potential",
+      "aliases": [
+        "孤高的求道者"
+      ],
+      "description": "最大韧性 +1；受击后成功闪避，获得1回合暴击率 +100%增益",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Lone Seeker",
+        "id": 11029,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-21003",
+      "kind": "battle_potential",
+      "aliases": [
+        "防御技巧"
+      ],
+      "description": "防御力 +2%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Skill of Defense",
+        "id": 21003,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-30006",
+      "kind": "battle_potential",
+      "aliases": [
+        "沉默盾牌"
+      ],
+      "description": "抢先保护概率 +20%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Shield of Silence",
+        "id": 30006,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-21004",
+      "kind": "battle_potential",
+      "aliases": [
+        "速度技巧"
+      ],
+      "description": "速度 +2",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Skill of Speed",
+        "id": 21004,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-21005",
+      "kind": "battle_potential",
+      "aliases": [
+        "洞察技巧"
+      ],
+      "description": "暴击率 +3%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Skill of Insight",
+        "id": 21005,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-21006",
+      "kind": "battle_potential",
+      "aliases": [
+        "破坏技巧"
+      ],
+      "description": "暴击伤害 +4%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Skill of Destruction",
+        "id": 21006,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-34002",
+      "kind": "battle_potential",
+      "aliases": [
+        "弹力加速"
+      ],
+      "description": "每回合开始时速度 +10，最多3层",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Elastic Acceleration",
+        "id": 34002,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-23039",
+      "kind": "battle_potential",
+      "aliases": [
+        "锐利成长"
+      ],
+      "description": "最大生命 +6%、暴击率 +6%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Sharp Growth",
+        "id": 23039,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-20007",
+      "kind": "battle_potential",
+      "aliases": [
+        "专注感知"
+      ],
+      "description": "每级专注 +2%，最高5级",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Sense of Focus",
+        "id": 20007,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-32003",
+      "kind": "battle_potential",
+      "aliases": [
+        "敏捷姿态"
+      ],
+      "description": "单体特殊技攻击后行动条 +20%，每回合1次",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Agile Stance",
+        "id": 32003,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-22007",
+      "kind": "battle_potential",
+      "aliases": [
+        "专注天赋"
+      ],
+      "description": "专注 +6%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Talent of Focus",
+        "id": 22007,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-11026",
+      "kind": "battle_potential",
+      "aliases": [
+        "灾难应对协议"
+      ],
+      "description": "最大韧性 +1；特殊技或终结技暴击时，恢复造成伤害20%的生命",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Disaster Response Protocol",
+        "id": 11026,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照",
+      "source_note": "舊 Gamekee 描述僅特殊技暴擊吸血；本說明依本次查得資料庫的特殊技／終結技及最大韧性描述，需留意版本。"
+    },
+    {
+      "id": "potential-21002",
+      "kind": "battle_potential",
+      "aliases": [
+        "生命技巧"
+      ],
+      "description": "最大生命 +2%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Skill of Life",
+        "id": 21002,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-20002",
+      "kind": "battle_potential",
+      "aliases": [
+        "生命感知"
+      ],
+      "description": "每级最大生命 +1%，最高5级",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Sense of Life",
+        "id": 20002,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-25002",
+      "kind": "battle_potential",
+      "aliases": [
+        "触发层叠"
+      ],
+      "description": "特殊技攻击后，特殊技伤害 +5%，最多5层",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Stack Trigger",
+        "id": 25002,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-11011",
+      "kind": "battle_potential",
+      "aliases": [
+        "从容应对"
+      ],
+      "description": "持有「Rule of Monastir」时受击有25%概率反击；受到被嘲讽敌人攻击时必定反击",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Composed Response",
+        "id": 11011,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照",
+      "uncertainty": "專屬增益中文正式名稱未核對，暫保留來源英文名稱。"
+    },
+    {
+      "id": "potential-20001",
+      "kind": "battle_potential",
+      "aliases": [
+        "攻击感知"
+      ],
+      "description": "每级攻击力 +1%，最高5级",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Sense of Attack",
+        "id": 20001,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-30004",
+      "kind": "battle_potential",
+      "aliases": [
+        "强韧意志"
+      ],
+      "description": "最大韧性 +2；未被破韧时，受击暴击伤害抗性 +20%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Unyielding Will",
+        "id": 30004,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-21007",
+      "kind": "battle_potential",
+      "aliases": [
+        "集中技巧",
+        "专注技巧"
+      ],
+      "description": "专注 +4%",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Skill of Focus",
+        "id": 21007,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "potential-32004",
+      "kind": "battle_potential",
+      "aliases": [
+        "侵占的暗影"
+      ],
+      "description": "使用普通攻击时暴击率 +5%，最多5层",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/potentials/",
+        "name": "Shadow of Erosion",
+        "id": 32004,
+        "checked": "2026-09-27"
+      },
+      "match_basis": "英文事件、來源卡片及事件順序對照"
+    },
+    {
+      "id": "journey-responsibility",
+      "kind": "journey_status",
+      "aliases": [
+        "责任感"
+      ],
+      "description": "所有训练失败率下降",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/journey/events/",
+        "checked": "2026-09-27",
+        "matches": [
+          {
+            "event_id": 710250102,
+            "event": "The Customer Is Always Right!",
+            "card": "Customized Training to Cover Weaknesses",
+            "description": "No matter how absurd things turn out, you consistently meet your deadlines until the very end. Training failure rate decreases."
+          }
+        ]
+      },
+      "user_confirmation": "2026-09-27 使用者圖片明示全訓練失敗率下降；持續3回合沿用事件資料。"
+    },
+    {
+      "id": "journey-confidence",
+      "kind": "journey_status",
+      "aliases": [
+        "自信感"
+      ],
+      "description": "训练失败率下降",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/journey/events/",
+        "checked": "2026-09-27",
+        "matches": [
+          {
+            "event_id": 710110101,
+            "event": "For Whom the Soup Boils",
+            "card": "Night View Beyond the Window",
+            "description": "You feel unstoppable. Training failure rate decreases."
+          }
+        ]
+      }
+    },
+    {
+      "id": "journey-operation-policy",
+      "kind": "journey_status",
+      "aliases": [
+        "作战指令"
+      ],
+      "description": "训练失败率下降",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/journey/events/",
+        "checked": "2026-09-27",
+        "matches": [
+          {
+            "event_id": 730010102,
+            "event": "When Kids Run Wild",
+            "card": "Nostalgia Strikes Back",
+            "description": "Coordinates the field with skillful command. Training failure rate decreases."
+          }
+        ]
+      }
+    },
+    {
+      "id": "journey-muscle-injury",
+      "kind": "journey_status",
+      "aliases": [
+        "肌肉负伤"
+      ],
+      "description": "力量训练经验值获取减少",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/journey/events/",
+        "checked": "2026-09-27",
+        "matches": [
+          {
+            "event_id": 710430101,
+            "event": "Spreading Her Wings",
+            "card": "The Great and Amazing Bunny Girl",
+            "description": "You feel that staying still is best. Strength Training EXP gained decreases."
+          }
+        ]
+      }
+    },
+    {
+      "id": "journey-overeating",
+      "kind": "journey_status",
+      "aliases": [
+        "暴食"
+      ],
+      "description": "训练获得的力量减少",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/journey/events/",
+        "checked": "2026-09-27",
+        "matches": [
+          {
+            "event_id": 710430102,
+            "event": "A Refined Palate",
+            "card": "The Great and Amazing Bunny Girl",
+            "description": "You feel sluggish from overeating. Strength gained during training decreases."
+          }
+        ]
+      }
+    },
+    {
+      "id": "journey-burnout",
+      "kind": "journey_status",
+      "aliases": [
+        "疲劳不堪"
+      ],
+      "description": "训练时无法获得生命属性",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/journey/events/",
+        "checked": "2026-09-27",
+        "matches": [
+          {
+            "event_id": 710240101,
+            "event": "Tell Us About Your First Love",
+            "card": "Divine Trial",
+            "description": "Your excessive passion has burned you out. You cannot gain Vitality during training."
+          }
+        ]
+      }
+    },
+    {
+      "id": "journey-keen-eye",
+      "kind": "journey_status",
+      "aliases": [
+        "鉴赏家"
+      ],
+      "description": "训练获得的专注增加",
+      "source": {
+        "url": "https://starsavior-db.pages.dev/journey/events/",
+        "checked": "2026-09-27",
+        "matches": [
+          {
+            "event_id": 710520102,
+            "event": "Donut Deduction",
+            "card": "There's Only One Truth",
+            "description": "Your observational skills are excellent. Focus gained during training increases."
+          }
+        ]
+      }
+    }
+  ]
+}

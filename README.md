@@ -24,11 +24,11 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-**v0.2.6 測試版**：新增跑馬效果提示與日課簡體介面支援，修正策略戰入口、免費禮包、票券辨識及排程中斷續跑。詳見 [更新紀錄](CHANGELOG.md)。
+**v0.2.7 測試版**：修正策略戰全勝後卡住、跑馬提示閃爍與漏顯示，補齊事件資料及增益／潛力作用。詳見 [更新紀錄](CHANGELOG.md)。
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.6/ok-star-savior-win32-Global-setup.exe) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.7/ok-star-savior-win32-Global-setup.exe) ·
 
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.6) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.7) ·
 
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 
@@ -78,15 +78,15 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-**[v0.2.6 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.6)。一般使用者請下載 Global 安裝版。**
+**[v0.2.7 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.7)。一般使用者請下載 Global 安裝版。**
 
 | 檔案 | 用途 |
 
 | --- | --- |
 
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.6/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.7/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
 
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.6/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.7/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 
 | `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
 
@@ -240,7 +240,7 @@ OKSS 會優先停止流程並保留除錯資訊，
 
 **遊戲介面目前需使用簡體中文。** 在左側「任務」選擇「跑馬小幫手（困難・預覽版）」並開始，再切回遊戲。辨識到已收錄事件時，選項左側會顯示半透明效果提示；滑鼠可穿透提示直接操作遊戲。背景不透明度和提示文字繁／簡可在任務設定調整。
 
-已收錄使用者提供的[事件查詢表](https://docs.qq.com/sheet/DSVBESGNncW5oVEJx)中 24 個非卡片分頁、43 個困難旅程事件。先用選項圖示判斷是否出現二至四選項，沒有選項就不做文字辨識。通常只核對事件名稱；同名且效果不同時才補讀日期，連續兩幀確認後按圖示實際高度及原表順序顯示效果（含兩行文字選項），不需要讀取選項文字。未知、不完整或仍有歧義的標題不會套用效果；新舊譯名差異仍需實際畫面核對。二／三／四選項位置已通過使用者截圖離線驗證。新版「訓練的方向性」有四選項，而原表僅有三項效果，尚未補齊前不顯示舊提示。
+已收錄使用者提供的[事件查詢表](https://docs.qq.com/sheet/DSVBESGNncW5oVEJx)中 24 個非卡片分頁、43 個困難旅程事件。先用選項圖示判斷是否出現選項，沒有選項就不做文字辨識。通常只核對事件名稱；同名且效果不同時才補讀日期，連續兩幀確認後按圖示實際高度及資料順序顯示效果；圖示位置讀不齊時按固定位置顯示完整資料，不以選項數量阻擋（含兩行文字選項），不需要讀取選項文字。未知、不完整或仍有歧義的標題不會套用效果；新舊譯名差異仍需實際畫面核對。二／三／四選項位置已通過使用者截圖離線驗證。「訓練的方向性」四選項已依後續遊戲截圖與使用者確認補齊，固定提供各組裝備／特殊潛力讓玩家擇一；此資料修正已包含於 v0.2.7。增益／減益與戰鬥潛力會補充作用，浮窗不顯示角色／職業專屬註記。
 
 天氣事件核對「晴朗、打雷、濃霧、熱帶夜晚、暴雪」，保留雷雨／大霧舊名，不依賴日期或「今日天氣」前綴。已移除「事件查詢」與卡片查詢視窗，事件資料保留在包內供浮窗使用。
 
@@ -558,7 +558,7 @@ Star Savior：目前遊戲版本
 
 | --- | --- |
 
-| 日課流程 | v0.2.6 通過 466 項離線測試與 23 個子測試；2026-09-27 單一帳號簡體介面完整 20 項日課及完成後退出實測通過。朋友策略戰入口修正已離線回放，仍待朋友設備實測。[修正內容](CHANGELOG.md) |
+| 日課流程 | v0.2.7 通過 491 項離線測試與 23 個子測試；策略戰全勝通知修正已離線回放，尚未實機重跑。2026-09-27 單一帳號簡體介面完整 20 項日課及完成後退出實測通過。朋友策略戰入口修正已離線回放，仍待朋友設備實測。[修正內容](CHANGELOG.md) |
 
 | 自訂排程 | 本機原始碼版已實測 22:00 定時啟動 Steam 遊戲，只跑保存的五項設定，完成後關閉遊戲及 OKSS；首頁仍保留完整日課設定。 |
 
@@ -682,7 +682,7 @@ OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`�
 
 ## 📌 專案狀態
 
-目前提供 `v0.2.6` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
+目前提供 `v0.2.7` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
 
 歡迎透過 [Issues](https://github.com/Annan687/ok-star-savior/issues) 提供不同環境的測試結果與問題紀錄。
 
