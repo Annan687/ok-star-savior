@@ -16,7 +16,8 @@ CHOICES = {"體力刷關": ["不消耗體力", *FARM],
 
 
 def default_profile():
-    return {"執行項目": [], **{key: choices[0] for key, choices in CHOICES.items()}}
+    return {"執行項目": [], "流程失敗時繼續下一項": False,
+            **{key: choices[0] for key, choices in CHOICES.items()}}
 
 
 def validate_profile(value):
@@ -26,8 +27,11 @@ def validate_profile(value):
     # V1 snapshots already stored in Windows include the old event name.
     # Ignore that retired field without changing the schedule's selected tasks.
     value = {key: item for key, item in value.items() if key != "活動名稱"}
+    value.setdefault("流程失敗時繼續下一項", False)
     if set(value) != set(default_profile()):
         raise NeedsReview("自訂排程設定不完整，請修改此排程並重新儲存")
+    if type(value["流程失敗時繼續下一項"]) is not bool:
+        raise NeedsReview("流程失敗時繼續下一項必須為勾選設定")
     selected = value["執行項目"]
     if not isinstance(selected, list) or not all(isinstance(item, str) for item in selected):
         raise NeedsReview("自訂排程項目格式錯誤")

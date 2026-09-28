@@ -98,6 +98,8 @@ class StartController:
                     return False
             else:
                 logger.info('windows.start_exe is False, skip start_device')
+            if not self.focus_connected_window():
+                return False
             self.check_gpu_driver_post_processing()
 
             def add_task_to_enable(enable_task):
@@ -124,6 +126,31 @@ class StartController:
             logger.error(f'do_start exception: {e}', e)
             communicate.starting_emulator.emit(True, self.tr(f'Start failed: {e}'), 0)
             return False
+
+    def focus_connected_window(self):
+        """Opt-in foreground prerequisite after connection, before tasks run."""
+        windows = self.config.get('windows') or {}
+        if not windows.get('bring_to_front_on_start') or windows.get('interaction') != 'Pynput':
+            return True
+        stable = 0
+        for attempt in range(15):
+            if self.exit_event.is_set():
+                return False
+            window = getattr(og.device_manager, 'hwnd_window', None)
+            foreground = bool(window and window.exists and window.is_foreground())
+            if foreground:
+                stable += 1
+                if stable >= 2:
+                    return True
+            else:
+                stable = 0
+                if window and window.exists and attempt % 5 == 0:
+                    window.bring_to_front()
+            if self.exit_event.wait(.2):
+                return False
+        communicate.starting_emulator.emit(
+            True, self.tr('無法確認遊戲已切到前台，未開始任務；請點選遊戲視窗後重試。'), 0)
+        return False
 
     def _wait_until_device_ready(self, refresh_first=True):
         wait_until = time.time() + self.start_timeout

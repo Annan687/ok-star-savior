@@ -138,7 +138,7 @@ class PreviewBackend:
     def __init__(self):
         self.values = {"執行項目": [n for n, _ in STEPS], "體力刷關": "不消耗體力",
                        "限時據點關卡": "略過", "激戰委託關卡": "略過",
-                       "Exit After Task": False}
+                       "Exit After Task": False, "流程失敗時繼續下一項": False}
 
     def settings(self):
         return dict(self.values)
@@ -301,6 +301,12 @@ class DailyPanel(QWidget):
 
         options, option_layout = self.card()
         option_layout.addWidget(self.label("執行設定", "sectionTitle"))
+        self.continue_on_failure = QCheckBox("流程失敗時繼續下一項")
+        self.continue_on_failure.setChecked(bool(values.get("流程失敗時繼續下一項", False)))
+        self.continue_on_failure.setToolTip("保留失敗紀錄，繼續後續日課；失敗項目可於下次續跑補做。")
+        self.continue_on_failure.toggled.connect(self.persist)
+        self.settings_widgets.append(self.continue_on_failure)
+        option_layout.addWidget(self.continue_on_failure)
         self.exit_after = QCheckBox("完成後關閉遊戲與 OKSS")
         self.exit_after.setChecked(bool(values.get("Exit After Task", False)))
         self.exit_after.toggled.connect(self.persist)
@@ -430,6 +436,7 @@ class DailyPanel(QWidget):
         self.backend.save({"執行項目": self.selected(), "體力刷關": self.farm.currentText(),
                            "限時據點關卡": self.timed.currentText(),
                            "激戰委託關卡": self.onslaught.currentText(),
+                           "流程失敗時繼續下一項": self.continue_on_failure.isChecked(),
                            "Exit After Task": self.exit_after.isChecked()})
         self.refresh()
 

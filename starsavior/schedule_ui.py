@@ -66,6 +66,9 @@ class ProfileDialog(MessageBoxBase):
             self.options[key] = combo
             form.addWidget(QLabel(key), index, 0); form.addWidget(combo, index, 1)
         self.viewLayout.addWidget(settings)
+        self.continue_on_failure = CheckBox("流程失敗時繼續下一項")
+        self.continue_on_failure.setChecked(profile.get("流程失敗時繼續下一項", False))
+        self.viewLayout.addWidget(self.continue_on_failure)
         self.yesButton.setText("使用這些設定")
         self.cancelButton.setText("取消")
         self.widget.setMinimumWidth(740)
@@ -86,6 +89,7 @@ class ProfileDialog(MessageBoxBase):
 
     def value(self):
         return validate_profile({"執行項目": [name for name, box in self.checks.items() if box.isChecked()],
+                                 "流程失敗時繼續下一項": self.continue_on_failure.isChecked(),
                                  **{key: combo.currentText() for key, combo in self.options.items()}})
 
 

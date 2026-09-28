@@ -24,11 +24,11 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-**v0.2.7 測試版**：修正策略戰全勝後卡住、跑馬提示閃爍與漏顯示，補齊事件資料及增益／潛力作用。詳見 [更新紀錄](CHANGELOG.md)。
+**v0.2.8 測試版**：新增流程失敗後繼續下一項，修正啟動前台、登入叉叉、事件選單與賓果盤辨識。詳見 [更新紀錄](CHANGELOG.md)。
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.7/ok-star-savior-win32-Global-setup.exe) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.8/ok-star-savior-win32-Global-setup.exe) ·
 
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.7) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.8) ·
 
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 
@@ -78,15 +78,15 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-**[v0.2.7 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.7)。一般使用者請下載 Global 安裝版。**
+**[v0.2.8 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.8)。一般使用者請下載 Global 安裝版。**
 
 | 檔案 | 用途 |
 
 | --- | --- |
 
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.7/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.8/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
 
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.7/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.8/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 
 | `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
 
@@ -109,6 +109,8 @@ OKSS 是第三方遊戲自動化工具：
 5. 勾選需要的日課與刷關目標，再按「開始日課」。需要手動操作時，先按「暫停」或「停止」。
 
 中斷後再按「開始日課」，會跳過上一輪已處理的項目，從需檢查及尚未執行的項目接續；重開 OKSS 後也保留進度。續跑限電腦本機同一日期、相同勾選與刷關設定。要重跑全部勾選項目，請按「重新開始」。整輪完成後、日期或設定改變後會開始新一輪；計劃任務啟動仍照該排程完整執行，不套用首頁續跑紀錄。「跟隨日課設定」排程中斷後，可按首頁「開始日課」接續同日、同設定的進度；自訂排程保持獨立。
+
+首頁「執行設定」可勾選「流程失敗時繼續下一項」，預設關閉。單項失敗會保留原因並繼續後續項目；失敗項目仍需檢查，下次可續跑補做。啟動失敗、擷取失效或手動停止仍會中止；有失敗的輪次不自動關閉。跟隨首頁的排程沿用此設定，自訂排程可獨立勾選。
 
 首次使用時，體力刷關預設為「不消耗體力」，限時據點預設略過。
 
@@ -558,7 +560,7 @@ Star Savior：目前遊戲版本
 
 | --- | --- |
 
-| 日課流程 | v0.2.7 通過 491 項離線測試與 23 個子測試；策略戰全勝通知修正已離線回放，尚未實機重跑。2026-09-27 單一帳號簡體介面完整 20 項日課及完成後退出實測通過。朋友策略戰入口修正已離線回放，仍待朋友設備實測。[修正內容](CHANGELOG.md) |
+| 日課流程 | v0.2.8 通過 529 項離線測試與 23 個子測試；前台／登入、事件選單、賓果及失敗後繼續功能尚待實機重跑。策略戰鑰匙重讀補強尚缺朋友原始截圖驗證。2026-09-27 單一帳號簡體介面完整 20 項日課及完成後退出實測通過。朋友策略戰入口修正已離線回放，仍待朋友設備實測。[修正內容](CHANGELOG.md) |
 
 | 自訂排程 | 本機原始碼版已實測 22:00 定時啟動 Steam 遊戲，只跑保存的五項設定，完成後關閉遊戲及 OKSS；首頁仍保留完整日課設定。 |
 
@@ -682,7 +684,7 @@ OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`�
 
 ## 📌 專案狀態
 
-目前提供 `v0.2.7` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
+目前提供 `v0.2.8` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
 
 歡迎透過 [Issues](https://github.com/Annan687/ok-star-savior/issues) 提供不同環境的測試結果與問題紀錄。
 

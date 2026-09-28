@@ -235,8 +235,16 @@ class Engine:
                 self.click(token)
                 self.rewards()
                 current = self.see()
-                if self.is_menu(current) and current.has(destination, area=(.07, .015, .38, .13), contains=False):
-                    self.click(Text("關閉已在目的地的選單", .27, .36, .01, .01))
+                if self.is_menu(current):
+                    at_destination = current.has(destination, area=(.07, .015, .38, .13), contains=False)
+                    if not at_destination and destination == "事件":
+                        # The adjacent help icon can merge into the heading as
+                        # "事件?". Re-read only the observed heading text, not
+                        # the menu tile; retain exact, unique label matching.
+                        at_destination = self.reread_claim_button(
+                            current, (.123, .035, .168, .095), ("事件",)) is not None
+                    if at_destination:
+                        self.click(Text("關閉已在目的地的選單", .27, .36, .01, .01))
                 return
             icon = v.menu_icon()
             if icon:

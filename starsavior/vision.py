@@ -315,13 +315,13 @@ class View:
                 hits.append(token)
         return hits
 
-    def close_icon(self, area):
+    def close_icon(self, area, light_min=200):
         """Locate a small light or dark X inside the expected dialog corner."""
         patch = self.crop(area)
         h, w = self.frame.shape[:2]
         gray = cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY)
         candidates = []
-        for mask in (cv2.inRange(gray, 200, 255), cv2.inRange(gray, 0, 70)):
+        for mask in (cv2.inRange(gray, light_min, 255), cv2.inRange(gray, 0, 70)):
             contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for contour in contours:
                 x, y, cw, ch = cv2.boundingRect(contour)

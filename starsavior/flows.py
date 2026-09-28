@@ -95,7 +95,7 @@ class DailyFlows(EventFlows, Engine):
                 return "已到大廳"
             if v.has("LOGINBONUS", "登入獎勵", "勤紀錄"):
                 unknown_since = None
-                self.close()
+                self.close_login_bonus()
             elif v.has("星穹傳送門") and v.has("全新首領登場"):
                 unknown_since = None
                 self.close((.86, .15, .96, .30))
@@ -134,6 +134,40 @@ class DailyFlows(EventFlows, Engine):
                 self.task.sleep(.5)
                 continue
         raise NeedsReview("登入領取超過次數上限")
+
+    def close_login_bonus(self):
+        # This calendar uses a gray X (observed peak brightness 189), unlike
+        # the bright close buttons elsewhere. Keep the lower threshold local.
+        area = (.75, .01, .99, .14)
+        previous, stable, absent = None, 0, 0
+        submitted = False
+        for _ in range(40):
+            v = self.see()
+            calendar = v.has("LOGINBONUS", "登入獎勵", "勤紀錄")
+            if not calendar:
+                stable, previous = 0, None
+                absent += 1
+                if absent >= 3:
+                    return
+            else:
+                absent = 0
+                if not submitted:
+                    try:
+                        token = v.close_icon(area, light_min=160)
+                    except NeedsReview:
+                        token = None
+                    same = (token is not None and previous is not None
+                            and abs(token.cx-previous.cx) < .003
+                            and abs(token.cy-previous.cy) < .003)
+                    stable = stable + 1 if same else (1 if token is not None else 0)
+                    previous = token
+                    if stable >= 3:
+                        self.click(token)
+                        submitted = True
+            self.task.sleep(.4)
+        if submitted:
+            raise NeedsReview("登入獎勵關閉後畫面未更新；未重複點擊叉叉")
+        raise NeedsReview("登入獎勵叉叉等待後仍不明確；未點擊")
 
     @staticmethod
     def title_start_button(v):
@@ -751,11 +785,18 @@ class DailyFlows(EventFlows, Engine):
             raise NeedsReview("策略戰鑰匙重讀缺少頁面標題")
         import cv2
         patch = v.crop((.63, .035, .661, .085))
-        readings = self.task.ocr(frame=cv2.resize(patch, None, fx=2, fy=2), threshold=.9)
-        if len(readings) == 1 and re.fullmatch(r"\d+\s*/\s*6", readings[0].name.strip()):
-            value = fraction(readings[0].name, 6)
-            if value is not None:
-                return value[0]
+        if patch.size:
+            for scale, contrast in ((2, False), (3, True)):
+                image = cv2.resize(patch, None, fx=scale, fy=scale)
+                if contrast:
+                    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                    image = cv2.cvtColor(cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX),
+                                         cv2.COLOR_GRAY2BGR)
+                readings = self.task.ocr(frame=image, threshold=.9)
+                if len(readings) == 1 and re.fullmatch(r"\d+\s*/\s*6", readings[0].name.strip()):
+                    value = fraction(readings[0].name, 6)
+                    if value is not None:
+                        return value[0]
         raise NeedsReview("策略戰鑰匙放大重讀仍不明確")
 
     @staticmethod

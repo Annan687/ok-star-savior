@@ -288,17 +288,18 @@ class EventFlows:
         self.event_wait(lambda v: self.event_home(v, "gray"), "領獎後未回到灰色研究首頁")
         return "活動每日、點數及特殊任務獎勵已檢查"
 
-    @staticmethod
-    def orbital_board(v):
+    def orbital_board(self, v):
+        if (v.has("每日任務", area=(.36, .20, .59, .30), contains=False)
+                or v.has("REWARD", "LINK", area=(.30, .30, .66, .62), contains=False)
+                or not v.has("灰色研究環形鏈路", area=(.04, .10, .24, .19))
+                or not v.has("活動任務", area=(.58, .20, .66, .29), contains=False)):
+            return False
         draw = v.find("全部抽取", area=(.82, .91, .90, .97), contains=False)
         refresh = v.find("更新賓果盤", area=(.83, .91, .96, .97), contains=False)
-        return (not v.has("每日任務", area=(.36, .20, .59, .30), contains=False)
-                and not v.has("REWARD", "LINK", area=(.30, .30, .66, .62), contains=False)
-                and v.has("灰色研究環形鏈路", area=(.04, .10, .24, .19))
-                and v.has("活動任務", area=(.58, .20, .66, .29), contains=False)
-                and ((len(draw) == 1 and not refresh)
-                     or (len(refresh) == 1 and not draw
-                         and v.has("賓果盤完成獎勵", area=(.81, .21, .91, .27), contains=False))))
+        if len(draw) == 1 and not refresh:
+            return True
+        # The refresh button replaces draw only when the board is complete.
+        return len(refresh) == 1 and not draw
 
     def orbital_tokens(self, v):
         tokens = [t for t in v.within((.916, .14, .96, .19)) if re.fullmatch(r"[\d,]+", t.key)]
