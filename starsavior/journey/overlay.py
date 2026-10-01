@@ -17,7 +17,10 @@ def display_text(value, language='繁體'):
     # source and meaningful parentheses such as duration, discount and caps.
     value = re.sub(r'[（(][^（）()\n]*(?:专用|專用|专属|專屬)[）)]', '', value)
     value = value.replace('实力', '力量').replace('實力', '力量')
-    value = value.replace('命中', '专注').replace('命抗', '保护')
+    value = value.replace('忍耐', '韧性')
+    # Keep the user-requested training labels paired with GX / IX as shown
+    # in their reference; ordinary effect terminology still uses 專注.
+    value = re.sub(r'命中(?!（GX）|\+抗性（IX）)', '专注', value).replace('命抗', '保护')
     return (_simplify if language == '简体' else _traditional).convert(value)
 
 
@@ -43,13 +46,14 @@ def wrapped_lines(hint, card_width, scale=1, language='繁體'):
 
 
 def visible_effect_lines(lines):
-    """Hide coin costs only; retain rewards, other costs and source data."""
+    """Hide option costs; retain result effects, status descriptions and sources."""
     visible = []
     for line in lines:
         parts = []
         for part in re.split('[｜|]', line):
             compact = re.sub(r'\s+', '', _simplify.convert(part))
-            if re.fullmatch(r'(?:(?:消耗|消费)(?:旧硬币|硬币|金币)\d+|(?:旧硬币|硬币|金币)[-−]\d+)', compact):
+            if (compact.startswith(('消耗', '消费'))
+                    or re.fullmatch(r'(?:旧硬币|硬币|金币|体力)[-−]\d+', compact)):
                 continue
             if part.strip():
                 parts.append(part.strip())

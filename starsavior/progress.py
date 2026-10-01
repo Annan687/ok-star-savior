@@ -9,10 +9,15 @@ from .policy import NeedsReview
 PATH = Path('runs/home-progress.json')
 
 
-def signature(config):
+def signature(config, *, legacy=False, include_retired=False):
     values = {key: config.get(key, '略過') for key in
-              ('體力刷關', '限時據點關卡', '激戰委託關卡')}
-    values['執行項目'] = sorted(set(config['執行項目']))
+              ('體力刷關', '限時據點關卡')}
+    selected = set(config['執行項目']) - {'激戰委託'}
+    if legacy:
+        values['激戰委託關卡'] = config.get('激戰委託關卡', '略過')
+        if include_retired:
+            selected.add('激戰委託')
+    values['執行項目'] = sorted(selected)
     values['活動'] = CURRENT_EVENT_NAME
     return hashlib.sha256(json.dumps(values, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
 
@@ -22,7 +27,9 @@ class HomeProgress:
         self.path = Path(path) if path is not None else PATH
         self.day = today or date.today().isoformat()
         self.signature = signature(config)
-        self.selected = set(config['執行項目'])
+        self.legacy_signatures = {signature(config, legacy=True, include_retired=selected)
+                                  for selected in (False, True)}
+        self.selected = set(config['執行項目']) - {'激戰委託'}
         self.data = None
 
     def load(self):
@@ -33,8 +40,13 @@ class HomeProgress:
             if not isinstance(data, dict) or data.get('schema') != 1:
                 raise ValueError('schema')
             if (data.get('day') != self.day or data.get('scope') not in ('home', 'schedule')
-                    or data.get('signature') != self.signature or data.get('finished') is True):
+                    or data.get('signature') not in {self.signature, *self.legacy_signatures}
+                    or data.get('finished') is True):
                 return None
+            if data.get('signature') in self.legacy_signatures and isinstance(data.get('done'), dict):
+                data['done'].pop('激戰委託', None)
+                if data.get('current') == '激戰委託':
+                    data.update(current=None, detail='')
             if (data.get('finished') is not False or not isinstance(data.get('done'), dict)
                     or set(data['done']) - self.selected
                     or any(not isinstance(v, str) for v in data['done'].values())

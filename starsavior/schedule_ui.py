@@ -83,8 +83,7 @@ class ProfileDialog(MessageBoxBase):
             return
         selected = {name for name, box in self.checks.items() if box.isChecked()}
         self.yesButton.setEnabled(bool(selected))
-        for key, related in (("體力刷關", {"體力刷關"}), ("限時據點關卡", {"限時據點"}),
-                             ("激戰委託關卡", {"激戰委託"})):
+        for key, related in (("體力刷關", {"體力刷關"}), ("限時據點關卡", {"限時據點"})):
             self.options[key].setEnabled(bool(selected & related))
 
     def value(self):

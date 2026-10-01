@@ -41,7 +41,7 @@ def check_source(root=ROOT, repository=None):
                      'starsavior/journey/task.py', 'starsavior/journey/model.py',
                      'starsavior/journey/overlay.py', 'starsavior/journey/events.json',
                      'starsavior/journey/cards.json',
-                     *(f'starsavior/journey/card_tables/{i:02}.png' for i in range(1, 8)),
+                     *(f'starsavior/journey/card_tables/{i:02}.png' for i in range(1, 9)),
                      'starsavior/case_task.py', 'starsavior/case_files/source.json',
                      'starsavior/case_files/assets/CoreHost.exe',
                      'starsavior/case_files/assets/RouteSearch-v1.2.exe',
@@ -72,7 +72,7 @@ def smoke():
     assert Path(ok.__file__).resolve() == ROOT / 'vendor/ok-script/ok/__init__.py'
     app = QApplication.instance() or QApplication([])
     panel = DailyPanel(PreviewBackend())
-    assert len(panel.checks) == len(STEPS) == 20
+    assert len(panel.checks) == len(STEPS) == 19
     assert not panel.start_button.isEnabled()
     panel.timer.stop()
     panel.close()

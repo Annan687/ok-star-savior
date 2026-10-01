@@ -5,14 +5,12 @@ import re
 import sys
 
 from .policy import FARM, TIMED, NeedsReview
-from .events import ONSLAUGHT
 
 CUSTOM_TASK = "starsavior.tasks.CustomDailyTask"
 MARKER = "OKSS_CUSTOM_V1:"
 FLAG = "--okss-profile"
 CHOICES = {"體力刷關": ["不消耗體力", *FARM],
-           "限時據點關卡": ["略過", *TIMED],
-           "激戰委託關卡": ["略過", *ONSLAUGHT]}
+           "限時據點關卡": ["略過", *TIMED]}
 
 
 def default_profile():
@@ -26,7 +24,7 @@ def validate_profile(value):
         raise NeedsReview("自訂排程設定不完整，請修改此排程並重新儲存")
     # V1 snapshots already stored in Windows include the old event name.
     # Ignore that retired field without changing the schedule's selected tasks.
-    value = {key: item for key, item in value.items() if key != "活動名稱"}
+    value = {key: item for key, item in value.items() if key not in ("活動名稱", "激戰委託關卡")}
     value.setdefault("流程失敗時繼續下一項", False)
     if set(value) != set(default_profile()):
         raise NeedsReview("自訂排程設定不完整，請修改此排程並重新儲存")

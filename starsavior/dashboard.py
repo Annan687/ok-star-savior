@@ -8,15 +8,14 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QToolButton,
 
 from .policy import FARM, TIMED
 from .tasks import STEPS
-from .events import ONSLAUGHT
 from .activity import CURRENT_EVENT_NAME
 
 ROOT = Path(__file__).resolve().parent.parent
 GROUPS = {
     "領取與商店": [name for name, _ in STEPS[:6]],
     "刷關與挑戰": [name for name, _ in STEPS[6:12]],
-    "活動": [name for name, _ in STEPS[12:16]],
-    "任務與養成": [name for name, _ in STEPS[16:]],
+    "活動": [name for name, _ in STEPS[12:15]],
+    "任務與養成": [name for name, _ in STEPS[15:]],
 }
 
 
@@ -137,7 +136,7 @@ class PreviewBackend:
     """Only for rendering this widget offline. Does not construct a game driver."""
     def __init__(self):
         self.values = {"執行項目": [n for n, _ in STEPS], "體力刷關": "不消耗體力",
-                       "限時據點關卡": "略過", "激戰委託關卡": "略過",
+                       "限時據點關卡": "略過",
                        "Exit After Task": False, "流程失敗時繼續下一項": False}
 
     def settings(self):
@@ -346,7 +345,7 @@ class DailyPanel(QWidget):
         self.refresh()
 
     def add_task_options(self, name, layout, values):
-        if name not in ("體力刷關", "限時據點", "激戰委託", "活動襲擊", "活動任務", "環形鏈路"):
+        if name not in ("體力刷關", "限時據點", "活動襲擊", "活動任務", "環形鏈路"):
             return
         container = QFrame()
         container.setObjectName("taskOptions")
@@ -359,9 +358,6 @@ class DailyPanel(QWidget):
         elif name == "限時據點":
             self.timed = self.combo(inner, "限時據點關卡", ["略過", *TIMED], values["限時據點關卡"])
             hint = "每天剩餘的票券集中刷這一關。"
-        elif name == "激戰委託":
-            self.onslaught = self.combo(inner, "激戰委託關卡", ["略過", *ONSLAUGHT], values.get("激戰委託關卡", "略過"))
-            hint = "三種關卡共用免費票；選定後 MAX 用完剩餘票券。"
         elif name in ("活動襲擊", "活動任務"):
             inner.addWidget(self.label("目前活動", "fieldLabel"))
             label = self.label(CURRENT_EVENT_NAME, "detail")
@@ -435,7 +431,6 @@ class DailyPanel(QWidget):
             return
         self.backend.save({"執行項目": self.selected(), "體力刷關": self.farm.currentText(),
                            "限時據點關卡": self.timed.currentText(),
-                           "激戰委託關卡": self.onslaught.currentText(),
                            "流程失敗時繼續下一項": self.continue_on_failure.isChecked(),
                            "Exit After Task": self.exit_after.isChecked()})
         self.refresh()

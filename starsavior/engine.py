@@ -223,7 +223,13 @@ class Engine:
                     # Handshake icon in the verified menu's right-hand rail.
                     token = Text("好友入口", .935, .418, .01, .015)
                 elif destination == "通行證":
-                    token = v.one("支援通行證", area=(.39, .1, .52, .45), contains=True)
+                    area = (.39, .1, .52, .45)
+                    hits = [t for t in v.within(area)
+                            if (norm("支援通行證") in t.key
+                                or re.fullmatch(r"作战突破路条VOL\.?[0-9]+", t.key))]
+                    if len(hits) != 1:
+                        raise NeedsReview("四格選單通行證入口名稱不完整或不唯一，未點擊")
+                    token = hits[0]
                 else:
                     area = (.52, .20, .94, .86)
                     hits = v.find(destination, area=area, contains=False)
@@ -382,6 +388,12 @@ class Engine:
         return None
 
     def resolve_claim_button(self, v, labels=("一鍵領取",)):
+        if (labels == ("一鍵領取",)
+                and v.has("公會任務", area=(.15, .18, .28, .26), contains=False)
+                and v.has("公會任務點數", area=(.18, .72, .30, .79), contains=False)):
+            # The gray guild footer merges its download icon into the label.
+            # Keep OCR geometry stable by reading only the observed text ROI.
+            return self.reread_claim_button(v, (.77, .755, .833, .80), labels)
         if labels == ("任務一鍵領取",):
             # At 900p the disabled label's OCR box alternates between the
             # download icon + text and text alone, preventing stable geometry.

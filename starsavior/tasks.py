@@ -4,7 +4,6 @@ from qfluentwidgets import FluentIcon
 
 from .engine import Engine
 from .flows import DailyFlows
-from .events import ONSLAUGHT
 from .policy import FARM, TIMED, NeedsReview
 
 STEPS = [
@@ -12,7 +11,7 @@ STEPS = [
     ("好友點數", "friends"), ("付費商店免費禮包", "paid_shop"), ("啟示錄商店", "apocalypse"),
     ("探索委託免費券", "exploration"), ("體力刷關", "stamina"), ("帕萊斯立方", "cube"),
     ("限時據點", "timed"), ("星際迴廊", "corridors"), ("策略戰", "strategy"),
-    ("激戰委託", "onslaught"), ("活動襲擊", "event"), ("活動任務", "event_missions"), ("環形鏈路", "orbital"),
+    ("活動襲擊", "event"), ("活動任務", "event_missions"), ("環形鏈路", "orbital"),
     ("每日與每週任務", "missions"),
     ("地區派遣", "dispatch"), ("公會", "guild"), ("通行證", "passes"),
 ]
@@ -22,6 +21,8 @@ def migrate_event_selection(selected):
     """Expand the former combined task in saved settings and schedules."""
     result = []
     for name in selected:
+        if name == "激戰委託":
+            continue  # Retired activity; retain all other saved selections.
         for target in (("活動襲擊", "活動任務") if name == "活動襲擊與任務" else (name,)):
             if target not in result:
                 result.append(target)
@@ -64,7 +65,6 @@ class DailyTask(BaseTask):
             "執行項目": [s for s, _ in STEPS],
             "體力刷關": "不消耗體力",
             "限時據點關卡": "略過",
-            "激戰委託關卡": "略過",
             "流程失敗時繼續下一項": False,
             "Exit After Task": False,
         })
@@ -72,13 +72,11 @@ class DailyTask(BaseTask):
             "執行項目": {"type": "multi_selection", "options": [s for s, _ in STEPS]},
             "體力刷關": {"type": "drop_down", "options": ["不消耗體力", *FARM]},
             "限時據點關卡": {"type": "drop_down", "options": ["略過", *TIMED]},
-            "激戰委託關卡": {"type": "drop_down", "options": ["略過", *ONSLAUGHT]},
         })
         self.config_description.update({
             "執行項目": "按示範順序執行勾選項目。今日已做完的項目可取消勾選。",
             "體力刷關": "選一種目標，MAX 使用現有意志力；不購買或使用回體道具。探索目標先耗免費券。",
             "限時據點關卡": "選一關使用當日剩餘票券；只在可掃蕩的滿星關卡執行。",
-            "激戰委託關卡": "三種關卡共用每日免費票，預設略過；只掃蕩已滿星關卡。",
             "流程失敗時繼續下一項": "單項失敗後保留紀錄並繼續；失敗項目可於下次續跑補做。啟動、擷取失敗或手動停止仍會中止。",
             "Exit After Task": "全部勾選項目成功結束後，關閉遊戲與 OKSS；失敗或手動停止時不執行。",
         })
@@ -108,8 +106,6 @@ class DailyTask(BaseTask):
             raise NeedsReview("未知體力刷關選項")
         if self.config["限時據點關卡"] not in ["略過", *TIMED]:
             raise NeedsReview("未知限時據點選項")
-        if self.config.get("激戰委託關卡", "略過") not in ("略過", *ONSLAUGHT):
-            raise NeedsReview("未知激戰委託關卡")
         from .progress import HomeProgress
         progress = HomeProgress(self.config) if type(self) is DailyTask else None
         completed = progress.begin(resume=resume_request is True,

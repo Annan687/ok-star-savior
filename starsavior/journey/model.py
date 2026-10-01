@@ -1,5 +1,5 @@
 """Read titles only when choices appear; dates disambiguate different effects."""
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
 from pathlib import Path
 import re
@@ -25,7 +25,7 @@ def load_cards():
     seen = set()
     for card in data['cards']:
         if (card['id'] in seen or not card['effects_recorded'] or len(card['events']) > 3
-                or card['image'] not in [f'{n:02}.png' for n in range(1, 8)]
+                or card['image'] not in [f'{n:02}.png' for n in range(1, 9)]
                 or not Path(__file__).with_name('card_tables').joinpath(card['image']).is_file()):
             raise ValueError('卡片參考資料不完整')
         seen.add(card['id'])
@@ -302,16 +302,24 @@ class StableAdvice:
     def __init__(self):
         self.previous = None
         self.count = 0
+        self.fixed_positions = None
 
     def update(self, advice):
-        # Partial icon readings may change only placement. Do not repeatedly
-        # hide the same confirmed event while observed/fallback rows alternate.
+        # Freeze placement at first display; animated decorations can make
+        # observed and fallback positions alternate for the same event.
         signature = (advice.event_id, tuple((h.index, h.column, h.lines) for h in advice.hints)) if advice and advice.hints else None
+        if not signature or signature != self.previous:
+            self.fixed_positions = None
         self.count = self.count + 1 if signature and signature == self.previous else 1
         self.previous = signature
         if not signature:
             return advice  # Clear old effects immediately on missing/unknown UI.
-        return advice if self.count >= 2 else None
+        if self.count < 2:
+            return None
+        if self.fixed_positions is None:
+            self.fixed_positions = tuple((h.x, h.y) for h in advice.hints)
+        return replace(advice, hints=tuple(
+            replace(h, x=x, y=y) for h, (x, y) in zip(advice.hints, self.fixed_positions)))
 
 
 class AdviceStore:

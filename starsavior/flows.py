@@ -370,11 +370,11 @@ class DailyFlows(EventFlows, Engine):
             if shop and v.find("特別販售禮包", area=area, contains=False):
                 target = v.one("特別販售禮包", area=area)
                 self.click(target)
-                self.expect("每個帳號購買", "每日購買", "SOLDOUT",
+                self.expect("每個帳號購買", "每个账号购买", "每日購買", "SOLDOUT",
                             area=(.17, .20, .98, .99))
                 return True
             tabs = tuple(t.key for t in v.within(area) if len(t.key) >= 3)
-            loaded = shop and tabs and v.has("每個帳號購買", area=(.17, .20, .98, .99))
+            loaded = shop and tabs and v.has("每個帳號購買", "每个账号购买", area=(.17, .20, .98, .99))
             stable = stable + 1 if loaded and tabs == previous else (1 if loaded else 0)
             previous = tabs if loaded else None
             self.task.sleep(.4)
@@ -829,6 +829,26 @@ class DailyFlows(EventFlows, Engine):
         entries = v.find("策略戰", area=(.40, .74, .60, .85), contains=False)
         return entries[0] if len(entries) == 1 else None
 
+    def resolve_strategy_state(self, v):
+        state = self.strategy_state(v)
+        if state is not None:
+            return state
+        # The heading's decorative icon may merge into OCR as a character.
+        # Establish the defense-result dialog by its body, then read only the
+        # heading text. Never accept the corrupted full-screen label as an alias.
+        if (v.has("依防御战斗结果，分数发生变动。", "依防禦戰鬥結果，分數發生變動。",
+                  area=(.38, .34, .63, .40), contains=False)
+                and v.has("戰鬥結果現況", area=(.44, .41, .57, .47), contains=False)
+                and v.has("勝利次數", area=(.40, .47, .49, .53), contains=False)
+                and v.has("戰敗次數", area=(.52, .47, .61, .53), contains=False)
+                and len(v.find("確認", area=(.40, .65, .60, .74), contains=False)) == 1
+                and not v.has("取消", "購買", "刷新對戰列表", area=CENTER)):
+            token = self.reread_claim_button(v, (.285, .275, .382, .32), ("防禦紀錄資訊",))
+            if token is not None:
+                v.items.append(token)
+                return self.strategy_state(v)
+        return None
+
     def resolve_strategy_entry(self, v):
         entry = self.strategy_entry(v)
         if entry is not None or not v.has("聖鎧", area=TOP, contains=False):
@@ -848,7 +868,7 @@ class DailyFlows(EventFlows, Engine):
         previous_state = None
         for _ in range(60):
             v = self.see()
-            state = self.strategy_state(v)
+            state = self.resolve_strategy_state(v)
             if state is not None or self.strategy_promotion(v):
                 state = state or "晉級"
                 state_frames = state_frames + 1 if state == previous_state else 1
@@ -888,7 +908,7 @@ class DailyFlows(EventFlows, Engine):
                 previous, stable = None, 0
                 clear_stable = 0
                 continue
-            state = self.strategy_state(v)
+            state = self.resolve_strategy_state(v)
             if state == "全勝獎勵":
                 confirm = v.one("確認", area=(.40, .64, .60, .74))
                 clear_stable = clear_stable + 1 if v.enabled(confirm) else 0
@@ -915,7 +935,7 @@ class DailyFlows(EventFlows, Engine):
 
     def strategy(self):
         v = self.see()
-        if not (self.strategy_state(v) or self.strategy_promotion(v)):
+        if not (self.resolve_strategy_state(v) or self.strategy_promotion(v)):
             if self.resolve_strategy_entry(v) is None:
                 self.menu("聖鎧")
             if not self.open_strategy():
