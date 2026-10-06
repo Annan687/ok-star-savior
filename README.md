@@ -24,11 +24,11 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-**v0.2.9 測試版**：修正策略戰、公會與通行證辨識，移除結束的激戰委託，新增克溫卡片並改善跑馬提示。詳見 [更新紀錄](CHANGELOG.md)。
+**v0.2.10 測試版**：修正灰色研究入口與首頁辨識、策略戰跳過確認漏字，以及首次晉級獎勵卡住。詳見 [更新紀錄](CHANGELOG.md)。
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.9/ok-star-savior-win32-Global-setup.exe) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.10/ok-star-savior-win32-Global-setup.exe) ·
 
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.9) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.10) ·
 
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 
@@ -78,15 +78,15 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-**[v0.2.9 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.9)。一般使用者請下載 Global 安裝版。**
+**[v0.2.10 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.10)。一般使用者請下載 Global 安裝版。**
 
 | 檔案 | 用途 |
 
 | --- | --- |
 
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.9/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.10/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
 
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.9/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.10/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 
 | `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
 
@@ -558,7 +558,7 @@ Star Savior：目前遊戲版本
 
 | --- | --- |
 
-| 日課流程 | v0.2.9 通過 559 項離線測試與 23 個子測試；策略戰、公會、通行證及商店修正已離線回放，完整新版日課仍待實機重跑。策略戰鑰匙重讀補強尚缺朋友原始截圖驗證。2026-09-27 單一帳號簡體介面完整 20 項日課及完成後退出實測通過。朋友策略戰入口修正已離線回放，仍待朋友設備實測。[修正內容](CHANGELOG.md) |
+| 日課流程 | v0.2.10 通過 587 項離線測試與 23 個子測試；灰色研究與策略戰修正已用三種解析度截圖離線回放，完整新版日課仍待實機重跑。策略戰鑰匙重讀補強尚缺朋友原始截圖驗證。2026-09-27 單一帳號簡體介面完整 20 項日課及完成後退出實測通過。朋友策略戰入口修正已離線回放，仍待朋友設備實測。[修正內容](CHANGELOG.md) |
 
 | 自訂排程 | 本機原始碼版已實測 22:00 定時啟動 Steam 遊戲，只跑保存的五項設定，完成後關閉遊戲及 OKSS；首頁仍保留完整日課設定。 |
 
@@ -682,7 +682,7 @@ OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`�
 
 ## 📌 專案狀態
 
-目前提供 `v0.2.9` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
+目前提供 `v0.2.10` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
 
 歡迎透過 [Issues](https://github.com/Annan687/ok-star-savior/issues) 提供不同環境的測試結果與問題紀錄。
 

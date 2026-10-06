@@ -91,28 +91,37 @@ class Engine:
 
     @staticmethod
     def strategy_promotion(v):
+        return Engine.strategy_promotion_kind(v) is not None
+
+    @staticmethod
+    def strategy_promotion_kind(v):
         if not (v.has("策略戰", area=(.43, .17, .57, .24), contains=False)
                 and v.has("晉級", area=(.4, .23, .6, .36), contains=False)):
-            return False
+            return None
+        if v.has("首次達成晉級獎勵", area=(.35, .38, .65, .47), contains=False):
+            return "first_reward"
         ranks = [t for t in v.within((.4, .64, .6, .78))
                  if re.fullmatch(r"[\u4e00-\u9fff]{2,6}[1-9]?", t.key)]
-        return len(ranks) == 1
+        return "rank" if len(ranks) == 1 else None
 
     def rewards(self, maximum=18, wait_initial=False, require_reward=False, return_when=None):
         seen = 0
         quiet = 0
         pending = 0
         promotion_frames = 0
-        promotion_clicked = False
+        promotion_previous = None
+        promotion_clicked = set()
         deadline = time.monotonic() + 30 if require_reward else None
         while seen < maximum:
             if deadline is not None and time.monotonic() >= deadline:
                 raise NeedsReview("等待獎勵與返回頁面逾時，未繼續導航")
             v = self.see()
-            if self.strategy_promotion(v):
+            promotion_kind = self.strategy_promotion_kind(v)
+            if promotion_kind is not None:
                 quiet = 0
-                promotion_frames += 1
-                if promotion_clicked:
+                promotion_frames = promotion_frames + 1 if promotion_kind == promotion_previous else 1
+                promotion_previous = promotion_kind
+                if promotion_kind in promotion_clicked:
                     pending += 1
                     if pending >= 20:
                         raise NeedsReview("策略戰晉級畫面點擊後仍未關閉，未重複點擊")
@@ -120,12 +129,13 @@ class Engine:
                     # This full-screen rank animation has no continue label.
                     # Click its lower blank area only after stable recognition.
                     self.click(Text("策略戰晉級下方空白", .495, .85, .01, .01))
-                    promotion_clicked = True
+                    promotion_clicked.add(promotion_kind)
                     pending = 0
                     seen += 1
                 self.task.sleep(.35)
                 continue
             promotion_frames = 0
+            promotion_previous = None
             if (v.has("月卡商品", area=CENTER, contains=False)
                     and v.has("REWARD", area=CENTER, contains=False)
                     and v.has("30天星光石補給", "30天意志力補給", area=BOTTOM)):
@@ -363,13 +373,13 @@ class Engine:
             raise NeedsReview(f"一鍵領取按鈕辨識不明確：{[t.text for t in hits]}")
         return None
 
-    def reread_claim_button(self, v, area, labels=("一鍵領取",), threshold=.9):
+    def reread_claim_button(self, v, area, labels=("一鍵領取",), threshold=.9, *, scale=3):
         """Caller must establish the page and supply its observed button ROI."""
         import cv2
         patch = v.crop(area)
         if not patch.size:
             return None
-        large = cv2.resize(patch, None, fx=3, fy=3)
+        large = cv2.resize(patch, None, fx=scale, fy=scale)
         h, w = v.frame.shape[:2]
         for contrasted in (False, True):
             image = large
@@ -383,8 +393,8 @@ class Engine:
             if hits:
                 t = hits[0]
                 ih, iw = image.shape[:2]
-                return Text(t.text, (int(w*area[0])+t.x*iw/3)/w,
-                            (int(h*area[1])+t.y*ih/3)/h, t.w*iw/3/w, t.h*ih/3/h)
+                return Text(t.text, (int(w*area[0])+t.x*iw/scale)/w,
+                            (int(h*area[1])+t.y*ih/scale)/h, t.w*iw/scale/w, t.h*ih/scale/h)
         return None
 
     def resolve_claim_button(self, v, labels=("一鍵領取",)):
@@ -615,15 +625,35 @@ class Engine:
                 or any(Engine.stage_label(t, stage)
                        for t in v.within((.73, .14, .97, .34))))
 
+    def strategy_skip_confirmation(self, v):
+        if not (v.has("跳過戰鬥", area=(.25, .26, .38, .34))
+                and v.has("確定要消耗1個聖鎧鑰匙", area=(.40, .50, .60, .55), contains=False)
+                and v.one("取消", area=(.38, .64, .47, .73), required=False) is not None):
+            return None
+        if not v.has("跳過該場戰鬥嗎？", area=(.43, .55, .57, .60), contains=False):
+            line = self.reread_claim_button(v, (.448, .549, .55, .584), ("跳過該場戰鬥嗎？",))
+            if line is None:
+                return None
+        confirm = v.one("確認", area=(.53, .64, .62, .73), required=False)
+        return confirm if confirm is not None and v.enabled(confirm) else None
+
+    def confirm_strategy_skip(self):
+        stable = 0
+        for _ in range(20):
+            v = self.see()
+            confirm = self.strategy_skip_confirmation(v)
+            stable = stable + 1 if confirm is not None else 0
+            if stable >= 3:
+                self.click(confirm)
+                return
+            self.task.sleep(.4)
+        raise NeedsReview("策略戰跳過確認的 1 個聖鎧鑰匙與完整內文尚未穩定，未提交")
+
     def skip_battle(self, strategy=False):
         self.expect("跳過戰鬥", seconds=12)
         self.tap("跳過戰鬥", area=BOTTOM, enabled=True)
         if strategy:
-            v = self.expect("跳過戰鬥", area=CENTER)
-            if not (v.has("確定要消耗1個聖鎧鑰匙", area=CENTER)
-                    and v.has("跳過該場戰鬥", area=CENTER)):
-                raise NeedsReview("策略戰跳過確認未辨識到消耗 1 個聖鎧鑰匙")
-            self.tap("確認", area=CENTER)
+            self.confirm_strategy_skip()
         else:
             self.confirm("跳過戰鬥", "確定要跳過")
         v = self.expect("VICTORY", "DEFEAT", seconds=30)

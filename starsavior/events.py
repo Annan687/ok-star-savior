@@ -28,9 +28,49 @@ class EventFlows:
                 and v.has("環形鏈路", area=(.75, .48, .96, .59))
                 and v.has("任務", "任務昌", "任務目", area=(.78, .61, .95, .72), contains=False))
 
+    def resolve_event_home(self, v, kind):
+        if (self.is_menu(v)
+                or v.has("每日任務", "特殊任務", area=(.36, .20, .59, .30), contains=False)
+                or v.has("REWARD", area=(.3, .2, .7, .6), contains=False)):
+            return False
+        if self.event_home(v, kind):
+            return True
+        # Establish the Gray home from its own title, not the activity list.
+        # Re-read only the Chinese labels, excluding their English and icons.
+        if kind != "gray" or not (
+                v.has("事件", area=(.08, 0, .28, .13), contains=False)
+                and v.has("AStudy", area=(.05, .55, .35, .72), contains=False)
+                and v.has("Gray", area=(.08, .72, .3, .88), contains=False)
+                and v.has("故事", area=(.80, .28, .94, .40), contains=False)):
+            return False
+        for label, area, crop in (
+                ("襲擊", (.78, .4, .97, .52), (.862, .449, .902, .493)),
+                ("環形鏈路", (.75, .48, .96, .59), (.814, .512, .881, .554)),
+                ("任務", (.78, .61, .95, .72), (.838, .642, .872, .678))):
+            if not v.has(label, area=area, contains=False):
+                token = self.reread_claim_button(v, crop, (label,))
+                if token is not None:
+                    v.items.append(token)
+        return self.event_home(v, kind)
+
+    def tap_gray_home(self, label, area):
+        def ready(page):
+            if not self.resolve_event_home(page, "gray"):
+                return False
+            if page.one(label, area=area, required=False) is None:
+                crop = {"襲擊": (.862, .449, .902, .493),
+                        "環形鏈路": (.814, .512, .881, .554),
+                        "任務": (.838, .642, .872, .678)}[label]
+                token = self.reread_claim_button(page, crop, (label,))
+                if token is not None:
+                    page.items.append(token)
+            return page.one(label, area=area, required=False) is not None
+        v = self.event_wait(ready, f"灰色研究首頁的{label}入口尚未穩定")
+        self.click(v.one(label, area=area))
+
     def open_event(self, kind):
         v = self.see()
-        if self.event_home(v, kind):
+        if self.resolve_event_home(v, kind):
             return True
         # The four-square Event shortcut keeps the active event subpage.
         # Leave recognized subpages through their observed back hierarchy.
@@ -41,22 +81,22 @@ class EventFlows:
             self.click(Text("返回活動列表上一層", .038, .055, .01, .025))
             v = self.event_wait(lambda page: self.event_navigation_state(page) not in (None, state),
                                 "活動子頁返回後尚未穩定，未重複返回")
-            if self.event_home(v, kind):
+            if self.resolve_event_home(v, kind):
                 return True
         if self.event_navigation_state(v) != "list":
             if self.menu("事件") is False:
                 return False
         def destination(v):
-            return not self.is_menu(v) and (self.event_home(v, kind)
+            return not self.is_menu(v) and (self.resolve_event_home(v, kind)
                                            or self.event_navigation_state(v) == "list")
         v = self.event_wait(destination, "事件列表尚未載入")
-        if self.event_home(v, kind):
+        if self.resolve_event_home(v, kind):
             return True
         v = self.event_wait(lambda page: len(self.event_card_targets(page, kind)) == 1,
                             f"無法確認{'激戰委託' if kind == 'onslaught' else '灰色研究'}活動入口")
         targets = self.event_card_targets(v, kind)
         self.click(targets[0])
-        self.event_wait(lambda v: self.event_home(v, kind), "活動首頁尚未載入")
+        self.event_wait(lambda v: self.resolve_event_home(v, kind), "活動首頁尚未載入")
         return True
 
     def event_card_targets(self, v, kind):
@@ -72,9 +112,30 @@ class EventFlows:
                 gray = any(abs(g.cx-t.cx) < .07 and 0 < g.cy-t.cy < .2
                            for g in v.find("Gray", area=(.35, .2, .95, .82)))
                 if not gray:
-                    area = (max(.35, t.cx-.08), t.cy+.035,
-                            min(.95, t.cx+.08), min(.82, t.cy+.16))
-                    gray = self.reread_claim_button(v, area, ("Gray",)) is not None
+                    # After earlier cards retire this title moves left. At
+                    # 900p the decorative "in" can spoil the Gray reread;
+                    # retry a tighter top edge relative to the actual title.
+                    # Large decorative letters can also disappear from the
+                    # detector at 3x; the final 2x pass keeps the same label,
+                    # confidence threshold and card-relative bounds.
+                    for top, scale in ((.035, 3), (.06, 3), (.06, 2)):
+                        area = (max(.35, t.cx-.08), t.cy+top,
+                                min(.95, t.cx+.08), min(.82, t.cy+.16))
+                        gray = self.reread_claim_button(v, area, ("Gray",), scale=scale) is not None
+                        if gray:
+                            break
+                if not gray:
+                    # The detected second title line gives tighter bounds when
+                    # the decorative first line's box shifts by a few pixels.
+                    # Its OCR text is not an alias: reread the complete Gray.
+                    lines = [g for g in v.items if abs(g.cx-t.cx) < .07
+                             and .06 < g.cy-t.cy < .17
+                             and .04 < g.h < .12 and .04 < g.w < .17]
+                    if len(lines) == 1:
+                        g = lines[0]
+                        area = (max(.35, g.x-.01), max(.2, g.y-.01),
+                                min(.95, g.x+g.w+.01), min(.82, g.y+g.h+.01))
+                        gray = self.reread_claim_button(v, area, ("Gray",)) is not None
                 if gray:
                     targets.append(t)
         return targets
@@ -82,10 +143,20 @@ class EventFlows:
     def event_navigation_state(self, v):
         if self.is_menu(v):
             return None
-        if self.event_home(v, "onslaught"):
+        if self.resolve_event_home(v, "onslaught"):
             return "onslaught"
-        if self.event_home(v, "gray"):
+        if self.resolve_event_home(v, "gray"):
             return "gray"
+        if (not v.has("燭光廣場", area=(.08, 0, .28, .13))
+                and v.has("事件", area=(.04, .8, .23, .97), contains=False)
+                and v.has("一般", area=(.04, .8, .23, .88), contains=False)
+                and v.has("AStudy", "OVERLOAD", "ONSLAUGHT", area=(.35, .2, .95, .8), contains=False)):
+            # OCR can split the heading into overlapping fragments. The two
+            # navigation tabs and a known event card establish where to reread;
+            # fragments alone must never authorize list navigation.
+            heading = self.reread_claim_button(v, (.123, .035, .195, .095), ("燭光廣場",))
+            if heading is not None:
+                v.items.append(heading)
         if (v.has("燭光廣場", area=(.08, 0, .28, .13))
                 and v.has("事件", area=(.04, .8, .23, .97), contains=False)):
             return "list"
@@ -127,7 +198,7 @@ class EventFlows:
             return None
         # The onslaught home resource bar places the fraction farther right
         # than the previously recorded stage/gray bar. Do not clip its last 3.
-        areas = ((.587, .04, .616, .079),) if self.event_home(v, "onslaught") else (
+        areas = ((.587, .04, .616, .079),) if self.resolve_event_home(v, "onslaught") else (
             (.575, .04, .602, .079), (.587, .04, .616, .079))
         recovered = []
         for area in areas:
@@ -271,21 +342,21 @@ class EventFlows:
             return "事件未開放，略過活動襲擊"
         if self.event_tickets(self.see()) == 0:
             return "活動免費票券已用完"
-        self.tap("襲擊", area=(.78, .4, .97, .52))
+        self.tap_gray_home("襲擊", area=(.78, .4, .97, .52))
         result = self.event_sweep("名偵探消失的世界", "grid")
         self.click(Text("返回灰色研究", .038, .05, .01, .025))
-        self.event_wait(lambda v: self.event_home(v, "gray"), "掃蕩後未回到灰色研究首頁")
+        self.event_wait(lambda v: self.resolve_event_home(v, "gray"), "掃蕩後未回到灰色研究首頁")
         return result
 
     def gray_missions(self):
         if not self.open_event("gray"):
             return "事件未開放，略過活動任務"
-        self.tap("任務", "任務昌", "任務目", area=(.78, .61, .95, .72))
+        self.tap_gray_home("任務", area=(.78, .61, .95, .72))
         self.claim_event_missions()
         self.tap("特殊任務", area=(.46, .20, .59, .30))
         self.claim_event_missions()
         self.close((.81, .20, .85, .26))
-        self.event_wait(lambda v: self.event_home(v, "gray"), "領獎後未回到灰色研究首頁")
+        self.event_wait(lambda v: self.resolve_event_home(v, "gray"), "領獎後未回到灰色研究首頁")
         return "活動每日、點數及特殊任務獎勵已檢查"
 
     def orbital_board(self, v):
@@ -385,12 +456,12 @@ class EventFlows:
         if not self.orbital_board(self.see()):
             if not self.open_event("gray"):
                 return "事件未開放，略過環形鏈路"
-            self.tap("環形鏈路", area=(.75, .48, .96, .59), contains=True)
+            self.tap_gray_home("環形鏈路", area=(.75, .48, .96, .59))
         self.event_wait(self.orbital_board, "環形鏈路盤面未載入")
         self.tap("活動任務", area=(.58, .20, .66, .29))
         self.claim_event_missions()
         self.close((.81, .20, .85, .26))
         spent, balance = self.orbital_draw_all()
         self.close()
-        self.event_wait(lambda v: self.event_home(v, "gray"), "環形鏈路結束後未回到活動首頁")
+        self.event_wait(lambda v: self.resolve_event_home(v, "gray"), "環形鏈路結束後未回到活動首頁")
         return f"環形鏈路任務已檢查；全部抽取消耗{spent}票，剩餘{balance}票"
