@@ -419,7 +419,7 @@ class DailyFlows(EventFlows, Engine):
                 and v.has("特別販售禮包", area=(.17, .08, .96, .20), contains=False)
                 and not v.has("購買商品", area=CENTER, contains=False)):
             return None
-        limits = v.find("每個帳號購買", "每日購買", "每週購買", "每月購買",
+        limits = v.find("每個帳號購買", "每个账号购买", "每日購買", "每週購買", "每月購買",
                         area=(.17, .20, .98, .87), contains=True)
         if not limits:
             return None
@@ -1019,10 +1019,10 @@ class DailyFlows(EventFlows, Engine):
     def event(self):
         # Activity support is shipped with the program, not selected by an old
         # homepage config or a saved Windows schedule snapshot.
-        return self.gray_assault()
+        return self.snowfield_assault()
 
     def event_missions(self):
-        return self.gray_missions()
+        return self.snowfield_missions()
 
     def missions(self):
         self.menu("任務")

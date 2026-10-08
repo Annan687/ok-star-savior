@@ -72,7 +72,7 @@ def smoke():
     assert Path(ok.__file__).resolve() == ROOT / 'vendor/ok-script/ok/__init__.py'
     app = QApplication.instance() or QApplication([])
     panel = DailyPanel(PreviewBackend())
-    assert len(panel.checks) == len(STEPS) == 19
+    assert len(panel.checks) == len(STEPS) == 18
     assert not panel.start_button.isEnabled()
     panel.timer.stop()
     panel.close()

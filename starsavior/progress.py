@@ -12,7 +12,7 @@ PATH = Path('runs/home-progress.json')
 def signature(config, *, legacy=False, include_retired=False):
     values = {key: config.get(key, '略過') for key in
               ('體力刷關', '限時據點關卡')}
-    selected = set(config['執行項目']) - {'激戰委託'}
+    selected = set(config['執行項目']) - {'激戰委託', '環形鏈路'}
     if legacy:
         values['激戰委託關卡'] = config.get('激戰委託關卡', '略過')
         if include_retired:
@@ -29,7 +29,7 @@ class HomeProgress:
         self.signature = signature(config)
         self.legacy_signatures = {signature(config, legacy=True, include_retired=selected)
                                   for selected in (False, True)}
-        self.selected = set(config['執行項目']) - {'激戰委託'}
+        self.selected = set(config['執行項目']) - {'激戰委託', '環形鏈路'}
         self.data = None
 
     def load(self):

@@ -4,11 +4,12 @@ import time
 
 from .policy import NeedsReview, roman_value
 from .vision import Text, View, norm, BOTTOM
+from .snowfield import SnowfieldFlows, SNOWFIELD_STAGE
 
 ONSLAUGHT = ("封閉的心象", "異形的攻勢", "虛假的契約")
 
 
-class EventFlows:
+class EventFlows(SnowfieldFlows):
     def event_wait(self, predicate, description, seconds=18):
         deadline = time.monotonic() + seconds
         stable = 0
@@ -22,6 +23,8 @@ class EventFlows:
 
     @staticmethod
     def event_home(v, kind):
+        if kind == "snowfield":
+            return SnowfieldFlows.snowfield_home(v)
         if kind == "onslaught":
             return all(v.has(name, area=(.04, .4, .36, .76), contains=False) for name in ONSLAUGHT)
         return (v.has("襲擊", area=(.78, .4, .97, .52), contains=False)
@@ -33,6 +36,8 @@ class EventFlows:
                 or v.has("每日任務", "特殊任務", area=(.36, .20, .59, .30), contains=False)
                 or v.has("REWARD", area=(.3, .2, .7, .6), contains=False)):
             return False
+        if kind == "snowfield":
+            return self.resolve_snowfield_home(v)
         if self.event_home(v, kind):
             return True
         # Establish the Gray home from its own title, not the activity list.
@@ -76,7 +81,7 @@ class EventFlows:
         # Leave recognized subpages through their observed back hierarchy.
         for _ in range(3):
             state = self.event_navigation_state(v)
-            if state not in ("stage", "onslaught", "gray"):
+            if state not in ("stage", "onslaught", "gray", "snowfield"):
                 break
             self.click(Text("返回活動列表上一層", .038, .055, .01, .025))
             v = self.event_wait(lambda page: self.event_navigation_state(page) not in (None, state),
@@ -93,7 +98,7 @@ class EventFlows:
         if self.resolve_event_home(v, kind):
             return True
         v = self.event_wait(lambda page: len(self.event_card_targets(page, kind)) == 1,
-                            f"無法確認{'激戰委託' if kind == 'onslaught' else '灰色研究'}活動入口")
+                            f"無法確認{dict(onslaught='激戰委託', gray='灰色研究', snowfield='DISCORDANT DUET')[kind]}活動入口")
         targets = self.event_card_targets(v, kind)
         self.click(targets[0])
         self.event_wait(lambda v: self.resolve_event_home(v, kind), "活動首頁尚未載入")
@@ -102,6 +107,8 @@ class EventFlows:
     def event_card_targets(self, v, kind):
         if self.event_navigation_state(v) != "list":
             return []
+        if kind == "snowfield":
+            return self.snowfield_card_targets(v)
         if kind == "onslaught":
             targets = v.find("ONSLAUGHT", "QNSLAUGHT", area=(.35, .2, .95, .8))
         else:
@@ -143,6 +150,8 @@ class EventFlows:
     def event_navigation_state(self, v):
         if self.is_menu(v):
             return None
+        if self.resolve_event_home(v, "snowfield"):
+            return "snowfield"
         if self.resolve_event_home(v, "onslaught"):
             return "onslaught"
         if self.resolve_event_home(v, "gray"):
@@ -150,7 +159,7 @@ class EventFlows:
         if (not v.has("燭光廣場", area=(.08, 0, .28, .13))
                 and v.has("事件", area=(.04, .8, .23, .97), contains=False)
                 and v.has("一般", area=(.04, .8, .23, .88), contains=False)
-                and v.has("AStudy", "OVERLOAD", "ONSLAUGHT", area=(.35, .2, .95, .8), contains=False)):
+                and v.has("AStudy", "OVERLOAD", "ONSLAUGHT", "DISCORDANT", area=(.35, .2, .95, .8), contains=False)):
             # OCR can split the heading into overlapping fragments. The two
             # navigation tabs and a known event card establish where to reread;
             # fragments alone must never authorize list navigation.
@@ -160,11 +169,19 @@ class EventFlows:
         if (v.has("燭光廣場", area=(.08, 0, .28, .13))
                 and v.has("事件", area=(.04, .8, .23, .97), contains=False)):
             return "list"
+        if (self.event_rows(v, SNOWFIELD_STAGE, "snowfield")
+                and v.has(SNOWFIELD_STAGE, area=(.73, .16, .98, .28))
+                and v.has("掃蕩戰鬥", area=(.74, .84, .96, .92), contains=False)
+                and not v.has("事件", area=(.08, 0, .28, .13), contains=False)):
+            heading = self.reread_claim_button(v, (.128, .04, .164, .082), ("事件",))
+            if heading is not None:
+                v.items.append(heading)
         if (v.has("事件", area=(.08, 0, .28, .13), contains=False)
                 and not v.has("掃蕩次數", area=(.7, .7, .98, .93))
                 and v.has("掃蕩戰鬥", "掃蕩戰門", area=(.74, .84, .96, .92), contains=False)
                 and any(self.event_rows(v, stage, layout) for stage, layout in
-                        [*((name, "column") for name in ONSLAUGHT), ("名偵探消失的世界", "grid")])):
+                        [*((name, "column") for name in ONSLAUGHT), ("名偵探消失的世界", "grid"),
+                         (SNOWFIELD_STAGE, "snowfield")])):
             return "stage"
         return None
 
@@ -191,14 +208,16 @@ class EventFlows:
             readings = [fraction(t.key, 3) for t in tokens
                         if re.fullmatch(r"\d+/\d+", t.key)]
             return [p[0] for p in readings if p is not None]
-        direct = values(v.within((.555, .025, .617, .10)))
+        snowfield = (self.resolve_event_home(v, "snowfield")
+                     or bool(self.event_rows(v, SNOWFIELD_STAGE, "snowfield")))
+        direct = values(v.within((.575, .025, .642, .10) if snowfield else (.555, .025, .617, .10)))
         if len(direct) == 1:
             return direct[0]
         if len(direct) > 1:
             return None
         # The onslaught home resource bar places the fraction farther right
         # than the previously recorded stage/gray bar. Do not clip its last 3.
-        areas = ((.587, .04, .616, .079),) if self.resolve_event_home(v, "onslaught") else (
+        areas = ((.593, .04, .636, .082), (.58, .04, .628, .082)) if snowfield else ((.587, .04, .616, .079),) if self.resolve_event_home(v, "onslaught") else (
             (.575, .04, .602, .079), (.587, .04, .616, .079))
         recovered = []
         for area in areas:
@@ -210,7 +229,7 @@ class EventFlows:
 
     @staticmethod
     def event_rows(v, stage, layout):
-        area = (.10, .15, .70, .85) if layout == "grid" else (.31, .13, .68, .78)
+        area = (.10, .15, .70, .85) if layout == "grid" else (.31, .13, .68, .95 if layout == "snowfield" else .78)
         rows = [t for t in v.within(area) if EventFlows.stage_label(t, stage)]
         return sorted(rows, key=lambda t: (round(t.cy/.04), t.cx), reverse=True)
 
@@ -228,11 +247,28 @@ class EventFlows:
         return bool(patch.size and np.mean(patch.min(axis=2) > 130) > .8)
 
     def event_selected_level(self, v, stage, row=None, layout=None):
-        if row is not None and layout == "column":
+        if row is not None and layout in ("column", "snowfield"):
             # The header can lose strokes (III -> I). Read the large Arabic
             # number of the highlighted card instead of reporting that guess.
             area = (.276, row.cy-.025, .31, row.cy+.065)
             numbers = [int(t.key) for t in self.event_local_text(v, area) if t.key.isdecimal()]
+            if not numbers and layout == "snowfield" and .17 < row.cy < .21:
+                # Only the first visible slot: the decorative large 1 often
+                # vanishes. Require its complete stage label with Roman I.
+                label = self.reread_claim_button(v, (.32, .165, .432, .213), (stage + "I",))
+                return 1 if label is not None else None
+            if not numbers and layout == "snowfield":
+                # The decorative 4 can disappear from digit OCR entirely.
+                # Cross-check the highlighted row's complete title against the
+                # independent right-hand title; a lone Roman suffix is unsafe.
+                names = tuple(stage + suffix for suffix in
+                              ("I", "II", "III", "IV", "V", "VI", "VII", "VIII"))
+                label = self.reread_claim_button(v, (.32, row.cy-.025, .445, row.cy+.026), names)
+                if label is not None:
+                    headers = [t for t in v.within((.73, .16, .98, .28))
+                               if self.stage_label(t, stage)]
+                    if len(headers) == 1 and headers[0].key == label.key:
+                        return roman_value(label.key[len(norm(stage)):])
             return numbers[0] if len(numbers) == 1 and 1 <= numbers[0] <= 99 else None
         headers = [t for t in v.within((.73, .16, .98, .28)) if self.stage_label(t, stage)]
         levels = [roman_value(t.key[len(norm(stage)):]) for t in headers]

@@ -40,6 +40,7 @@ class ProfileDialog(MessageBoxBase):
         hint.setWordWrap(True)
         self.viewLayout.addWidget(hint)
         self.activity_label = QLabel(f"目前活動：{CURRENT_EVENT_NAME}")
+        self.activity_label.setWordWrap(True)
         self.viewLayout.addWidget(self.activity_label)
         actions = QHBoxLayout()
         self.checks = {}

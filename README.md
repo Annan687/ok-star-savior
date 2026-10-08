@@ -24,11 +24,11 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-**v0.2.10 測試版**：修正灰色研究入口與首頁辨識、策略戰跳過確認漏字，以及首次晉級獎勵卡住。詳見 [更新紀錄](CHANGELOG.md)。
+**v0.2.11 測試版**：支援雪原新活動、I～VIII 關卡掃蕩，修正任務第二次領取與返回首頁誤判，兼容滾動名稱的免費禮包。詳見 [更新紀錄](CHANGELOG.md)。
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.10/ok-star-savior-win32-Global-setup.exe) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.11/ok-star-savior-win32-Global-setup.exe) ·
 
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.10) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.11) ·
 
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 
@@ -78,15 +78,15 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-**[v0.2.10 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.10)。一般使用者請下載 Global 安裝版。**
+**[v0.2.11 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.11)。一般使用者請下載 Global 安裝版。**
 
 | 檔案 | 用途 |
 
 | --- | --- |
 
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.10/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.11/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
 
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.10/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.11/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 
 | `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
 
@@ -168,7 +168,7 @@ v0.2.2 已加入以下功能，目前已完成離線驗證，仍待實際定時�
 
 ## ✨ 日課功能
 
-目前包含 **19 項日常流程**：
+目前包含 **18 項日常流程**：
 
 - 登入彈窗
 
@@ -198,8 +198,6 @@ v0.2.2 已加入以下功能，目前已完成離線驗證，仍待實際定時�
 
 - 活動任務
 
-- 環形鏈路
-
 - 任務
 
 - 派遣
@@ -214,11 +212,11 @@ v0.2.2 已加入以下功能，目前已完成離線驗證，仍待實際定時�
 
 激戰委託活動已結束，本版移除該項及關卡設定；舊勾選與排程會保留其餘項目。
 
-清單有獨立「活動」區，四項可各自勾選。灰色研究的襲擊與每日／點數／特殊任務分開選擇；活動名稱由新版程式提供，不需自行輸入；舊設定中的「魔女的帷幕」會自動忽略。v0.2.5 起包含此修正。只領獎時只勾「活動任務」，不會掃蕩。
+清單有獨立「活動」區，活動襲擊與活動任務可分開勾選。本版接入 DISCORDANT DUET ON THE BLACK SNOWFIELD，沒有環形鏈路；舊設定與排程自動移除環形鏈路並保留其他勾選。只勾「活動任務」不會掃蕩。
 
-活動襲擊固定 MAX 用完該活動剩餘免費票券，不提供掃蕩次數選項。
+活動襲擊由高往低確認可掃蕩關卡，固定 MAX 用完剩餘免費票券，不自動進場首通。活動名稱由新版程式提供，不需自行輸入；入口按標題定位，兼容活動卡換位。舊合併的「活動襲擊與任務」會轉成兩項。
 
-環形鏈路獨立勾選，領取自己的任務票券後全部抽取。舊版合併的「活動襲擊與任務」勾選會轉成兩項。
+新活動入口、首頁、關卡與任務彈窗已三種解析度離線辨識；任務領取和掃蕩沿用既有流程，完整操作仍待實機驗證。新免費禮包依下方免費價格與購買限制定位，商品名稱滾動不影響判定。相關修改已納入 v0.2.11。
 
 遇到無法辨識或不確定的畫面時，
 
@@ -558,7 +556,7 @@ Star Savior：目前遊戲版本
 
 | --- | --- |
 
-| 日課流程 | v0.2.10 通過 587 項離線測試與 23 個子測試；灰色研究與策略戰修正已用三種解析度截圖離線回放，完整新版日課仍待實機重跑。策略戰鑰匙重讀補強尚缺朋友原始截圖驗證。2026-09-27 單一帳號簡體介面完整 20 項日課及完成後退出實測通過。朋友策略戰入口修正已離線回放，仍待朋友設備實測。[修正內容](CHANGELOG.md) |
+| 日課流程 | v0.2.11 通過 621 項離線測試與 23 個子測試；新活動與免費禮包已用三種解析度截圖離線回放，完整新版日課仍待實機重跑。策略戰鑰匙重讀補強尚缺朋友原始截圖驗證。2026-09-27 單一帳號簡體介面完整 20 項日課及完成後退出實測通過。朋友策略戰入口修正已離線回放，仍待朋友設備實測。[修正內容](CHANGELOG.md) |
 
 | 自訂排程 | 本機原始碼版已實測 22:00 定時啟動 Steam 遊戲，只跑保存的五項設定，完成後關閉遊戲及 OKSS；首頁仍保留完整日課設定。 |
 
@@ -682,7 +680,7 @@ OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`�
 
 ## 📌 專案狀態
 
-目前提供 `v0.2.10` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
+目前提供 `v0.2.11` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
 
 歡迎透過 [Issues](https://github.com/Annan687/ok-star-savior/issues) 提供不同環境的測試結果與問題紀錄。
 

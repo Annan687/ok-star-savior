@@ -199,9 +199,9 @@ class Engine:
         matches = [s for s in labels if v.has(s, area=(.07, .015, .38, .13), contains=False)]
         return matches[0] if len(matches) == 1 else "其他頁面"
 
-    def close(self, area=(.75, .01, .99, .14)):
+    def close(self, area=(.75, .01, .99, .14), *, light_min=200):
         v = self.see()
-        self.click(v.close_icon(area))
+        self.click(v.close_icon(area, light_min=light_min))
 
     def event_menu_available(self, v):
         for attempt in range(3):
@@ -265,6 +265,9 @@ class Engine:
             icon = v.menu_icon()
             if icon:
                 self.click(icon)
+                continue
+            recover_event = getattr(self, "recover_menu_from_event_home", None)
+            if recover_event is not None and recover_event(v):
                 continue
             # Nested overlays must be closed, not clicked through.
             if v.has("購買商品", "跳過戰鬥", "刷新對戰列表", "緊急支援", area=CENTER, contains=False):
@@ -460,6 +463,12 @@ class Engine:
             for label in ("已獲得全部每日獎勵", "已獲得全部每週獎勵"):
                 if v.has(label, area=(.36, .30, .85, .70)):
                     return (norm(label),)
+        if event_modal and v.has("每日任務點數", area=(.36, .70, .46, .745), contains=False):
+            # A claimed daily task increases this fixed counter even when
+            # unfinished tasks remain. Glowing chest digits, reward amounts,
+            # scrolling rows and the resource bar are not stable evidence.
+            points = [t.key for t in v.within((.37, .738, .425, .79)) if t.key.isdecimal()]
+            return ("event_daily_points", points[0]) if len(points) == 1 else None
         # Ignore OCR box jitter, the resource bar, and countdowns: none prove
         # a claim succeeded. Button appearance is checked separately below.
         return tuple(sorted(t.key for t in v.items if t.cy > .18
@@ -484,7 +493,12 @@ class Engine:
             current = (self.claim_signature(v), v.enabled(token) if token is not None else None)
             empty_mail = (v.has("信件", area=TOP, contains=False)
                           and v.has("沒有收到的信件"))
-            if current != signature and (token is not None or empty_mail):
+            comparable = signature[0] is not None and current[0] is not None
+            if comparable and signature[0][0:1] == ("event_daily_points",):
+                comparable = (current[0] == (norm("已獲得全部每日獎勵"),)
+                              or (current[0][0:1] == ("event_daily_points",)
+                                  and int(current[0][1]) >= int(signature[0][1])))
+            if comparable and current != signature and (token is not None or empty_mail):
                 stable = stable+1 if current == previous else 1
                 previous = current
                 if stable >= 3:
