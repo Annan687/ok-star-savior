@@ -252,6 +252,10 @@ class EventFlows(SnowfieldFlows):
             # number of the highlighted card instead of reporting that guess.
             area = (.276, row.cy-.025, .31, row.cy+.065)
             numbers = [int(t.key) for t in self.event_local_text(v, area) if t.key.isdecimal()]
+            if not numbers and layout == "snowfield":
+                digit = self.snowfield_selected_digit(v, row)
+                if digit is not None:
+                    return digit
             if not numbers and layout == "snowfield" and .17 < row.cy < .21:
                 # Only the first visible slot: the decorative large 1 often
                 # vanishes. Require its complete stage label with Roman I.
@@ -277,6 +281,29 @@ class EventFlows(SnowfieldFlows):
         headers = self.event_local_text(v, (.742, .19, .973, .255))
         levels = [roman_value(t.key[len(norm(stage)):]) for t in headers if self.stage_label(t, stage)]
         return levels[0] if len(levels) == 1 and levels[0] else None
+
+    def snowfield_selected_digit(self, v, row):
+        # On the highlighted card the numeral is dark, the emblem is light.
+        # Preserve the numeral's pixels; do not infer a level from row position
+        # or reinterpret a damaged Roman suffix. Two masks must agree.
+        if not self.event_row_selected(v, row, "snowfield"):
+            return None
+        import cv2
+        crop = v.crop((.282, row.cy-.014, .305, row.cy+.046))
+        if not crop.size:
+            return None
+        gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+        readings = []
+        for cutoff in (60, 80):
+            _, mask = cv2.threshold(gray, cutoff, 255, cv2.THRESH_BINARY)
+            mask = cv2.copyMakeBorder(mask, 12, 12, 12, 12,
+                                     cv2.BORDER_CONSTANT, value=255)
+            frame = cv2.cvtColor(cv2.resize(mask, None, fx=3, fy=3), cv2.COLOR_GRAY2BGR)
+            tokens = View(frame, self.task.ocr(frame=frame, threshold=.9)).items
+            if len(tokens) != 1 or tokens[0].key not in tuple("12345678"):
+                return None
+            readings.append(int(tokens[0].key))
+        return readings[0] if readings[0] == readings[1] else None
 
     def select_event_stage(self, stage, layout):
         v = self.event_wait(lambda v: len(self.event_rows(v, stage, layout)) > 0,
@@ -364,11 +391,15 @@ class EventFlows(SnowfieldFlows):
         return self.reread_claim_button(v, (.757, .710, .825, .776))
 
     def claim_event_missions(self):
-        for _ in range(4):
+        for attempt in range(5):
             v, button = self.wait_claim_ready(self.event_claim_button,
                 "活動任務尚未載入完整一鍵領取按鈕")
             if not v.enabled(button):
                 return
+            # The fourth submission may have completed the page. Observe its
+            # final state before reporting the limit; never send a fifth claim.
+            if attempt == 4:
+                break
             self.click(button)
             self.wait_claim_change(v, self.event_claim_button)
         raise NeedsReview("活動一鍵領取超過正常次數")
