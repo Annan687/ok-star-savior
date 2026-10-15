@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parent.parent
 GROUPS = {
     "領取與商店": [name for name, _ in STEPS[:6]],
     "刷關與挑戰": [name for name, _ in STEPS[6:12]],
-    "活動": [name for name, _ in STEPS[12:14]],
-    "任務與養成": [name for name, _ in STEPS[14:]],
+    "活動": [name for name, _ in STEPS[12:15]],
+    "任務與養成": [name for name, _ in STEPS[15:]],
 }
 
 
@@ -345,7 +345,7 @@ class DailyPanel(QWidget):
         self.refresh()
 
     def add_task_options(self, name, layout, values):
-        if name not in ("體力刷關", "限時據點", "活動襲擊", "活動任務"):
+        if name not in ("體力刷關", "限時據點", "活動襲擊", "活動任務", "環形鏈路"):
             return
         container = QFrame()
         container.setObjectName("taskOptions")
@@ -358,13 +358,14 @@ class DailyPanel(QWidget):
         elif name == "限時據點":
             self.timed = self.combo(inner, "限時據點關卡", ["略過", *TIMED], values["限時據點關卡"])
             hint = "每天剩餘的票券集中刷這一關。"
-        elif name in ("活動襲擊", "活動任務"):
+        elif name in ("活動襲擊", "活動任務", "環形鏈路"):
             inner.addWidget(self.label("目前活動", "fieldLabel"))
             label = self.label(CURRENT_EVENT_NAME, "detail")
             label.setWordWrap(True)
             self.event_labels.append(label)
             inner.addWidget(label)
             hint = ("MAX 用完剩餘免費票；活動任務可另外勾選。" if name == "活動襲擊"
+                    else "領取鏈路任務票券後全部抽取；完成整盤會更新賓果盤。" if name == "環形鏈路"
                     else "只領取活動任務與點數獎勵，不進行襲擊掃蕩。與活動襲擊共用活動名稱。")
         label = self.label(hint, "hint")
         label.setWordWrap(True)

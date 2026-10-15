@@ -25,7 +25,7 @@ def load_cards():
     seen = set()
     for card in data['cards']:
         if (card['id'] in seen or not card['effects_recorded'] or len(card['events']) > 3
-                or card['image'] not in [f'{n:02}.png' for n in range(1, 9)]
+                or card['image'] not in [f'{n:02}.png' for n in range(1, 10)]
                 or not Path(__file__).with_name('card_tables').joinpath(card['image']).is_file()):
             raise ValueError('卡片參考資料不完整')
         seen.add(card['id'])

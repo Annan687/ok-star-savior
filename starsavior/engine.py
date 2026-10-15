@@ -89,20 +89,53 @@ class Engine:
                 raise NeedsReview(f"畫面未到達：{' / '.join(labels)}")
             self.task.sleep(.4)
 
+    def navigate_checked(self, label, source, arrived):
+        """Retry only reversible navigation on a positively identified source.
+
+        Callers provide a live, available target and a distinct destination.
+        Never use this for purchases, claims or battle/resource submissions.
+        """
+        previous, stable, ready, clicks = None, 0, 0, 0
+        for _ in range(60):
+            v = self.see()
+            if arrived(v):
+                ready += 1
+                previous, stable = None, 0
+                if ready >= 3:
+                    return v
+            else:
+                ready = 0
+                token = source(v)
+                key = (token.key, round(token.cx, 2), round(token.cy, 2)) if token else None
+                stable = stable + 1 if key is not None and key == previous else int(key is not None)
+                previous = key
+                # Give an already submitted transition longer to respond.
+                if token is not None and stable >= (8 if clicks else 3):
+                    if clicks >= 3:
+                        raise NeedsReview(f"{label}：入口點擊 3 次後仍停在原頁，未繼續後續操作")
+                    self.click(token)
+                    clicks += 1
+                    previous, stable = None, 0
+            self.task.sleep(.4)
+        raise NeedsReview(f"{label}：畫面切換未確認（入口點擊 {clicks} 次），未繼續後續操作")
+
     @staticmethod
     def strategy_promotion(v):
         return Engine.strategy_promotion_kind(v) is not None
 
     @staticmethod
     def strategy_promotion_kind(v):
-        if not (v.has("策略戰", area=(.43, .17, .57, .24), contains=False)
-                and v.has("晉級", area=(.4, .23, .6, .36), contains=False)):
+        if not v.has("策略戰", area=(.43, .17, .57, .24), contains=False):
             return None
-        if v.has("首次達成晉級獎勵", area=(.35, .38, .65, .47), contains=False):
+        promotion = v.has("晉級", area=(.4, .23, .6, .36), contains=False)
+        demotion = v.has("降級", area=(.4, .23, .6, .36), contains=False)
+        if promotion == demotion:
+            return None
+        if promotion and v.has("首次達成晉級獎勵", area=(.35, .38, .65, .47), contains=False):
             return "first_reward"
         ranks = [t for t in v.within((.4, .64, .6, .78))
                  if re.fullmatch(r"[\u4e00-\u9fff]{2,6}[1-9]?", t.key)]
-        return "rank" if len(ranks) == 1 else None
+        return ("rank" if promotion else "demotion") if len(ranks) == 1 else None
 
     def rewards(self, maximum=18, wait_initial=False, require_reward=False, return_when=None):
         seen = 0
@@ -124,11 +157,12 @@ class Engine:
                 if promotion_kind in promotion_clicked:
                     pending += 1
                     if pending >= 20:
-                        raise NeedsReview("策略戰晉級畫面點擊後仍未關閉，未重複點擊")
+                        raise NeedsReview("策略戰段位變動畫面點擊後仍未關閉，未重複點擊")
                 elif promotion_frames >= 3:
                     # This full-screen rank animation has no continue label.
                     # Click its lower blank area only after stable recognition.
-                    self.click(Text("策略戰晉級下方空白", .495, .85, .01, .01))
+                    label = "降級" if promotion_kind == "demotion" else "晉級"
+                    self.click(Text(f"策略戰{label}下方空白", .495, .85, .01, .01))
                     promotion_clicked.add(promotion_kind)
                     pending = 0
                     seen += 1
@@ -222,11 +256,19 @@ class Engine:
                 v = self.see()
         return False
 
-    def menu(self, destination):
+    def menu(self, destination, *, arrived=None):
         self.rewards()
         for _ in range(5):
             v = self.see()
+            if arrived is not None and arrived(v):
+                self.navigate_checked(destination, lambda _: None, arrived)
+                return
             if self.is_menu(v):
+                if arrived is not None:
+                    self.navigate_checked(destination,
+                                          lambda frame: self.menu_navigation_target(frame, destination),
+                                          arrived)
+                    return
                 if destination == "事件" and not self.event_menu_available(v):
                     return False
                 if destination == "好友":
@@ -286,6 +328,18 @@ class Engine:
             if not closed:
                 raise NeedsReview(f"無法找到前往「{destination}」的四格選單或關閉圖示")
         raise NeedsReview(f"前往「{destination}」的導航超過上限")
+
+    def menu_navigation_target(self, v, destination):
+        if not self.is_menu(v):
+            return None
+        if v.has(destination, area=(.07, .015, .38, .13), contains=False):
+            return Text("關閉已在目的地的選單", .27, .36, .01, .01)
+        area = (.52, .20, .94, .86)
+        hits = v.find(destination, area=area, contains=False)
+        if len(hits) > 1:
+            raise NeedsReview(f'四格選單「{destination}」有多個候選，未點擊')
+        token = hits[0] if hits else self.reread_claim_button(v, area, (destination,))
+        return token if token and v.menu_tile_state(token) is True else None
 
     def plaza(self, destination):
         title_area = (.07, .015, .38, .13)

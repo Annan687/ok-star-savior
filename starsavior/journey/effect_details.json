@@ -3,6 +3,23 @@
   "policy": "仅补作用说明，保留奖励、折扣、回合与原始来源；未确认的上限不猜。",
   "effects": [
     {
+      "id": "potential-lydia-void-call",
+      "kind": "battle_potential",
+      "aliases": [
+        "虚空之召"
+      ],
+      "description": "暴击率 +20%；攻击后根据发生暴击的目标数量，使自身攻击力增加2%，最多叠加10次",
+      "exclusive_to": "莉迪亚",
+      "source": {
+        "kind": "user_provided_screenshot",
+        "title": "虚空之召・莉迪亚专用",
+        "checked": "2026-10-15",
+        "reference": "使用者提供的新卡照片 2",
+        "text": "暴击率增加20%。攻击后根据发生暴击的目标数量，使自身的攻击力增加2%，最多叠加10次。"
+      },
+      "match_basis": "使用者遊戲內專屬潛質說明截圖"
+    },
+    {
       "id": "potential-23011",
       "kind": "battle_potential",
       "aliases": [

@@ -466,7 +466,7 @@
     },
     {
       "id": "36ta6i-19",
-      "name": "拯救集团供应",
+      "name": "救援团补给",
       "periods": [
         "三月中旬",
         "3月中旬"
@@ -475,64 +475,121 @@
       "choices": [
         {
           "aliases": [
-            "让我们选择食物。"
+            "选营养剂吧。"
           ],
           "lines": [
-            "力量 +10｜获得「满意度问卷」"
+            "力量 +10 | 获得遗物「满意度问卷」"
           ],
           "source_lines": [
             "力量 +10",
-            "获得「满意度问卷」"
+            "获得遗物：满意度问卷"
           ],
-          "source_cells": [
-            "B20",
-            "C20",
-            "C21"
-          ]
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-10-14",
+            "description": "使用者遊戲截圖確認救援團補給、三月中旬與選項順序；同次提供的救世軍團分發表確認三項效果。"
+          }
         },
         {
           "aliases": [
-            "让我们选择一个蓬松的枕头"
+            "选蓬松的枕头吧。"
           ],
           "lines": [
-            "生命 +10｜获得「满意度问卷」"
+            "体力 +10 | 获得遗物「满意度问卷」"
           ],
           "source_lines": [
-            "生命 +10",
-            "获得「满意度问卷」"
+            "体力 +10",
+            "获得遗物：满意度问卷"
           ],
-          "source_cells": [
-            "B22",
-            "C22",
-            "C23"
-          ]
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-10-14",
+            "description": "使用者遊戲截圖確認救援團補給、三月中旬與選項順序；同次提供的救世軍團分發表確認三項效果。"
+          }
         },
         {
           "aliases": [
-            "让我们选择辛辣食物"
+            "选香辣的食物吧。"
           ],
           "lines": [
-            "耐力 +10｜获得「满意度问卷」"
+            "韧性 +10 | 获得遗物「满意度问卷」"
           ],
           "source_lines": [
-            "耐力 +10",
-            "获得「满意度问卷」"
+            "韧性 +10",
+            "获得遗物：满意度问卷"
           ],
-          "source_cells": [
-            "B24",
-            "C24",
-            "C25"
-          ]
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-10-14",
+            "description": "使用者遊戲截圖確認救援團補給、三月中旬與選項順序；同次提供的救世軍團分發表確認三項效果。"
+          }
         }
       ],
       "source": {
         "url": "https://docs.qq.com/sheet/DSVBESGNncW5oVEJx?tab=36ta6i",
         "sheet": "三月中旬（随机事件）",
-        "cell": "B19"
+        "cell": "B19",
+        "original_choices": [
+          {
+            "aliases": [
+              "让我们选择食物。"
+            ],
+            "lines": [
+              "力量 +10｜获得「满意度问卷」"
+            ],
+            "source_lines": [
+              "力量 +10",
+              "获得「满意度问卷」"
+            ],
+            "source_cells": [
+              "B20",
+              "C20",
+              "C21"
+            ]
+          },
+          {
+            "aliases": [
+              "让我们选择一个蓬松的枕头"
+            ],
+            "lines": [
+              "生命 +10｜获得「满意度问卷」"
+            ],
+            "source_lines": [
+              "生命 +10",
+              "获得「满意度问卷」"
+            ],
+            "source_cells": [
+              "B22",
+              "C22",
+              "C23"
+            ]
+          },
+          {
+            "aliases": [
+              "让我们选择辛辣食物"
+            ],
+            "lines": [
+              "耐力 +10｜获得「满意度问卷」"
+            ],
+            "source_lines": [
+              "耐力 +10",
+              "获得「满意度问卷」"
+            ],
+            "source_cells": [
+              "B24",
+              "C24",
+              "C25"
+            ]
+          }
+        ]
       },
       "warnings": [],
       "name_aliases": [
-        "救世军团分发"
+        "救世军团分发",
+        "拯救集团供应"
       ],
       "name_references": [
         {
@@ -540,8 +597,72 @@
           "source": "使用者另提供的事件表圖片 1（2026-09-27）",
           "status": "表格對照；尚非實機確認",
           "difference": ""
+        },
+        {
+          "name": "救援团补给",
+          "source": "使用者遊戲截圖與效果表（2026-10-14）",
+          "status": "實機名稱及選項順序確認；效果依本次補表更新",
+          "difference": ""
         }
-      ]
+      ],
+      "confirmed_name": "救援团补给",
+      "confirmed_choices": [
+        {
+          "aliases": [
+            "选营养剂吧。"
+          ],
+          "lines": [
+            "力量 +10 | 获得遗物「满意度问卷」"
+          ],
+          "source_lines": [
+            "力量 +10",
+            "获得遗物：满意度问卷"
+          ],
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-10-14",
+            "description": "使用者遊戲截圖確認救援團補給、三月中旬與選項順序；同次提供的救世軍團分發表確認三項效果。"
+          }
+        },
+        {
+          "aliases": [
+            "选蓬松的枕头吧。"
+          ],
+          "lines": [
+            "体力 +10 | 获得遗物「满意度问卷」"
+          ],
+          "source_lines": [
+            "体力 +10",
+            "获得遗物：满意度问卷"
+          ],
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-10-14",
+            "description": "使用者遊戲截圖確認救援團補給、三月中旬與選項順序；同次提供的救世軍團分發表確認三項效果。"
+          }
+        },
+        {
+          "aliases": [
+            "选香辣的食物吧。"
+          ],
+          "lines": [
+            "韧性 +10 | 获得遗物「满意度问卷」"
+          ],
+          "source_lines": [
+            "韧性 +10",
+            "获得遗物：满意度问卷"
+          ],
+          "source_cells": [],
+          "source_reference": {
+            "kind": "user_confirmed_game",
+            "date": "2026-10-14",
+            "description": "使用者遊戲截圖確認救援團補給、三月中旬與選項順序；同次提供的救世軍團分發表確認三項效果。"
+          }
+        }
+      ],
+      "correction": "2026-10-14 依使用者補圖改為正式名稱救援團補給；選項2為體力+10、選項3為韌性+10，三項均獲得遺物滿意度問卷。原困難表保存在source.original_choices。"
     },
     {
       "id": "36ta6i-34",

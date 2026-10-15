@@ -54,11 +54,13 @@ class SnowfieldFlows:
         self.click(v.one(label, area=area))
 
     def recover_menu_from_event_home(self, v):
+        from .activity import ACTIVITIES
         # Falling snow and the bright background obscure the four-square icon.
         # Leave only a fully identified event home via its known back hierarchy.
-        if not self.resolve_event_home(v, "snowfield"):
+        kind = next((k for k in (*ACTIVITIES, 'snowfield') if self.resolve_event_home(v, k)), None)
+        if kind is None:
             return False
-        self.event_wait(lambda page: self.resolve_event_home(page, "snowfield"),
+        self.event_wait(lambda page: self.resolve_event_home(page, kind),
                         "活動首頁尚未穩定，未返回列表")
         self.click(Text("返回活動列表", .038, .055, .01, .025))
         self.event_wait(lambda page: self.event_navigation_state(page) == "list",

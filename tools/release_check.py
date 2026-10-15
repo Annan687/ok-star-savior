@@ -38,10 +38,12 @@ def check_source(root=ROOT, repository=None):
         if line and not line.startswith('#') and not re.fullmatch(r'[\w.-]+==[\w.+-]+', line):
             raise ValueError(f'Requirement is not a portable version pin: {line}')
     for relative in ('main.py', 'assets/icon.png', 'icons/icon.ico',
+                     'assets/activities/serve-list.png', 'assets/activities/serve-home.png',
+                     'starsavior/activity_flows.py',
                      'starsavior/journey/task.py', 'starsavior/journey/model.py',
                      'starsavior/journey/overlay.py', 'starsavior/journey/events.json',
                      'starsavior/journey/cards.json',
-                     *(f'starsavior/journey/card_tables/{i:02}.png' for i in range(1, 9)),
+                     *(f'starsavior/journey/card_tables/{i:02}.png' for i in range(1, 10)),
                      'starsavior/case_task.py', 'starsavior/case_files/source.json',
                      'starsavior/case_files/assets/CoreHost.exe',
                      'starsavior/case_files/assets/RouteSearch-v1.2.exe',
@@ -72,7 +74,7 @@ def smoke():
     assert Path(ok.__file__).resolve() == ROOT / 'vendor/ok-script/ok/__init__.py'
     app = QApplication.instance() or QApplication([])
     panel = DailyPanel(PreviewBackend())
-    assert len(panel.checks) == len(STEPS) == 18
+    assert len(panel.checks) == len(STEPS) == 19
     assert not panel.start_button.isEnabled()
     panel.timer.stop()
     panel.close()

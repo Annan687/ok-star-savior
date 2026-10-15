@@ -5,11 +5,13 @@ import time
 from .policy import NeedsReview, roman_value
 from .vision import Text, View, norm, BOTTOM
 from .snowfield import SnowfieldFlows, SNOWFIELD_STAGE
+from .activity import ACTIVITIES
+from .activity_flows import ActivityFlows, logo_targets
 
 ONSLAUGHT = ("封閉的心象", "異形的攻勢", "虛假的契約")
 
 
-class EventFlows(SnowfieldFlows):
+class EventFlows(ActivityFlows, SnowfieldFlows):
     def event_wait(self, predicate, description, seconds=18):
         deadline = time.monotonic() + seconds
         stable = 0
@@ -38,6 +40,8 @@ class EventFlows(SnowfieldFlows):
             return False
         if kind == "snowfield":
             return self.resolve_snowfield_home(v)
+        if kind in ACTIVITIES:
+            return self.configured_home(v, kind)
         if self.event_home(v, kind):
             return True
         # Establish the Gray home from its own title, not the activity list.
@@ -81,7 +85,14 @@ class EventFlows(SnowfieldFlows):
         # Leave recognized subpages through their observed back hierarchy.
         for _ in range(3):
             state = self.event_navigation_state(v)
-            if state not in ("stage", "onslaught", "gray", "snowfield"):
+            if state and state.startswith('orbital:'):
+                self.close()
+                v = self.event_wait(lambda page: self.event_navigation_state(page) not in (None, state),
+                                    '環形鏈路返回後尚未穩定，未重複關閉')
+                if self.resolve_event_home(v, kind):
+                    return True
+                continue
+            if state not in ("stage", "onslaught", "gray", "snowfield", *ACTIVITIES):
                 break
             self.click(Text("返回活動列表上一層", .038, .055, .01, .025))
             v = self.event_wait(lambda page: self.event_navigation_state(page) not in (None, state),
@@ -98,7 +109,7 @@ class EventFlows(SnowfieldFlows):
         if self.resolve_event_home(v, kind):
             return True
         v = self.event_wait(lambda page: len(self.event_card_targets(page, kind)) == 1,
-                            f"無法確認{dict(onslaught='激戰委託', gray='灰色研究', snowfield='DISCORDANT DUET')[kind]}活動入口")
+                            f"無法確認{dict(onslaught='激戰委託', gray='灰色研究', snowfield='DISCORDANT DUET', **{k: p['name'] for k, p in ACTIVITIES.items()})[kind]}活動入口")
         targets = self.event_card_targets(v, kind)
         self.click(targets[0])
         self.event_wait(lambda v: self.resolve_event_home(v, kind), "活動首頁尚未載入")
@@ -107,6 +118,8 @@ class EventFlows(SnowfieldFlows):
     def event_card_targets(self, v, kind):
         if self.event_navigation_state(v) != "list":
             return []
+        if kind in ACTIVITIES:
+            return logo_targets(v, ACTIVITIES[kind]['card_logo'], (.35, .55, .95, .82))
         if kind == "snowfield":
             return self.snowfield_card_targets(v)
         if kind == "onslaught":
@@ -150,6 +163,11 @@ class EventFlows(SnowfieldFlows):
     def event_navigation_state(self, v):
         if self.is_menu(v):
             return None
+        for kind in ACTIVITIES:
+            if self.resolve_event_home(v, kind):
+                return kind
+            if self.orbital_board(v, kind=kind):
+                return 'orbital:' + kind
         if self.resolve_event_home(v, "snowfield"):
             return "snowfield"
         if self.resolve_event_home(v, "onslaught"):
@@ -159,7 +177,9 @@ class EventFlows(SnowfieldFlows):
         if (not v.has("燭光廣場", area=(.08, 0, .28, .13))
                 and v.has("事件", area=(.04, .8, .23, .97), contains=False)
                 and v.has("一般", area=(.04, .8, .23, .88), contains=False)
-                and v.has("AStudy", "OVERLOAD", "ONSLAUGHT", "DISCORDANT", area=(.35, .2, .95, .8), contains=False)):
+                and (v.has("AStudy", "OVERLOAD", "ONSLAUGHT", "DISCORDANT", area=(.35, .2, .95, .8), contains=False)
+                     or any(len(logo_targets(v, p['card_logo'], (.35, .55, .95, .82))) == 1
+                            for p in ACTIVITIES.values()))):
             # OCR can split the heading into overlapping fragments. The two
             # navigation tabs and a known event card establish where to reread;
             # fragments alone must never authorize list navigation.
@@ -169,8 +189,9 @@ class EventFlows(SnowfieldFlows):
         if (v.has("燭光廣場", area=(.08, 0, .28, .13))
                 and v.has("事件", area=(.04, .8, .23, .97), contains=False)):
             return "list"
-        if (self.event_rows(v, SNOWFIELD_STAGE, "snowfield")
-                and v.has(SNOWFIELD_STAGE, area=(.73, .16, .98, .28))
+        stages = [(SNOWFIELD_STAGE, "snowfield"),
+                  *((p['stage'], p['layout']) for p in ACTIVITIES.values())]
+        if (any(self.event_rows(v, stage, layout) for stage, layout in stages)
                 and v.has("掃蕩戰鬥", area=(.74, .84, .96, .92), contains=False)
                 and not v.has("事件", area=(.08, 0, .28, .13), contains=False)):
             heading = self.reread_claim_button(v, (.128, .04, .164, .082), ("事件",))
@@ -181,7 +202,7 @@ class EventFlows(SnowfieldFlows):
                 and v.has("掃蕩戰鬥", "掃蕩戰門", area=(.74, .84, .96, .92), contains=False)
                 and any(self.event_rows(v, stage, layout) for stage, layout in
                         [*((name, "column") for name in ONSLAUGHT), ("名偵探消失的世界", "grid"),
-                         (SNOWFIELD_STAGE, "snowfield")])):
+                         *stages])):
             return "stage"
         return None
 
@@ -208,7 +229,8 @@ class EventFlows(SnowfieldFlows):
             readings = [fraction(t.key, 3) for t in tokens
                         if re.fullmatch(r"\d+/\d+", t.key)]
             return [p[0] for p in readings if p is not None]
-        snowfield = (self.resolve_event_home(v, "snowfield")
+        snowfield = (any(self.resolve_event_home(v, kind) for kind in ACTIVITIES)
+                     or self.resolve_event_home(v, "snowfield")
                      or bool(self.event_rows(v, SNOWFIELD_STAGE, "snowfield")))
         direct = values(v.within((.575, .025, .642, .10) if snowfield else (.555, .025, .617, .10)))
         if len(direct) == 1:
@@ -229,7 +251,7 @@ class EventFlows(SnowfieldFlows):
 
     @staticmethod
     def event_rows(v, stage, layout):
-        area = (.10, .15, .70, .85) if layout == "grid" else (.31, .13, .68, .95 if layout == "snowfield" else .78)
+        area = (.10, .15, .70, .85) if layout in ("grid", "pink_grid") else (.31, .13, .68, .95 if layout == "snowfield" else .78)
         rows = [t for t in v.within(area) if EventFlows.stage_label(t, stage)]
         return sorted(rows, key=lambda t: (round(t.cy/.04), t.cx), reverse=True)
 
@@ -242,8 +264,16 @@ class EventFlows(SnowfieldFlows):
     @staticmethod
     def event_row_selected(v, row, layout):
         import numpy as np
-        x = (.335 if row.cx < .38 else .65) if layout == "grid" else .60
+        x = (.335 if row.cx < .38 else .65) if layout in ("grid", "pink_grid") else .60
         patch = v.crop((x, row.cy+.032, x+.016, row.cy+.044))
+        if layout == 'pink_grid':
+            # Unselected pink cards are also bright. Only the pale selected
+            # background has low saturation; do not infer selection from stars.
+            import cv2
+            if not patch.size:
+                return False
+            hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+            return bool(np.mean((hsv[:, :, 1] < 35) & (hsv[:, :, 2] > 215)) > .8)
         return bool(patch.size and np.mean(patch.min(axis=2) > 130) > .8)
 
     def event_selected_level(self, v, stage, row=None, layout=None):
@@ -426,11 +456,21 @@ class EventFlows(SnowfieldFlows):
         self.event_wait(lambda v: self.resolve_event_home(v, "gray"), "領獎後未回到灰色研究首頁")
         return "活動每日、點數及特殊任務獎勵已檢查"
 
-    def orbital_board(self, v):
+    def orbital_board(self, v, kind=None):
         if (v.has("每日任務", area=(.36, .20, .59, .30), contains=False)
                 or v.has("REWARD", "LINK", area=(.30, .30, .66, .62), contains=False)
-                or not v.has("灰色研究環形鏈路", area=(.04, .10, .24, .19))
                 or not v.has("活動任務", area=(.58, .20, .66, .29), contains=False)):
+            return False
+        kind = kind or getattr(self, '_orbital_kind', 'gray')
+        if kind in ACTIVITIES:
+            profile = ACTIVITIES[kind]
+            # The top-left name scrolls; this subtitle stays fixed.
+            area = profile['orbital_title_area']
+            title = profile['orbital_title']
+            if not v.has(title, area=area, contains=False):
+                if self.reread_claim_button(v, area, (title,)) is None:
+                    return False
+        elif not v.has("灰色研究環形鏈路", area=(.04, .10, .24, .19)):
             return False
         draw = v.find("全部抽取", area=(.82, .91, .90, .97), contains=False)
         refresh = v.find("更新賓果盤", area=(.83, .91, .96, .97), contains=False)
@@ -463,6 +503,14 @@ class EventFlows(SnowfieldFlows):
         rounds = [int(m[1]) for m in rounds if m]
         if len(rounds) == 1:
             return rounds[0]
+        if not rounds and getattr(self, '_orbital_kind', None) in ACTIVITIES and self.orbital_board(v):
+            # Read the complete badge: cropping only the 1 clips its stroke at
+            # 720p. Do not translate the ambiguous full-frame ILINK into 1.
+            badges = [re.fullmatch(r'([1-9]\d*)LINK', t.key)
+                      for t in self.event_local_text(v, (.675, .21, .74, .27))]
+            badges = [int(m[1]) for m in badges if m]
+            if len(badges) == 1:
+                return badges[0]
         if not rounds and v.has("ILINK", area=(.675, .21, .74, .27), contains=False):
             # First-round 1 LINK is sometimes read as I LINK; re-read pixels.
             digits = [t.key for t in self.event_local_text(v, (.680, .218, .692, .255))

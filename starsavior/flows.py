@@ -13,6 +13,8 @@ from .vision import norm, Text, View, FULL, TOP, BOTTOM, CENTER, RIGHT, LEFT
 
 
 class DailyFlows(EventFlows, Engine):
+    LOGIN_WAIT_SECONDS = 180
+
     @staticmethod
     def boot_phase(v):
         if DailyFlows.title_start_button(v) is not None:
@@ -35,6 +37,9 @@ class DailyFlows(EventFlows, Engine):
     def prepare_game(self, claim_login=False):
         """Boot readiness is a prerequisite, independent of selected chores."""
         v = self.see()
+        if self.login_notice_present(v):
+            self.startup(claim_login=claim_login)
+            return
         if self.is_lobby(v) or self.is_menu(v):
             return
         phase = self.boot_phase(v)
@@ -53,6 +58,9 @@ class DailyFlows(EventFlows, Engine):
                 previous = phase
             self.task.sleep(.5)
             v = self.see()
+            if self.login_notice_present(v):
+                self.startup(claim_login=claim_login)
+                return
             # Ready navigation must win over wallpaper pixels or text.
             if self.is_lobby(v) or self.is_menu(v):
                 return
@@ -66,7 +74,9 @@ class DailyFlows(EventFlows, Engine):
         visited = set()
         unknown_since = None
         entered_title = False
-        for _ in range(30):
+        handled_pages = 0
+        # Loading polls do not consume the limit on actual popup operations.
+        while handled_pages < 30:
             self.rewards()
             v = self.see()
             start = self.title_start_button(v)
@@ -74,6 +84,7 @@ class DailyFlows(EventFlows, Engine):
                 if entered_title:
                     raise NeedsReview("登入後又回到標題畫面，未重複送出登入")
                 self.click(start)
+                handled_pages += 1
                 entered_title = True
                 self.wait_for_title_transition()
                 unknown_since = None
@@ -83,23 +94,26 @@ class DailyFlows(EventFlows, Engine):
                 confirm = self.animation_skip_confirmation(v)
                 if confirm is not None:
                     self.click(confirm)
+                    handled_pages += 1
                     unknown_since = None
                     continue
-            if (v.has("通知", area=CENTER, contains=False)
-                    and v.has("30天星光石補給商品", "30天意志力補給商品", area=CENTER)
-                    and v.has("是否前往購買商品以更新剩餘期限", area=CENTER)):
+            notice = self.login_notice_present(v)
+            if notice and self.close_monthly_expiry(v):
+                handled_pages += 1
                 unknown_since = None
-                self.tap("取消", area=CENTER)
                 continue
-            if not animation_dialog and (self.is_lobby(v) or self.is_menu(v)):
+            if not notice and not animation_dialog and (self.is_lobby(v) or self.is_menu(v)):
                 return "已到大廳"
             if v.has("LOGINBONUS", "登入獎勵", "勤紀錄"):
+                handled_pages += 1
                 unknown_since = None
                 self.close_login_bonus()
             elif v.has("星穹傳送門") and v.has("全新首領登場"):
+                handled_pages += 1
                 unknown_since = None
                 self.close((.86, .15, .96, .30))
             elif v.has("簽到簿", "300日紀念"):
+                handled_pages += 1
                 unknown_since = None
                 if not claim_login:
                     self.close()
@@ -129,11 +143,78 @@ class DailyFlows(EventFlows, Engine):
                 now = time.monotonic()
                 if unknown_since is None:
                     unknown_since = now
-                if now-unknown_since >= 15:
-                    raise NeedsReview("等待大廳進場動畫約 15 秒後仍無法確認介面；請檢查是否已進入大廳")
+                if now-unknown_since >= self.LOGIN_WAIT_SECONDS:
+                    raise NeedsReview(f"登入／大廳載入等待逾時（{self.LOGIN_WAIT_SECONDS} 秒），仍無法確認介面；請檢查遊戲載入或連線狀態")
                 self.task.sleep(.5)
                 continue
-        raise NeedsReview("登入領取超過次數上限")
+        raise NeedsReview("登入彈窗／進場仍未完成，未開始後續日課")
+
+    @staticmethod
+    def login_notice_present(v):
+        return v.has("通知", area=(.25, .30, .34, .37), contains=False)
+
+    def monthly_expiry_cancel(self, v):
+        if not self.login_notice_present(v):
+            return None
+        area = (.259, .475, .736, .513)
+        products = ("30天星光石補給商品", "30天意志力補給商品")
+
+        def product_in(view, region):
+            # Use complete product and renewal phrases, not OCR spellings of
+            # the variable remaining-days sentence (剩餘/剩馀 often loses strokes).
+            text = "".join(t.key for t in sorted(view.within(region), key=lambda t: (t.y, t.x)))
+            found = [p for p in products if norm(p) in text]
+            return found[0] if (len(found) == 1 and norm("是否前往購買商品以更新") in text
+                                and norm("期限") in text) else None
+
+        product = product_in(v, area)
+        if product is None:
+            import cv2
+            patch = cv2.resize(v.crop(area), None, fx=3, fy=3)
+            local = View(patch, self.task.ocr(frame=patch, threshold=.9))
+            product = product_in(local, FULL)
+        if product is None:
+            return None
+        buttons = []
+        for label, region in (("取消", (.407, .628, .448, .666)),
+                              ("確認", (.556, .628, .587, .666))):
+            hits = v.find(label, area=region, contains=False)
+            if len(hits) > 1:
+                raise NeedsReview("月卡到期通知按鈕不唯一，未點擊")
+            token = hits[0] if hits else self.reread_claim_button(v, region, (label,))
+            if token is None or not v.enabled(token):
+                return None
+            buttons.append(token)
+        return product, buttons[0]
+
+    def close_monthly_expiry(self, v):
+        state = self.monthly_expiry_cancel(v)
+        if state is None:
+            return False
+        product, _ = state
+        stable = 0
+        for _ in range(30):
+            state = self.monthly_expiry_cancel(v)
+            stable = stable + 1 if state and state[0] == product else 0
+            if stable >= 3:
+                self.click(state[1])
+                break
+            self.task.sleep(.4)
+            v = self.see()
+        else:
+            raise NeedsReview("月卡到期通知未穩定，未取消")
+        stable = 0
+        for _ in range(30):
+            v = self.see()
+            other = self.monthly_expiry_cancel(v) if self.login_notice_present(v) else None
+            changed = (other is not None and other[0] != product) or (
+                not self.login_notice_present(v) and (self.is_lobby(v) or self.is_menu(v)
+                or v.has("LOGINBONUS", "登入獎勵", "勤紀錄", "簽到簿", "300日紀念")))
+            stable = stable + 1 if changed else 0
+            if stable >= 3:
+                return True
+            self.task.sleep(.4)
+        raise NeedsReview("月卡到期通知取消後未確認關閉，未重複點擊")
 
     def close_login_bonus(self):
         # This calendar uses a gray X (observed peak brightness 189), unlike
@@ -176,13 +257,13 @@ class DailyFlows(EventFlows, Engine):
         return v.one("TOUCHTOSTART", area=(.25, .75, .75, .94), required=False)
 
     def wait_for_title_transition(self):
-        deadline = time.monotonic() + 60
+        deadline = time.monotonic() + self.LOGIN_WAIT_SECONDS
         while time.monotonic() < deadline:
             v = self.see()
             if v.items and not v.has("STARSAVIOR", "星之救援者", area=(.25, .5, .75, .87), contains=False):
                 return
             self.task.sleep(.5)
-        raise NeedsReview("點擊 Touch to Start 後登入等待逾時，請檢查遊戲連線或登入狀態")
+        raise NeedsReview(f"點擊 Touch to Start 後登入等待逾時（{self.LOGIN_WAIT_SECONDS} 秒），請檢查遊戲連線或登入狀態")
 
     @staticmethod
     def animation_skip_confirmation(v):
@@ -288,22 +369,35 @@ class DailyFlows(EventFlows, Engine):
         raise NeedsReview("信箱已空，但關閉點擊後未返回大廳，背景輸入可能未生效")
 
     @staticmethod
-    def friend_button(v, label):
+    def friend_button(v, label, required=True):
         # The leading horizontal stroke can disappear in 900p OCR.
         # Limit the alias to its own footer button on the verified friend page.
         area = ((.65, .85, .79, .97) if label == "一鍵領取"
                 else (.79, .85, .93, .97))
-        return v.one(label, label[1:], area=area)
+        hits = v.find(label, label[1:], area=area, contains=False)
+        if len(hits) > 1:
+            raise NeedsReview(f"好友{label}有多個候選，未點擊")
+        return v.one(label, label[1:], area=area, required=required)
 
-    def friend_panel(self):
-        v = self.expect("好友列表", area=LEFT)
-        if not v.has("好友", area=(.07, .015, .38, .13), contains=False):
-            raise NeedsReview("好友列表缺少好友頁標題")
+    def resolve_friend_button(self, v, label):
+        if not (v.has("好友列表", area=LEFT, contains=False)
+                and v.has("好友", area=(.07, .015, .38, .13), contains=False)
+                and not v.has("REWARD", area=CENTER, contains=False)):
+            return None
         # Both controls must be present, even when disabled. Missing OCR is
         # not evidence that today's claims or sends have finished.
-        for label in ("一鍵領取", "一鍵發送"):
-            self.friend_button(v, label)
-        return v
+        buttons = {}
+        for name, area in (("一鍵領取", (.700, .883, .760, .932)),
+                           ("一鍵發送", (.836, .883, .898, .932))):
+            token = self.friend_button(v, name, required=False)
+            if token is None:
+                # Text-only footer crops exclude the handshake icons. Never
+                # turn OCR errors such as 一键建领取 into accepted aliases.
+                token = self.reread_claim_button(v, area, (name,))
+            if token is None:
+                return None
+            buttons[name] = token
+        return buttons[label]
 
     def friends(self):
         v = self.see()
@@ -311,24 +405,20 @@ class DailyFlows(EventFlows, Engine):
             self.menu("好友")
         results = []
         for label in ("一鍵領取", "一鍵發送"):
-            v = self.friend_panel()
-            token = self.friend_button(v, label)
+            resolver = lambda page: self.resolve_friend_button(page, label)
+            v, token = self.wait_claim_ready(resolver, f"好友{label}及完整頁面尚未穩定，未提交")
             if not v.enabled(token):
                 results.append(f"{label}目前不可用，略過")
                 continue
             self.click(token)
-            # Claim opens a reward overlay; send becomes disabled directly.
-            # Wait for either transition, without submitting the action twice.
-            for _ in range(10):
-                self.rewards()
-                v = self.friend_panel()
-                token = self.friend_button(v, label)
-                if not v.enabled(token):
-                    results.append(f"{label}已完成")
-                    break
-                self.task.sleep(.4)
-            else:
-                raise NeedsReview(f"好友{label}後按鈕仍可用，未重複點擊")
+            # Friend names / online status can change without a successful
+            # submission. Require this button to become stably disabled;
+            # the shared waiter also handles a delayed REWARD overlay.
+            def completed(page):
+                button = resolver(page)
+                return button if button is not None and not page.enabled(button) else None
+            self.wait_claim_ready(completed, f"好友{label}後按鈕仍可用或狀態不明，未重複點擊")
+            results.append(f"{label}已完成")
         self.close()
         for _ in range(10):
             v = self.see()
@@ -722,35 +812,72 @@ class DailyFlows(EventFlows, Engine):
             if not remaining:
                 results.append(f"{name}次數已用完")
                 continue
-            self.click(row)
-            for _ in range(3):
-                v = self.see()
-                selected = v.one(name, area=RIGHT, required=False)
-                if selected and v.enabled(selected):
-                    break
-                self.task.sleep(.5)
-                v = self.corridor_overview()
-                self.click(v.one(name, area=RIGHT))
-            else:
-                raise NeedsReview(f"{name} 未顯示選取高亮，未進入")
-            self.tap("進入", area=BOTTOM)
-            self.expect(name, area=(.80, .24, .96, .40))
+            self.navigate_checked(f"選擇{name}",
+                                  lambda frame: self.corridor_row_target(frame, name),
+                                  lambda frame: self.corridor_enter_target(frame, name) is not None)
+            self.navigate_checked(f"進入{name}",
+                                  lambda frame: self.corridor_enter_target(frame, name),
+                                  lambda frame: self.corridor_detail_ready(frame, name))
             for _ in range(remaining):
-                v = self.see()
+                v = self.wait_corridor_detail(name)
                 before = v.count(3, area=(.65, .70, .98, 1))[1][0]
                 if not before:
                     break
-                self.tap("進入", area=BOTTOM, enabled=True)
+                self.click(v.one("進入", area=BOTTOM))
                 won = self.skip_battle()
                 if not won:
                     results.append(f"{name}本次失敗，停止該迴廊")
                     break
-                after = self.see().count(3, area=(.65, .70, .98, 1))[1][0]
+                after = self.wait_corridor_detail(name).count(3, area=(.65, .70, .98, 1))[1][0]
                 if after != before-1:
                     raise NeedsReview("迴廊剩餘次數未按預期減少")
             else:
                 results.append(f"{name}完成")
         return "；".join(results)
+
+    def corridor_row_target(self, v, name):
+        if self.is_menu(v) or not all(v.one(label, area=RIGHT, required=False) for label in
+                                    ("太陽迴廊", "月亮迴廊", "星辰迴廊")):
+            return None
+        row = v.one(name, area=RIGHT, required=False)
+        area = (.88, row.cy, .98, row.cy+.08)
+        counter = v.count(3, area=area, required=False)
+        if v.has("CLOSED", area=area) or counter is None or counter[1][0] == 0:
+            return None
+        return row
+
+    def corridor_enter_target(self, v, name):
+        row = self.corridor_row_target(v, name)
+        if row is None or not v.enabled(row):
+            return None
+        button = v.one("進入", area=BOTTOM, required=False)
+        return button if button and v.enabled(button) else None
+
+    def corridor_detail_ready(self, v, name):
+        # The overview also contains the corridor name and an Enter button.
+        # Require inner-page details and its bottom counter before any battle.
+        if self.is_menu(v) or any(v.has(other, area=RIGHT, contains=False)
+                                 for other in ("太陽迴廊", "月亮迴廊", "星辰迴廊") if other != name):
+            return False
+        return (v.one(name, area=(.80, .24, .96, .40), required=False) is not None
+                and v.has("編制條件", "建議戰鬥力", area=(.77, .32, .98, .52))
+                and v.one("進入", area=BOTTOM, required=False) is not None
+                and v.count(3, area=(.65, .70, .98, 1), required=False) is not None)
+
+    def wait_corridor_detail(self, name):
+        previous, stable = None, 0
+        for _ in range(30):
+            v = self.see()
+            count = v.count(3, area=(.65, .70, .98, 1), required=False) if self.corridor_detail_ready(v, name) else None
+            value = count[1][0] if count else None
+            if value and not v.enabled(v.one("進入", area=BOTTOM)):
+                value = None
+            stable = stable + 1 if value is not None and value == previous else int(value is not None)
+            previous = value
+            if stable >= 3:
+                return v
+            self.task.sleep(.4)
+        raise NeedsReview(f"{name}內頁／剩餘次數未穩定，未重新提交戰鬥")
 
     def corridor_overview(self):
         # The page title appears before the entrance animation finishes.
@@ -829,6 +956,16 @@ class DailyFlows(EventFlows, Engine):
         entries = v.find("策略戰", area=(.40, .74, .60, .85), contains=False)
         return entries[0] if len(entries) == 1 else None
 
+    @staticmethod
+    def strategy_defense_body(v):
+        return (v.has("依防御战斗结果，分数发生变动。", "依防禦戰鬥結果，分數發生變動。",
+                      area=(.38, .34, .63, .40), contains=False)
+                and v.has("戰鬥結果現況", area=(.44, .41, .57, .47), contains=False)
+                and v.has("勝利次數", area=(.40, .47, .49, .53), contains=False)
+                and v.has("戰敗次數", area=(.52, .47, .61, .53), contains=False)
+                and len(v.find("確認", area=(.40, .65, .60, .74), contains=False)) == 1
+                and not v.has("取消", "購買", "刷新對戰列表", area=CENTER))
+
     def resolve_strategy_state(self, v):
         state = self.strategy_state(v)
         if state is not None:
@@ -836,13 +973,7 @@ class DailyFlows(EventFlows, Engine):
         # The heading's decorative icon may merge into OCR as a character.
         # Establish the defense-result dialog by its body, then read only the
         # heading text. Never accept the corrupted full-screen label as an alias.
-        if (v.has("依防御战斗结果，分数发生变动。", "依防禦戰鬥結果，分數發生變動。",
-                  area=(.38, .34, .63, .40), contains=False)
-                and v.has("戰鬥結果現況", area=(.44, .41, .57, .47), contains=False)
-                and v.has("勝利次數", area=(.40, .47, .49, .53), contains=False)
-                and v.has("戰敗次數", area=(.52, .47, .61, .53), contains=False)
-                and len(v.find("確認", area=(.40, .65, .60, .74), contains=False)) == 1
-                and not v.has("取消", "購買", "刷新對戰列表", area=CENTER)):
+        if self.strategy_defense_body(v):
             token = self.reread_claim_button(v, (.285, .275, .382, .32), ("防禦紀錄資訊",))
             if token is not None:
                 v.items.append(token)
@@ -870,7 +1001,7 @@ class DailyFlows(EventFlows, Engine):
             v = self.see()
             state = self.resolve_strategy_state(v)
             if state is not None or self.strategy_promotion(v):
-                state = state or "晉級"
+                state = state or self.strategy_promotion_kind(v)
                 state_frames = state_frames + 1 if state == previous_state else 1
                 previous_state = state
                 card_frames = 0
@@ -895,9 +1026,13 @@ class DailyFlows(EventFlows, Engine):
             raise NeedsReview("策略戰入口標籤放大重讀仍不完整，未點擊卡片；未刷新")
         raise NeedsReview("尚未進入策略戰對戰列表，入口未回應或仍在載入；未刷新")
 
-    def strategy_screen(self, *labels, area=FULL, seconds=15, key_rewards=None):
+    def strategy_screen(self, *labels, area=FULL, seconds=15, key_rewards=None,
+                        read_keys=False, key_before=None, completed_target=None):
         previous, stable, promotions = None, 0, 0
         clear_stable, clear_submitted = 0, False
+        defense_stable, defense_submitted = 0, False
+        last_state = "未知／載入畫面"
+        last_keys = None
         for _ in range(max(3, int(seconds/.4))):
             v = self.see()
             if self.strategy_promotion(v):
@@ -906,9 +1041,23 @@ class DailyFlows(EventFlows, Engine):
                     break
                 self.rewards(wait_initial=True)
                 previous, stable = None, 0
-                clear_stable = 0
+                clear_stable = defense_stable = 0
                 continue
             state = self.resolve_strategy_state(v)
+            last_state = state or "未知／載入畫面"
+            # Defense results can interrupt entry, battle settlement or a
+            # refreshed list. Dismiss once, then still require the target page.
+            if state == "防禦紀錄資訊":
+                confirm = v.one("確認", area=(.40, .65, .60, .74), required=False)
+                ready = self.strategy_defense_body(v) and confirm is not None and v.enabled(confirm)
+                defense_stable = defense_stable + 1 if ready else 0
+                if defense_stable >= 3 and not defense_submitted:
+                    self.click(confirm)
+                    defense_submitted = True
+                previous, stable, clear_stable = None, 0, 0
+                self.task.sleep(.4)
+                continue
+            defense_stable = 0
             if state == "全勝獎勵":
                 confirm = v.one("確認", area=(.40, .64, .60, .74))
                 clear_stable = clear_stable + 1 if v.enabled(confirm) else 0
@@ -920,18 +1069,63 @@ class DailyFlows(EventFlows, Engine):
                 continue
             clear_stable = 0
             valid = state is not None and state in labels and (not clear_submitted or state == "對戰列表")
-            stable = stable + 1 if valid and state == previous else (1 if valid else 0)
-            previous = state if valid else None
-            if stable >= 3:
+            signature, required = state, 3
+            mismatch = False
+            if read_keys and state == "對戰列表":
+                try:
+                    last_keys = self.strategy_keys(v)
+                except NeedsReview:
+                    last_keys = None
+                valid = valid and last_keys is not None
+                signature = (state, last_keys)
+                if valid and key_before is not None:
+                    expected = key_before - 1 + int(clear_submitted)
+                    mismatch = last_keys != expected
+                    if mismatch:
+                        # skip_battle has already required VICTORY / DEFEAT.
+                        # Also require this opponent to stop being a fresh
+                        # challenge, or a confirmed automatic list refresh.
+                        settled = clear_submitted or (
+                            completed_target is not None
+                            and v.has("勝利", "重新挑戰", contains=False,
+                                      area=v.around(completed_target, .075, .045))
+                            and not v.has("挑戰", contains=False,
+                                          area=v.around(completed_target, .075, .045)))
+                        valid = valid and settled
+                        signature = (state, last_keys, settled)
+                        # Give a stale counter more time to catch up before
+                        # accepting a stable live balance after settlement.
+                        required = 6
+            stable = stable + 1 if valid and signature == previous else (1 if valid else 0)
+            previous = signature if valid else None
+            if stable >= required:
+                if read_keys and state == "對戰列表":
+                    v.strategy_key_count = last_keys
+                    if key_before is None:
+                        detail = f"戰前確認 {last_keys}/6"
+                    else:
+                        detail = (f"戰前 {key_before}/6；戰後 {last_keys}/6；"
+                                  f"全勝獎勵 +{int(clear_submitted)}；預期 {expected}/6")
+                        if mismatch:
+                            detail += "；結算及對手狀態已確認，依穩定剩餘鑰匙繼續"
+                    self.task.info_set("策略戰鑰匙", detail)
                 if clear_submitted and key_rewards is not None:
                     # Observed list-clear reward: one Saint Armor key. Credit
                     # only after the confirmation has returned to the list.
                     key_rewards.append(1)
                 return v
             self.task.sleep(.4)
+        if read_keys and last_state == "對戰列表":
+            detail = f"目前讀值 {last_keys if last_keys is not None else '不明'}/6"
+            if key_before is not None:
+                detail = (f"戰前 {key_before}/6；{detail}；全勝獎勵 +{int(clear_submitted)}；"
+                          f"預期 {key_before-1+int(clear_submitted)}/6")
+            raise NeedsReview(f"策略戰鑰匙扣除／數值或對手結算狀態尚未穩定（{detail}）；未再次挑戰")
         if clear_submitted:
             raise NeedsReview("策略戰全勝獎勵已確認，但尚未回到對戰列表；未重複點擊")
-        raise NeedsReview("策略戰頁面尚未穩定到達對戰列表或結算通知；未挑戰或刷新")
+        if defense_submitted:
+            raise NeedsReview("策略戰防禦紀錄已確認，但尚未回到預期頁面；未重複點擊")
+        raise NeedsReview(f"策略戰等待{'／'.join(labels)}逾時；目前為{last_state}，未繼續操作")
 
     def strategy(self):
         v = self.see()
@@ -942,21 +1136,14 @@ class DailyFlows(EventFlows, Engine):
                 return "策略戰正在結算，暫無法挑戰；鑰匙未使用"
         refreshes = 0
         for _ in range(35):
-            v = self.strategy_screen("週聯賽獎勵", "防禦紀錄資訊", "對戰列表")
-            if v.has("防禦紀錄資訊", area=CENTER):
-                if not (v.has("戰鬥結果現況", area=CENTER)
-                        and v.has("勝利次數", area=CENTER)
-                        and v.has("戰敗次數", area=CENTER)):
-                    raise NeedsReview("防禦紀錄通知內容尚未辨識完整")
-                self.tap("確認", area=CENTER)
-                continue
+            v = self.strategy_screen("週聯賽獎勵", "對戰列表", read_keys=True)
             if v.has("週聯賽獎勵"):
                 if not v.has("重新配置週聯賽段位"):
                     raise NeedsReview("策略戰結算獎勵內容尚未辨識完整")
                 self.tap("確認", area=BOTTOM)
                 self.rewards()
                 continue
-            before = self.strategy_keys(v)
+            before = v.strategy_key_count
             if before == 0:
                 return "鑰匙已用完"
             targets = [t for t in v.within((.5, .22, .97, .98)) if exact_challenge(t.text)]
@@ -964,15 +1151,17 @@ class DailyFlows(EventFlows, Engine):
             if targets:
                 self.click(targets[0])
                 self.skip_battle(strategy=True)
-                key_rewards = []
-                after = self.strategy_keys(self.strategy_screen("對戰列表", key_rewards=key_rewards))
-                if after != before-1+sum(key_rewards):
-                    raise NeedsReview("策略戰後未確認鑰匙扣除")
+                after = self.strategy_screen("對戰列表", read_keys=True,
+                                             key_before=before, completed_target=targets[0])
+                if after.strategy_key_count == 0:
+                    return "鑰匙已用完"
                 continue
             # Check the lower part before deciding every opponent was tried.
             self.task.scroll_relative(.83, .72, -3)
             self.task.sleep(.5)
-            v = self.strategy_screen("對戰列表")
+            v = self.strategy_screen("對戰列表", read_keys=True)
+            if v.strategy_key_count == 0:
+                return "鑰匙已用完"
             if any(exact_challenge(t.text) and v.enabled(t) for t in v.within(RIGHT)):
                 continue
             if refreshes >= 10:
@@ -1009,9 +1198,10 @@ class DailyFlows(EventFlows, Engine):
             stable = stable + 1 if confirm is not None and v.enabled(confirm) else 0
             if stable >= 3:
                 self.click(confirm)
-                self.event_wait(lambda page: (
-                    self.strategy_state(page) == "對戰列表"),
-                    "刷新提交後尚未回到對戰列表，未重複提交")
+                try:
+                    self.strategy_screen("對戰列表", seconds=18)
+                except NeedsReview as exc:
+                    raise NeedsReview(f"刷新已提交，返回對戰列表未完成；未重複提交：{exc}") from exc
                 return True
             self.task.sleep(.4)
         raise NeedsReview("刷新對戰列表確認框尚未穩定，未提交")
@@ -1019,10 +1209,10 @@ class DailyFlows(EventFlows, Engine):
     def event(self):
         # Activity support is shipped with the program, not selected by an old
         # homepage config or a saved Windows schedule snapshot.
-        return self.snowfield_assault()
+        return self.activity_assault()
 
     def event_missions(self):
-        return self.snowfield_missions()
+        return self.activity_missions()
 
     def missions(self):
         self.menu("任務")
@@ -1078,8 +1268,14 @@ class DailyFlows(EventFlows, Engine):
             raise NeedsReview("重新派遣後仍停留獎勵頁")
         return "已領取並沿用原隊伍重新派遣"
 
+    def guild_entry_ready(self, v):
+        return not self.is_menu(v) and (
+            v.has("REWARD", area=CENTER, contains=False)
+            or (v.has("公會", area=(.07, .015, .38, .13), contains=False)
+                and v.has("公會商店", area=(.5, .88, .98, 1))))
+
     def guild(self):
-        self.menu("公會")
+        self.menu("公會", arrived=self.guild_entry_ready)
         self.expect("REWARD", "公會商店", seconds=15)
         self.rewards()
         # OCR can join all three bottom navigation buttons into one token.
