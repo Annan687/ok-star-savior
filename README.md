@@ -24,11 +24,11 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-**v0.2.13 測試版**：接入「戰士之心！奉獻之心！」與環形鏈路，補強登入、導航、好友領取及策略戰穩定性，新增莉迪亞卡片提示。詳見 [更新紀錄](CHANGELOG.md)。
+**v0.2.14 測試版**：修正活動簽到關閉與特別免費禮包下架後卡住，環形鏈路改為非零票且按鈕可用就抽取，避免費用數字誤讀阻擋。詳見 [更新紀錄](CHANGELOG.md)。
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.13/ok-star-savior-win32-Global-setup.exe) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.14/ok-star-savior-win32-Global-setup.exe) ·
 
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.13) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.14) ·
 
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 
@@ -78,15 +78,15 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-**[v0.2.13 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.13)。一般使用者請下載 Global 安裝版。**
+**[v0.2.14 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.14)。一般使用者請下載 Global 安裝版。**
 
 | 檔案 | 用途 |
 
 | --- | --- |
 
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.13/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.14/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
 
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.13/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.14/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 
 | `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
 
@@ -218,7 +218,11 @@ v0.2.2 已加入以下功能，目前已完成離線驗證，仍待實際定時�
 
 活動襲擊支援「還森林一片潔淨」兩欄八關，由高往低確認可掃蕩關卡，固定 MAX 用完剩餘免費票券，不自動進場首通。活動名稱由新版程式提供，不需自行輸入；確認列表後搜尋唯一活動標誌，兼容舊活動結束後卡片前移。舊合併的「活動襲擊與任務」會轉成兩項。
 
-新活動沿用共用任務領取、點數獎勵、掃蕩與鏈路流程。已實機完成零票略過襲擊、每日／點數／特殊任務領取，以及消耗 30 張鏈路票至歸零後返回首頁；實際掃蕩與整盤更新仍待驗證。入口及相關頁面另通過三種解析度離線辨識，卡片前移已以模擬畫面核對。新免費禮包依下方免費價格與購買限制定位，商品名稱滾動不影響判定。
+新活動沿用共用任務領取、點數獎勵、掃蕩與鏈路流程。10/15 已實機完成零票略過襲擊、每日／點數／特殊任務領取，以及消耗 30 張鏈路票至歸零後返回首頁；10/16 另完成第 III 關掃蕩三次至 0/3。入口及相關頁面另通過三種解析度離線辨識，卡片前移已以模擬畫面核對。
+
+v0.2.14 的環形鏈路只判斷票數是否為零：非零且「全部抽取」可用便抽取，每次等到獎勵並返回盤面才繼續，不再核對費用與精確扣票差額。零票、非零可抽、可更新三種狀態分開連續確認三次；非零數字變動不會重置等待。整盤完成仍會更新並確認下一盤，不比較更新前後的精確餘額。這次鏈路調整與整盤更新尚待實機驗證。
+
+免費禮包依下方免費價格與購買限制定位。特別免費禮包子分頁消失時，確認商店已穩定載入便繼續普通每日／每週／每月禮包，不再被其他活動分頁的滾動名稱阻擋；購買視窗仍須確認總價免費。
 
 遇到無法辨識或不確定的畫面時，
 
@@ -558,7 +562,7 @@ Star Savior：目前遊戲版本
 
 | --- | --- |
 
-| 日課流程 | v0.2.13 通過 729 項離線測試與 23 個子測試；新活動 36 組三尺寸頁面回放、3 組卡片移位模擬通過。2026-10-15 單一帳號已實機完成新活動零票略過、任務領取及鏈路抽取至歸零返回。完整新版日課與其他設備仍待擴大實測。[修正內容](CHANGELOG.md) |
+| 日課流程 | v0.2.14 通過 765 項專案離線測試、23 個子測試、程式載入及介面 smoke 檢查。2026-10-16 單一帳號已完成活動簽到及新活動第 III 關掃蕩三次至 0/3。禮包分頁缺席／滾動名稱、鏈路非零抽取與更新條件已用三種尺寸真圖及模擬流程離線回放；這些新修補仍待實機重跑。完整新版日課與其他設備仍待擴大實測。[修正內容](CHANGELOG.md) |
 
 | 自訂排程 | 本機原始碼版已實測 22:00 定時啟動 Steam 遊戲，只跑保存的五項設定，完成後關閉遊戲及 OKSS；首頁仍保留完整日課設定。 |
 
@@ -574,7 +578,7 @@ Star Savior：目前遊戲版本
 
 - 安裝版排程、不同任務組合及長期跨日穩定性；目前完整啟動至關閉的排程實测限本機原始碼版的五項自訂流程。
 
-- 新活動實際掃蕩與環形鏈路整盤更新、莉迪亞新卡旅程事件提示、限時商店整個分類消失及案件檔案整合的實機驗證。
+- 新活動 IV～VIII、環形鏈路非零抽取與整盤更新、特別免費禮包分頁缺席修補、莉迪亞新卡旅程事件提示、限時商店整個分類消失及案件檔案整合的實機驗證。
 
 - 完整安裝精靈、乾淨 Windows 環境及第二台電腦的安裝與執行。
 
@@ -682,7 +686,7 @@ OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`�
 
 ## 📌 專案狀態
 
-目前提供 `v0.2.13` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
+目前提供 `v0.2.14` 測試版；各項驗證進度與限制見上方「目前測試狀態」。
 
 歡迎透過 [Issues](https://github.com/Annan687/ok-star-savior/issues) 提供不同環境的測試結果與問題紀錄。
 

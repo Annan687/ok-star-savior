@@ -12,12 +12,16 @@ ONSLAUGHT = ("封閉的心象", "異形的攻勢", "虛假的契約")
 
 
 class EventFlows(ActivityFlows, SnowfieldFlows):
-    def event_wait(self, predicate, description, seconds=18):
+    def event_wait(self, predicate, description, seconds=18, *, stability_key=None):
         deadline = time.monotonic() + seconds
         stable = 0
+        previous = None
         while time.monotonic() < deadline:
             v = self.see()
-            stable = stable + 1 if predicate(v) else 0
+            ready = predicate(v)
+            key = stability_key(v) if ready and stability_key is not None else None
+            stable = (stable + 1 if ready and key == previous else int(bool(ready)))
+            previous = key
             if stable >= 3:
                 return v
             self.task.sleep(.35)
@@ -480,22 +484,18 @@ class EventFlows(ActivityFlows, SnowfieldFlows):
         return len(refresh) == 1 and not draw
 
     def orbital_tokens(self, v):
-        tokens = [t for t in v.within((.916, .14, .96, .19)) if re.fullmatch(r"[\d,]+", t.key)]
+        number = r"\d+(?:,\d{3})*"
+        tokens = [t for t in v.within((.90, .14, .96, .19)) if re.fullmatch(number, t.key)]
         if not tokens and self.orbital_board(v):
-            # The ticket icon can extend the full-frame box outside the counter.
-            tokens = [t for t in self.event_local_text(v, (.918, .14, .96, .18))
-                      if re.fullmatch(r"[\d,]+", t.key)]
+            # Right-aligned balances grow leftwards. The old .918 crop cut
+            # 130 into 30 when full-frame OCR merged the ticket icon with it.
+            tokens = [t for t in self.event_local_text(v, (.90, .14, .96, .18))
+                      if re.fullmatch(number, t.key)]
+            if any(t.x <= .02 or t.x + t.w >= .98 for t in tokens):
+                raise NeedsReview("環形鏈路票券數碰到裁切邊界，未採用不完整數字")
         if len(tokens) != 1:
             raise NeedsReview("環形鏈路票券數不明確")
         return int(tokens[0].key.replace(",", ""))
-
-    @staticmethod
-    def orbital_draw_cost(v):
-        single = [t for t in v.within((.77, .91, .80, .98)) if t.key.isdecimal()]
-        costs = [t for t in v.within((.915, .91, .96, .98)) if re.fullmatch(r"[\d,]+", t.key)]
-        if len(single) != 1 or single[0].key != "10" or len(costs) != 1:
-            raise NeedsReview("環形鏈路抽取費用未確認，未提交")
-        return int(costs[0].key.replace(",", ""))
 
     def orbital_round(self, v):
         rounds = [re.fullmatch(r"([1-9]\d*)LINK", t.key)
@@ -523,48 +523,66 @@ class EventFlows(ActivityFlows, SnowfieldFlows):
         button = v.one("更新賓果盤", area=(.83, .91, .96, .97))
         if not self.orbital_board(v) or not v.enabled(button):
             raise NeedsReview("環形鏈路更新按鈕尚未就緒")
-        before = self.orbital_tokens(v)
         round_before = self.orbital_round(v)
         self.click(button)
         # Observed: one click, no confirmation and no cost. Never repeat an
-        # uncertain refresh; require the next round and unchanged balance.
+        # uncertain refresh; require the next round and restored draw button.
         def refreshed(page):
             if (not self.orbital_board(page)
                     or page.has("更新賓果盤", area=(.83, .91, .96, .97), contains=False)):
                 return False
             try:
-                return (self.orbital_round(page) == round_before + 1
-                        and self.orbital_tokens(page) == before)
+                return self.orbital_round(page) == round_before + 1
             except NeedsReview:
                 return False
-        self.event_wait(refreshed, "更新賓果盤後盤數或票券未確認；未重試")
-        self.task.log_info(f"環形鏈路已更新：第{round_before}盤→第{round_before + 1}盤；剩餘{before}票")
+        self.event_wait(refreshed, "更新賓果盤後尚未確認下一盤；未重試")
+        self.task.log_info(f"環形鏈路已更新：第{round_before}盤→第{round_before + 1}盤")
+
+    def orbital_draw_ready(self, v):
+        v.orbital_action = None
+        v.orbital_balance = None
+        if not self.orbital_board(v):
+            return False
+        if v.has("更新賓果盤", area=(.83, .91, .96, .97), contains=False):
+            v.orbital_action = "refresh"
+            return True
+        try:
+            balance = self.orbital_tokens(v)
+            if balance == 0:
+                v.orbital_action = "zero"
+            elif v.enabled(v.one("全部抽取", area=(.82, .91, .90, .97))):
+                v.orbital_action = "draw"
+            v.orbital_balance = balance
+            return v.orbital_action is not None
+        except NeedsReview:
+            return False
 
     def orbital_draw_all(self):
-        total = 0
+        draws = 0
         for _ in range(20):
-            v = self.event_wait(self.orbital_board, "環形鏈路盤面尚未穩定")
+            v = self.event_wait(self.orbital_draw_ready, "環形鏈路盤面、票數或抽取按鈕尚未就緒",
+                                stability_key=lambda page: page.orbital_action)
             # Refresh even when the last draw exhausted all tokens.
             if v.has("更新賓果盤", area=(.83, .91, .96, .97), contains=False):
                 self.orbital_refresh(v)
                 continue
-            before = self.orbital_tokens(v)
+            # Reuse the reading which established this frame's action. Local
+            # OCR must not turn the same confirmed frame into another state.
+            balance = getattr(v, 'orbital_balance', None)
+            if balance is None:
+                balance = self.orbital_tokens(v)
             button = v.one("全部抽取", area=(.82, .91, .90, .97))
-            if before < 10:
-                if v.enabled(button):
-                    raise NeedsReview("環形鏈路票券與抽取按鈕狀態不符")
-                return total, before
-            cost = self.orbital_draw_cost(v)
-            if not (10 <= cost <= before and cost % 10 == 0 and v.enabled(button)):
-                raise NeedsReview("環形鏈路全部抽取費用或按鈕狀態不符，未提交")
+            if balance == 0:
+                return draws, balance
+            if not v.enabled(button):
+                raise NeedsReview("環形鏈路票券非0，但全部抽取按鈕未開放；未提交")
             self.click(button)
             # The observed game submits immediately, shows LINK animation,
             # then REWARD. Never navigate away or resubmit during that gap.
             self.rewards(require_reward=True, return_when=self.orbital_board)
-            after = self.orbital_tokens(self.event_wait(self.orbital_board, "抽取後尚未返回盤面"))
-            if before-after != cost:
-                raise NeedsReview(f"環形鏈路票券變化不符：{before}→{after}，預期{cost}；未重試")
-            total += cost
+            # User policy: only zero/nonzero matters, not the exact OCR value
+            # or draw cost. The next iteration still waits for a ready board.
+            draws += 1
         raise NeedsReview("環形鏈路抽取達到本輪上限，仍有票券待檢查")
 
     def orbital(self):
@@ -576,7 +594,7 @@ class EventFlows(ActivityFlows, SnowfieldFlows):
         self.tap("活動任務", area=(.58, .20, .66, .29))
         self.claim_event_missions()
         self.close((.81, .20, .85, .26))
-        spent, balance = self.orbital_draw_all()
+        draws, balance = self.orbital_draw_all()
         self.close()
         self.event_wait(lambda v: self.resolve_event_home(v, "gray"), "環形鏈路結束後未回到活動首頁")
-        return f"環形鏈路任務已檢查；全部抽取消耗{spent}票，剩餘{balance}票"
+        return f"環形鏈路任務已檢查；完成全部抽取{draws}次，餘額顯示{balance}票"

@@ -92,9 +92,9 @@ class ActivityFlows:
             self.tap('活動任務', area=(.58, .20, .66, .29))
             self.claim_event_missions()
             self.close((.81, .20, .85, .26), light_min=ACTIVITIES[kind]['mission_close_light'])
-            spent, balance = self.orbital_draw_all()
+            draws, balance = self.orbital_draw_all()
             self.close()
             self.event_wait(lambda v: self.resolve_event_home(v, kind), '環形鏈路結束後未回到活動首頁')
-            return f'環形鏈路任務已檢查；全部抽取消耗{spent}票，剩餘{balance}票'
+            return f'環形鏈路任務已檢查；完成全部抽取{draws}次，餘額顯示{balance}票'
         finally:
             self.__dict__.pop('_orbital_kind', None)

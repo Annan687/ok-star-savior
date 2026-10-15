@@ -116,7 +116,7 @@ class DailyFlows(EventFlows, Engine):
                 handled_pages += 1
                 unknown_since = None
                 if not claim_login:
-                    self.close()
+                    self.close_event_checkin()
                     continue
                 highlights = v.outline_targets((.3, .22, .95, .90))
                 highlights = [t for t in highlights if not v.has("COMPLETE", area=v.around(t, t.w/2, t.h/2))]
@@ -136,7 +136,7 @@ class DailyFlows(EventFlows, Engine):
                     elif red or highlights or not tabs:
                         raise NeedsReview("活動簽到的可領亮框／分頁不明確")
                     else:
-                        self.close()
+                        self.close_event_checkin()
             else:
                 # Lobby wallpapers animate on entry. Intermediate frames can
                 # contain text while the actual navigation is still hidden.
@@ -148,6 +148,22 @@ class DailyFlows(EventFlows, Engine):
                 self.task.sleep(.5)
                 continue
         raise NeedsReview("登入彈窗／進場仍未完成，未開始後續日課")
+
+    def close_event_checkin(self):
+        v = self.see()
+        if not v.has("簽到簿", "300日紀念"):
+            return
+        # User-confirmed full-screen calendar corner, relative to the game
+        # client (excluding its title bar). Artwork can hide the X contour.
+        self.click(Text("活動簽到右上角關閉", .954, .061, .01, .02))
+        absent = 0
+        for _ in range(30):
+            v = self.see()
+            absent = 0 if v.has("簽到簿", "300日紀念") else absent + 1
+            if absent >= 3:
+                return
+            self.task.sleep(.4)
+        raise NeedsReview("已點擊活動簽到右上角固定位置，但未確認關閉；未重複點擊")
 
     @staticmethod
     def login_notice_present(v):
@@ -448,9 +464,9 @@ class DailyFlows(EventFlows, Engine):
 
     def open_special_free_tab(self):
         # Limited-time sub-tabs can disappear while the left category remains.
-        # Require a loaded shop and a stable alternative tab before skipping.
+        # Require a continuously loaded shop before skipping. Other promotion
+        # names scroll, so their OCR strings cannot be a stability signature.
         area = (.17, .08, .96, .20)
-        previous = None
         stable = 0
         for _ in range(12):
             v = self.see()
@@ -465,8 +481,7 @@ class DailyFlows(EventFlows, Engine):
                 return True
             tabs = tuple(t.key for t in v.within(area) if len(t.key) >= 3)
             loaded = shop and tabs and v.has("每個帳號購買", "每个账号购买", area=(.17, .20, .98, .99))
-            stable = stable + 1 if loaded and tabs == previous else (1 if loaded else 0)
-            previous = tabs if loaded else None
+            stable = stable + 1 if loaded else 0
             self.task.sleep(.4)
         if stable >= 3:
             self.task.log_info("特別販售禮包的限時分頁目前未出現，繼續檢查普通免費禮包")
