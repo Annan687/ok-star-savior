@@ -9,12 +9,15 @@ from .policy import FARM, TIMED, NeedsReview
 CUSTOM_TASK = "starsavior.tasks.CustomDailyTask"
 MARKER = "OKSS_CUSTOM_V1:"
 FLAG = "--okss-profile"
+ASSAULT_TEAMS = [f"隊伍{number}" for number in range(1, 7)]
 CHOICES = {"體力刷關": ["不消耗體力", *FARM],
-           "限時據點關卡": ["略過", *TIMED]}
+           "限時據點關卡": ["略過", *TIMED],
+           "襲擊出戰隊伍": ASSAULT_TEAMS}
 
 
 def default_profile():
-    return {"執行項目": [], "流程失敗時繼續下一項": False,
+    return {"執行項目": [], "流程失敗時繼續下一項": False, "襲擊自動推進": False,
+            "襲擊指定隊伍": False,
             **{key: choices[0] for key, choices in CHOICES.items()}}
 
 
@@ -26,10 +29,19 @@ def validate_profile(value):
     # Ignore that retired field without changing the schedule's selected tasks.
     value = {key: item for key, item in value.items() if key not in ("活動名稱", "激戰委託關卡")}
     value.setdefault("流程失敗時繼續下一項", False)
+    value.setdefault("襲擊自動推進", False)
+    value.setdefault("襲擊指定隊伍", False)
+    value.setdefault("襲擊出戰隊伍", "隊伍1")
+    if value["襲擊出戰隊伍"] == "目前隊伍" and value["襲擊指定隊伍"] is False:
+        value["襲擊出戰隊伍"] = "隊伍1"  # Earlier local, unreleased selector.
     if set(value) != set(default_profile()):
         raise NeedsReview("自訂排程設定不完整，請修改此排程並重新儲存")
     if type(value["流程失敗時繼續下一項"]) is not bool:
         raise NeedsReview("流程失敗時繼續下一項必須為勾選設定")
+    if type(value["襲擊自動推進"]) is not bool:
+        raise NeedsReview("襲擊自動推進必須為勾選設定")
+    if type(value["襲擊指定隊伍"]) is not bool:
+        raise NeedsReview("襲擊指定隊伍必須為勾選設定")
     selected = value["執行項目"]
     if not isinstance(selected, list) or not all(isinstance(item, str) for item in selected):
         raise NeedsReview("自訂排程項目格式錯誤")

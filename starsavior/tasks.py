@@ -5,6 +5,7 @@ from qfluentwidgets import FluentIcon
 from .engine import Engine
 from .flows import DailyFlows
 from .policy import FARM, TIMED, NeedsReview
+from .schedule_profile import ASSAULT_TEAMS
 
 STEPS = [
     ("登入彈窗", "startup"), ("支援金與免費緊急支援", "support"), ("郵件", "mail"),
@@ -65,6 +66,9 @@ class DailyTask(BaseTask):
             "執行項目": [s for s, _ in STEPS],
             "體力刷關": "不消耗體力",
             "限時據點關卡": "略過",
+            "襲擊自動推進": False,
+            "襲擊指定隊伍": False,
+            "襲擊出戰隊伍": "隊伍1",
             "流程失敗時繼續下一項": False,
             "Exit After Task": False,
         })
@@ -72,11 +76,15 @@ class DailyTask(BaseTask):
             "執行項目": {"type": "multi_selection", "options": [s for s, _ in STEPS]},
             "體力刷關": {"type": "drop_down", "options": ["不消耗體力", *FARM]},
             "限時據點關卡": {"type": "drop_down", "options": ["略過", *TIMED]},
+            "襲擊出戰隊伍": {"type": "drop_down", "options": ASSAULT_TEAMS},
         })
         self.config_description.update({
             "執行項目": "按示範順序執行勾選項目。今日已做完的項目可取消勾選。",
             "體力刷關": "選一種目標，MAX 使用現有意志力；不購買或使用回體道具。探索目標先耗免費券。",
             "限時據點關卡": "選一關使用當日剩餘票券；只在可掃蕩的滿星關卡執行。",
+            "襲擊自動推進": "活動襲擊優先挑戰後續關卡；戰敗後回到最高可掃蕩關卡，用完剩餘免費票。",
+            "襲擊指定隊伍": "未勾選時使用進場當下的隊伍；勾選後才切換至指定隊伍。",
+            "襲擊出戰隊伍": "勾選指定出戰隊伍時，切換至隊伍 1～6；不修改隊伍成員。",
             "流程失敗時繼續下一項": "單項失敗後保留紀錄並繼續；失敗項目可於下次續跑補做。啟動、擷取失敗或手動停止仍會中止。",
             "Exit After Task": "全部勾選項目成功結束後，關閉遊戲與 OKSS；失敗或手動停止時不執行。",
         })
@@ -88,6 +96,8 @@ class DailyTask(BaseTask):
         self.config.pop("活動名稱", None)
         if "活動掃蕩次數" in self.config:
             self.config.pop("活動掃蕩次數")
+        if self.config.get("襲擊出戰隊伍") == "目前隊伍" and self.config.get("襲擊指定隊伍", False) is False:
+            self.config["襲擊出戰隊伍"] = "隊伍1"
 
     def run(self):
         # Consume the one-shot UI request; scheduled/F9 starts never inherit it.
@@ -106,6 +116,12 @@ class DailyTask(BaseTask):
             raise NeedsReview("未知體力刷關選項")
         if self.config["限時據點關卡"] not in ["略過", *TIMED]:
             raise NeedsReview("未知限時據點選項")
+        if type(self.config.get("襲擊自動推進", False)) is not bool:
+            raise NeedsReview("襲擊自動推進必須為勾選設定")
+        if type(self.config.get("襲擊指定隊伍", False)) is not bool:
+            raise NeedsReview("襲擊指定隊伍必須為勾選設定")
+        if self.config.get("襲擊出戰隊伍", "隊伍1") not in ASSAULT_TEAMS:
+            raise NeedsReview("未知襲擊出戰隊伍選項")
         from .progress import HomeProgress
         progress = HomeProgress(self.config) if type(self) is DailyTask else None
         completed = progress.begin(resume=resume_request is True,

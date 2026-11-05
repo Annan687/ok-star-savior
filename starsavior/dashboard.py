@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QToolButton,
 
 from .policy import FARM, TIMED
 from .tasks import STEPS
+from .schedule_profile import ASSAULT_TEAMS
 from .activity import CURRENT_EVENT_NAME
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -136,7 +137,8 @@ class PreviewBackend:
     """Only for rendering this widget offline. Does not construct a game driver."""
     def __init__(self):
         self.values = {"執行項目": [n for n, _ in STEPS], "體力刷關": "不消耗體力",
-                       "限時據點關卡": "略過",
+                       "限時據點關卡": "略過", "襲擊自動推進": False,
+                       "襲擊指定隊伍": False, "襲擊出戰隊伍": "隊伍1",
                        "Exit After Task": False, "流程失敗時繼續下一項": False}
 
     def settings(self):
@@ -364,7 +366,22 @@ class DailyPanel(QWidget):
             label.setWordWrap(True)
             self.event_labels.append(label)
             inner.addWidget(label)
-            hint = ("MAX 用完剩餘免費票；活動任務可另外勾選。" if name == "活動襲擊"
+            if name == "活動襲擊":
+                self.assault_advance = QCheckBox("襲擊自動推進")
+                self.assault_advance.setChecked(values.get("襲擊自動推進", False) is True)
+                self.assault_advance.setToolTip("優先挑戰後續關卡；戰敗後回到最高可掃蕩關卡，用完剩餘免費票。")
+                self.assault_advance.toggled.connect(self.persist)
+                self.settings_widgets.append(self.assault_advance)
+                inner.addWidget(self.assault_advance)
+                self.assault_specify = QCheckBox("指定出戰隊伍")
+                self.assault_specify.setChecked(values.get("襲擊指定隊伍", False) is True)
+                self.assault_specify.setToolTip("未勾選時使用進場當下的隊伍；勾選後才切換至下方指定隊伍。")
+                self.assault_specify.toggled.connect(self.persist)
+                self.settings_widgets.append(self.assault_specify)
+                inner.addWidget(self.assault_specify)
+                self.assault_team = self.combo(inner, "襲擊出戰隊伍", ASSAULT_TEAMS,
+                                               values.get("襲擊出戰隊伍", "隊伍1"))
+            hint = ("自動推進會挑戰後續關卡，戰敗後回頭掃蕩。未指定隊伍時沿用進場當下的隊伍。使用剩餘免費票。" if name == "活動襲擊"
                     else "領取鏈路任務票券後全部抽取；完成整盤會更新賓果盤。" if name == "環形鏈路"
                     else "只領取活動任務與點數獎勵，不進行襲擊掃蕩。與活動襲擊共用活動名稱。")
         label = self.label(hint, "hint")
@@ -430,6 +447,9 @@ class DailyPanel(QWidget):
             return
         self.backend.save({"執行項目": self.selected(), "體力刷關": self.farm.currentText(),
                            "限時據點關卡": self.timed.currentText(),
+                           "襲擊自動推進": self.assault_advance.isChecked(),
+                           "襲擊指定隊伍": self.assault_specify.isChecked(),
+                           "襲擊出戰隊伍": self.assault_team.currentText(),
                            "流程失敗時繼續下一項": self.continue_on_failure.isChecked(),
                            "Exit After Task": self.exit_after.isChecked()})
         self.refresh()
@@ -482,6 +502,9 @@ class DailyPanel(QWidget):
         self.stop_button.setEnabled(data["active"] and not data["pending"])
         for widget in self.settings_widgets:
             widget.setEnabled(not data["busy"])
+        can_advance = not data["busy"] and self.checks["活動襲擊"].isChecked() and self.assault_advance.isChecked()
+        self.assault_specify.setEnabled(can_advance)
+        self.assault_team.setEnabled(can_advance and self.assault_specify.isChecked())
         for name, options in self.task_options.items():
             options.setVisible(self.checks[name].isChecked())
         for name, status in self.row_status.items():

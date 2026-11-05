@@ -63,10 +63,31 @@ class ProfileDialog(MessageBoxBase):
         form.setContentsMargins(0, 0, 0, 0)
         self.options = {}
         for index, (key, values) in enumerate(CHOICES.items()):
+            if key == "襲擊出戰隊伍":
+                continue
             combo = ComboBox(); combo.addItems(values); combo.setCurrentText(profile[key])
             self.options[key] = combo
             form.addWidget(QLabel(key), index, 0); form.addWidget(combo, index, 1)
         self.viewLayout.addWidget(settings)
+        self.assault_advance = CheckBox("襲擊自動推進")
+        self.assault_advance.setChecked(profile.get("襲擊自動推進", False) is True)
+        self.assault_advance.stateChanged.connect(self.update_options)
+        self.viewLayout.addWidget(self.assault_advance)
+        self.assault_specify = CheckBox("指定出戰隊伍")
+        self.assault_specify.setChecked(profile.get("襲擊指定隊伍", False) is True)
+        self.assault_specify.stateChanged.connect(self.update_options)
+        self.viewLayout.addWidget(self.assault_specify)
+        team_row = QHBoxLayout()
+        team_row.addWidget(QLabel("襲擊出戰隊伍"))
+        self.assault_team = ComboBox()
+        self.assault_team.addItems(CHOICES["襲擊出戰隊伍"])
+        self.assault_team.setCurrentText(profile.get("襲擊出戰隊伍", "隊伍1"))
+        self.options["襲擊出戰隊伍"] = self.assault_team
+        team_row.addWidget(self.assault_team)
+        self.viewLayout.addLayout(team_row)
+        advance_hint = QLabel("自動推進會挑戰後續關卡，戰敗後回頭掃蕩。未指定隊伍時沿用進場當下的隊伍。使用剩餘免費票。")
+        advance_hint.setWordWrap(True)
+        self.viewLayout.addWidget(advance_hint)
         self.continue_on_failure = CheckBox("流程失敗時繼續下一項")
         self.continue_on_failure.setChecked(profile.get("流程失敗時繼續下一項", False))
         self.viewLayout.addWidget(self.continue_on_failure)
@@ -86,9 +107,15 @@ class ProfileDialog(MessageBoxBase):
         self.yesButton.setEnabled(bool(selected))
         for key, related in (("體力刷關", {"體力刷關"}), ("限時據點關卡", {"限時據點"})):
             self.options[key].setEnabled(bool(selected & related))
+        self.assault_advance.setEnabled("活動襲擊" in selected)
+        can_advance = "活動襲擊" in selected and self.assault_advance.isChecked()
+        self.assault_specify.setEnabled(can_advance)
+        self.assault_team.setEnabled(can_advance and self.assault_specify.isChecked())
 
     def value(self):
         return validate_profile({"執行項目": [name for name, box in self.checks.items() if box.isChecked()],
+                                 "襲擊自動推進": self.assault_advance.isChecked(),
+                                 "襲擊指定隊伍": self.assault_specify.isChecked(),
                                  "流程失敗時繼續下一項": self.continue_on_failure.isChecked(),
                                  **{key: combo.currentText() for key, combo in self.options.items()}})
 

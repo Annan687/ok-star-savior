@@ -594,6 +594,27 @@ class DailyFlows(EventFlows, Engine):
         detail = "已檢查特別、每日、每週與每月免費禮包" if special else "特別限時分頁未出現或分類已下架；已檢查每日、每週與每月免費禮包"
         return f"{detail}，領取 {n} 個"
 
+    def apocalypse_max_button(self, v):
+        if not self.purchase_quantity_dialog(v):
+            return None
+        area = (.606, .582, .644, .622)
+        hits = v.find("MAX", area=area, contains=False)
+        if len(hits) > 1:
+            raise NeedsReview("五折商品 MAX 有多個候選，未點擊")
+        # Full-frame OCR may merge the adjacent plus into '+ MAX'. Re-read
+        # only the observed MAX label; do not click the merged token's center.
+        return hits[0] if hits else self.reread_claim_button(v, area, ("MAX",))
+
+    def tap_apocalypse_max(self):
+        def ready(v):
+            v.purchase_max = self.apocalypse_max_button(v)
+            return v.purchase_max is not None
+
+        v = self.event_wait(ready, "購買商品頁的 MAX 尚未辨識完整；未購買",
+                            stability_key=lambda v: (round(v.purchase_max.cx, 2),
+                                                      round(v.purchase_max.cy, 2)))
+        self.click(v.purchase_max)
+
     def apocalypse(self):
         self.menu("啟示錄商店")
         self.tap("每日商品", area=LEFT)
@@ -629,7 +650,7 @@ class DailyFlows(EventFlows, Engine):
             if not unit_text.isdigit() or int(unit_text) <= 0:
                 raise NeedsReview("五折商品單次價格未辨識")
             unit = int(unit_text)
-            self.tap("MAX", area=CENTER)
+            self.tap_apocalypse_max()
             v = self.see()
             price = v.field("總購買價格")
             total = re.sub(r"[, ]", "", price.text)
@@ -725,25 +746,84 @@ class DailyFlows(EventFlows, Engine):
 
     def cube(self):
         self.plaza("帕萊斯立方")
-        v = self.expect("自動協議")
-        remaining = v.count(1, area=TOP)[1][0]
-        if not remaining:
-            return "權限卡已用完"
-        self.tap("自動協議", area=BOTTOM, enabled=True)
-        self.confirm("自動協議", "帕萊斯權限卡")
-        self.expect("REWARD", "點擊以繼續", seconds=15)
-        self.rewards(require_reward=True, return_when=self.cube_settled)
-        return "自動協議完成"
+        for completed in range(4):
+            _, (enabled, button) = self.wait_cube_ready()
+            if not enabled:
+                return "自動協議完成" if completed else "自動協議已停用，無可執行次數"
+            if completed == 3:
+                raise NeedsReview("帕萊斯立方自動協議已達3次上限，按鈕仍可用，未再提交")
+            self.task.log_info(f"帕萊斯立方：自動協議可用，執行第 {completed + 1}/3 次")
+            self.click(button)
+            self.confirm("自動協議", "帕萊斯權限卡")
+            # Ticket OCR is informational only. Each submission still needs
+            # a real reward dismissal and five complete return-page frames.
+            self.rewards(require_reward=True,
+                         return_when=lambda v: self.resolve_cube_state(v) is not None)
+            self.task.log_info("帕萊斯立方：已確認領獎並返回，重新檢查自動協議按鈕")
+
+    def wait_cube_ready(self):
+        previous, stable = None, 0
+        for _ in range(30):
+            v = self.see()
+            state = self.resolve_cube_state(v)
+            # Unlike a binary enabled check, an unrecognized color must not
+            # be counted as disabled. Only observed white/gray can settle.
+            value = state[0] if state is not None else None
+            stable = stable + 1 if value is not None and value == previous else int(value is not None)
+            previous = value
+            if value is not None and stable >= (3 if value else 5):
+                return v, state
+            self.task.sleep(.4)
+        raise NeedsReview("帕萊斯立方頁面或自動協議按鈕顏色未穩定，未提交")
+
+    @staticmethod
+    def cube_state(v):
+        if len(v.find("帕萊斯立方", area=(.07, .015, .38, .13), contains=False)) != 1:
+            return None
+        return DailyFlows.cube_button_state(v)
+
+    def resolve_cube_state(self, v):
+        state = self.cube_state(v)
+        if state is not None or v.has("帕萊斯立方", area=(.07, .015, .38, .13), contains=False):
+            return state
+        # The adjacent help icon can merge into the header as a question mark.
+        # Only re-read its observed text area after both controls and colors
+        # establish the cube layout; do not accept the merged label as an alias.
+        if self.cube_button_state(v) is None:
+            return None
+        title = self.reread_claim_button(v, (.125, .035, .209, .09), ("帕萊斯立方",))
+        if title is not None:
+            v.items.append(title)
+        return self.cube_state(v)
+
+    @staticmethod
+    def cube_button_state(v):
+        if (Engine.is_menu(v)
+                or v.has("確認", "取消", "REWARD", area=CENTER, contains=False)):
+            return None
+        button = v.one("自動協議", area=(.76, .78, .96, .87), required=False)
+        entrance = v.one("進入立方", area=(.76, .88, .97, .99), required=False)
+        if button is None or entrance is None or not v.enabled(entrance):
+            return None
+        import cv2
+        colors = []
+        # Blank margins of the observed button exclude text, cost and icon.
+        for area in ((.78, .81, .80, .84), (.87, .81, .88, .84)):
+            patch = v.crop(area)
+            if not patch.size:
+                return None
+            hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+            neutral = hsv[:, :, 1] < 35
+            white = neutral & (hsv[:, :, 2] > 215)
+            gray = neutral & (hsv[:, :, 2] >= 50) & (hsv[:, :, 2] <= 100)
+            colors.append(True if white.mean() > .85 else False if gray.mean() > .85 else None)
+        if colors[0] is None or colors[0] != colors[1]:
+            return None
+        return colors[0], button
 
     @staticmethod
     def cube_settled(v):
-        if (Engine.is_menu(v)
-                or not v.has("帕萊斯立方", area=(.07, .015, .38, .13), contains=False)
-                or not v.has("自動協議", area=BOTTOM, contains=False)
-                or v.has("確認", "取消", "REWARD", area=CENTER, contains=False)):
-            return False
-        count = v.count(1, area=TOP, required=False)
-        return count is not None and count[1][0] == 0
+        return DailyFlows.cube_state(v) is not None
 
     @staticmethod
     def timed_entrance(v, stage):

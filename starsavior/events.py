@@ -7,11 +7,13 @@ from .vision import Text, View, norm, BOTTOM
 from .snowfield import SnowfieldFlows, SNOWFIELD_STAGE
 from .activity import ACTIVITIES
 from .activity_flows import ActivityFlows, logo_targets
+from .assault import AssaultFlows
+from .assault_battle import AssaultBattleFlows
 
 ONSLAUGHT = ("封閉的心象", "異形的攻勢", "虛假的契約")
 
 
-class EventFlows(ActivityFlows, SnowfieldFlows):
+class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows):
     def event_wait(self, predicate, description, seconds=18, *, stability_key=None):
         deadline = time.monotonic() + seconds
         stable = 0
@@ -235,7 +237,9 @@ class EventFlows(ActivityFlows, SnowfieldFlows):
             return [p[0] for p in readings if p is not None]
         snowfield = (any(self.resolve_event_home(v, kind) for kind in ACTIVITIES)
                      or self.resolve_event_home(v, "snowfield")
-                     or bool(self.event_rows(v, SNOWFIELD_STAGE, "snowfield")))
+                     or bool(self.event_rows(v, SNOWFIELD_STAGE, "snowfield"))
+                     or any(p['layout'] == 'snowfield' and bool(self.event_rows(v, p['stage'], p['layout']))
+                            for p in ACTIVITIES.values()))
         direct = values(v.within((.575, .025, .642, .10) if snowfield else (.555, .025, .617, .10)))
         if len(direct) == 1:
             return direct[0]
@@ -435,16 +439,21 @@ class EventFlows(ActivityFlows, SnowfieldFlows):
             if attempt == 4:
                 break
             self.click(button)
+            # The foreground game's custom cursor/glow can cover the gray
+            # claim text after a task-only claim. Move off the footer before
+            # checking the update; do not treat the covered label as disabled.
+            self.task.move_relative(.70, .68)
             self.wait_claim_change(v, self.event_claim_button)
         raise NeedsReview("活動一鍵領取超過正常次數")
 
     def gray_assault(self):
         if not self.open_event("gray"):
             return "事件未開放，略過活動襲擊"
-        if self.event_tickets(self.see()) == 0:
+        if (not self.task.config.get('襲擊自動推進', False)
+                and self.event_tickets(self.see()) == 0):
             return "活動免費票券已用完"
         self.tap_gray_home("襲擊", area=(.78, .4, .97, .52))
-        result = self.event_sweep("名偵探消失的世界", "grid")
+        result = self.event_assault("名偵探消失的世界", "grid")
         self.click(Text("返回灰色研究", .038, .05, .01, .025))
         self.event_wait(lambda v: self.resolve_event_home(v, "gray"), "掃蕩後未回到灰色研究首頁")
         return result
@@ -461,6 +470,8 @@ class EventFlows(ActivityFlows, SnowfieldFlows):
         return "活動每日、點數及特殊任務獎勵已檢查"
 
     def orbital_board(self, v, kind=None):
+        if ACTIVITIES.get(kind or getattr(self, '_orbital_kind', 'gray'), {}).get('orbital_enabled') is False:
+            return False
         if (v.has("每日任務", area=(.36, .20, .59, .30), contains=False)
                 or v.has("REWARD", "LINK", area=(.30, .30, .66, .62), contains=False)
                 or not v.has("活動任務", area=(.58, .20, .66, .29), contains=False)):
@@ -486,9 +497,12 @@ class EventFlows(ActivityFlows, SnowfieldFlows):
     def orbital_tokens(self, v):
         number = r"\d+(?:,\d{3})*"
         tokens = [t for t in v.within((.90, .14, .96, .19)) if re.fullmatch(number, t.key)]
-        if not tokens and self.orbital_board(v):
+        if len(tokens) != 1 and self.orbital_board(v):
             # Right-aligned balances grow leftwards. The old .918 crop cut
             # 130 into 30 when full-frame OCR merged the ticket icon with it.
+            # The icon can also become a separate digit beside the balance.
+            # Re-read the complete area instead of choosing the rightmost
+            # number: a split 1 + 0 must not become a false zero balance.
             tokens = [t for t in self.event_local_text(v, (.90, .14, .96, .18))
                       if re.fullmatch(number, t.key)]
             if any(t.x <= .02 or t.x + t.w >= .98 for t in tokens):

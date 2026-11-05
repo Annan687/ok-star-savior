@@ -19,6 +19,13 @@ def signature(config, *, legacy=False, include_retired=False):
             selected.add('激戰委託')
     values['執行項目'] = sorted(selected)
     values['活動'] = CURRENT_EVENT_NAME
+    # Disabled is the original sweep-only behavior and retains old checkpoints.
+    # Enabling progression must not inherit an already-completed sweep step.
+    if config.get('襲擊自動推進', False) is True:
+        values['襲擊自動推進'] = True
+        if config.get('襲擊指定隊伍', False) is True:
+            values['襲擊指定隊伍'] = True
+            values['襲擊出戰隊伍'] = config.get('襲擊出戰隊伍', '隊伍1')
     return hashlib.sha256(json.dumps(values, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
 
 

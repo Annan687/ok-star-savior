@@ -3,6 +3,22 @@
   "policy": "仅补作用说明，保留奖励、折扣、回合与原始来源；未确认的上限不猜。",
   "effects": [
     {
+      "id": "potential-practiced-acceleration",
+      "kind": "battle_potential",
+      "aliases": [
+        "熟练加速"
+      ],
+      "description": "使用非攻击类特殊技后，自身速度增加4，最多叠加5次",
+      "source": {
+        "kind": "user_provided_screenshot",
+        "title": "熟练加速・各等级效果 Lv.MAX",
+        "checked": "2026-10-30",
+        "reference": "使用者提供的熟練加速遊戲效果截圖（2026-10-30）",
+        "text": "使用后非攻击类特殊技后，自身的速度增加4。最多可叠加5次。"
+      },
+      "match_basis": "使用者遊戲內潛質說明截圖；自訂資料識別碼，非遊戲內ID"
+    },
+    {
       "id": "potential-lydia-void-call",
       "kind": "battle_potential",
       "aliases": [

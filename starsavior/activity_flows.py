@@ -62,12 +62,13 @@ class ActivityFlows:
         profile = ACTIVITIES[kind]
         if not self.open_event(kind):
             return '事件未開放，略過活動襲擊'
-        if self.event_tickets(self.see()) == 0:
+        if (not self.task.config.get('襲擊自動推進', False)
+                and self.event_tickets(self.see()) == 0):
             return '活動免費票券已用完'
         self.tap_activity_home(kind, '襲擊')
-        result = self.event_sweep(profile['stage'], profile['layout'])
+        result = self.event_assault(profile['stage'], profile['layout'])
         self.click(Text('返回活動首頁', .038, .05, .01, .025))
-        self.event_wait(lambda v: self.resolve_event_home(v, kind), '掃蕩後未回到活動首頁')
+        self.event_wait(lambda v: self.resolve_event_home(v, kind), '襲擊結束後未回到活動首頁')
         return result
 
     def activity_missions(self, kind=CURRENT_EVENT_KIND):
@@ -82,6 +83,8 @@ class ActivityFlows:
         return '活動每日、點數及特殊任務獎勵已檢查'
 
     def activity_orbital(self, kind=CURRENT_EVENT_KIND):
+        if ACTIVITIES[kind].get('orbital_enabled') is False:
+            return '本期活動不執行環形鏈路'
         self._orbital_kind = kind
         try:
             if not self.orbital_board(self.see()):

@@ -237,6 +237,51 @@ class Engine:
         v = self.see()
         self.click(v.close_icon(area, light_min=light_min))
 
+    @staticmethod
+    def purchase_quantity_dialog(v):
+        """Recognize the observed shop quantity modal before using its controls."""
+        if v.has("REWARD", "LEVELUP", area=CENTER, contains=False):
+            return False
+        fields = (("購買商品", (.20, .21, .33, .29), False),
+                  ("每日購買", (.24, .55, .35, .63), True),
+                  ("單件價格", (.35, .63, .50, .70), True),
+                  ("總購買價格", (.49, .63, .64, .70), True),
+                  ("購買", (.42, .69, .58, .78), False))
+        return all(len(v.find(label, area=area, contains=contains)) == 1
+                   for label, area, contains in fields)
+
+    def close_purchase_quantity_dialog(self):
+        """Close a confirmed quantity modal once, then verify navigation is safe."""
+        previous, stable, clear, submitted = None, 0, 0, False
+        for _ in range(30):
+            v = self.see()
+            overlay = v.has("購買商品", "單件價格", "總購買價格", "確認", "取消",
+                            "跳過戰鬥", "刷新對戰列表", "緊急支援", "REWARD", "LEVELUP",
+                            area=CENTER, contains=True)
+            ready = not overlay and self.page_name(v) != "其他頁面"
+            clear = clear + 1 if ready else 0
+            if clear >= 3:
+                return
+            token = None
+            if not submitted and self.purchase_quantity_dialog(v):
+                # If a cancel variant appears, let menu use its existing path.
+                if v.has("取消", area=CENTER, contains=False):
+                    return
+                try:
+                    token = v.close_icon((.74, .20, .80, .29))
+                except NeedsReview:
+                    pass
+            key = (round(token.cx, 2), round(token.cy, 2)) if token else None
+            stable = stable + 1 if key is not None and key == previous else int(key is not None)
+            previous = key
+            if stable >= 3 and not submitted:
+                self.click(token)
+                submitted = True
+                previous, stable = None, 0
+            self.task.sleep(.4)
+        raise NeedsReview("購買商品視窗關閉後尚未確認返回頁面，未重複點擊" if submitted else
+                          "購買商品視窗或關閉叉叉尚未穩定，未點擊")
+
     def event_menu_available(self, v):
         for attempt in range(3):
             if not self.is_menu(v):
@@ -260,6 +305,14 @@ class Engine:
         self.rewards()
         for _ in range(5):
             v = self.see()
+            # A quantity modal may leave the shop's menu icon visible behind it.
+            # Its observed variant has an X rather than a cancel button.
+            if self.purchase_quantity_dialog(v):
+                if v.has("取消", area=CENTER, contains=False):
+                    self.tap("取消", area=CENTER)
+                else:
+                    self.close_purchase_quantity_dialog()
+                continue
             if arrived is not None and arrived(v):
                 self.navigate_checked(destination, lambda _: None, arrived)
                 return
@@ -507,13 +560,29 @@ class Engine:
 
     @staticmethod
     def claim_signature(v):
+        mission_side = v.has("每日任務", "每週任務", area=(.02, .10, .19, .28), contains=False)
+        mission_kinds = [kind for kind in ("每日", "每週")
+                         for _ in v.find(kind+"任務點數", area=(.26, .83, .41, .93), contains=False)]
+        if mission_side:
+            # Both sidebar tabs stay visible. Only the unique footer identifies
+            # the current tab; chest digits and unfinished rows may flicker.
+            if len(mission_kinds) != 1 or v.has("REWARD", "LEVELUP", "確認", "取消",
+                                              area=CENTER, contains=False):
+                return None
+            kind = mission_kinds[0]
+            if not v.has(kind+"任務", area=(.02, .10, .19, .28), contains=False):
+                return None
+            label = "已獲得全部"+kind+"獎勵"
+            if v.has(label, area=(.36, .30, .85, .70)):
+                return (norm(label),)
+            points = [t.key for t in v.within((.275, .885, .325, .94)) if t.key.isdecimal()]
+            key = "mission_daily_points" if kind == "每日" else "mission_weekly_points"
+            return (key, points[0]) if len(points) == 1 else None
         # Empty task lists have an explicit completion sentence. Point boxes
         # still glow and remain claimable, so ignore their flickering tiny OCR
         # only for this transition; claim_all rechecks the button afterwards.
-        mission_page = (v.has("每日任務", "每週任務", area=(.02, .10, .19, .28))
-                        and v.has("每日任務點數", "每週任務點數", area=(.26, .83, .41, .93)))
         event_modal = v.has("每日任務", "特殊任務", area=(.36, .20, .59, .30), contains=False)
-        if mission_page or event_modal:
+        if event_modal:
             for label in ("已獲得全部每日獎勵", "已獲得全部每週獎勵"):
                 if v.has(label, area=(.36, .30, .85, .70)):
                     return (norm(label),)
@@ -551,6 +620,11 @@ class Engine:
             if comparable and signature[0][0:1] == ("event_daily_points",):
                 comparable = (current[0] == (norm("已獲得全部每日獎勵"),)
                               or (current[0][0:1] == ("event_daily_points",)
+                                  and int(current[0][1]) >= int(signature[0][1])))
+            if comparable and signature[0][0:1] in (("mission_daily_points",), ("mission_weekly_points",)):
+                kind = "每日" if signature[0][0] == "mission_daily_points" else "每週"
+                comparable = (current[0] == (norm("已獲得全部"+kind+"獎勵"),)
+                              or (current[0][0:1] == signature[0][0:1]
                                   and int(current[0][1]) >= int(signature[0][1])))
             if comparable and current != signature and (token is not None or empty_mail):
                 stable = stable+1 if current == previous else 1

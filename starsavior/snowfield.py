@@ -70,10 +70,11 @@ class SnowfieldFlows:
     def snowfield_assault(self):
         if not self.open_event("snowfield"):
             return "事件未開放，略過活動襲擊"
-        if self.event_tickets(self.see()) == 0:
+        if (not self.task.config.get('襲擊自動推進', False)
+                and self.event_tickets(self.see()) == 0):
             return "活動免費票券已用完"
         self.tap_snowfield_home("襲擊", (.62, .86, .70, .95))
-        result = self.event_sweep(SNOWFIELD_STAGE, "snowfield")
+        result = self.event_assault(SNOWFIELD_STAGE, "snowfield")
         self.click(Text("返回新活動首頁", .038, .05, .01, .025))
         self.event_wait(lambda v: self.resolve_event_home(v, "snowfield"), "掃蕩後未回到新活動首頁")
         return result
