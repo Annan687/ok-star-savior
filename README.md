@@ -24,11 +24,11 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-**v0.2.15 測試版**：接入「甜苦交織！黃金甜點幻想曲」，新增可選襲擊自動推進與指定隊伍；魔方以按鈕顏色判斷並限制每輪最多3次。本期環形鏈路固定略過，另包含商店、任務與跑馬卡片更新。詳見 [更新紀錄](CHANGELOG.md)。
+**v0.2.16 測試版**。修正本期活動襲擊 VII 等關卡因裝飾數字或羅馬數字漏讀而卡住，改按固定列位辨認關次。已實機完成 VII、VIII 勝利、剩餘一票掃蕩至 0/3，以及活動每日與點數領獎。詳見 [更新紀錄](CHANGELOG.md)。
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.15/ok-star-savior-win32-Global-setup.exe) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.16/ok-star-savior-win32-Global-setup.exe) ·
 
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.15) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.16) ·
 
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 
@@ -78,15 +78,15 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-**[v0.2.15 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.15)。一般使用者請下載 Global 安裝版。**
+**[v0.2.16 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.16)。一般使用者請下載 Global 安裝版。**
 
 | 檔案 | 用途 |
 
 | --- | --- |
 
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.15/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.16/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
 
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.15/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.16/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 
 | `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
 

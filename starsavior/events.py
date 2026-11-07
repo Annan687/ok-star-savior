@@ -285,6 +285,17 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
         return bool(patch.size and np.mean(patch.min(axis=2) > 130) > .8)
 
     def event_selected_level(self, v, stage, row=None, layout=None):
+        if row is not None and layout == "snowfield" and stage == ACTIVITIES["golden"]["stage"]:
+            # Golden shows all eight slots at fixed positions. The decorated
+            # numeral and title suffix can both be unreadable on the selected
+            # card. Resolve its level by position after checking the highlight.
+            first, spacing = .189, .102
+            index = round((row.cy-first)/spacing)
+            if (0 <= index < 8 and .31 <= row.x <= .35
+                    and abs(row.cy-(first+index*spacing)) <= .018
+                    and self.event_row_selected(v, row, layout)):
+                return index + 1
+            return None
         if row is not None and layout in ("column", "snowfield"):
             # The header can lose strokes (III -> I). Read the large Arabic
             # number of the highlighted card instead of reporting that guess.
