@@ -11,6 +11,7 @@ from .assault_warning import AssaultWarningFlows
 
 _START = (.76, .90, .96, .98)
 _LEAVE = (.74, .87, .96, .97)
+_AUTO_FORMATION = (.55, .91, .67, .97)
 
 
 class AssaultBattleFlows(AssaultWarningFlows):
@@ -39,9 +40,13 @@ class AssaultBattleFlows(AssaultWarningFlows):
                 or not v.has('編制', area=(.12, .035, .18, .09), contains=False)
                 or not v.has('事件', area=(.74, .16, .81, .20), contains=False)):
             return False
-        return (v.one('開始戰鬥', area=_START, required=False) is not None
-                and v.has('全部解除', area=(.44, .91, .55, .97), contains=False)
-                and v.has('自動編制', area=(.55, .91, .67, .97), contains=False))
+        if (v.one('開始戰鬥', area=_START, required=False) is None
+                or not v.has('全部解除', area=(.44, .91, .55, .97), contains=False)):
+            return False
+        if v.has('自動編制', area=_AUTO_FORMATION, contains=False):
+            return True
+        return (v.has('自動編', area=_AUTO_FORMATION, contains=False)
+                and self.reread_claim_button(v, _AUTO_FORMATION, ('自動編制',)) is not None)
 
     def assault_party(self, v, number):
         if number not in range(1, 7):
@@ -81,7 +86,7 @@ class AssaultBattleFlows(AssaultWarningFlows):
             if number is not None and not self.assault_party_selected(page, self.assault_party(page, number)):
                 return False
             button = page.one('開始戰鬥', area=_START, required=False)
-            count = self.read_event_tickets(page)
+            count = self.read_event_tickets(page, formation=True)
             return button is not None and page.enabled(button) and count is not None and count > 0
         return self.event_wait(selected, '未確認所選隊伍、剩餘免費票或開始戰鬥按鈕；未出戰', seconds=30)
 

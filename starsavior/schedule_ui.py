@@ -11,7 +11,7 @@ from .tasks import STEPS, CustomDailyTask, DailyTask
 from .schedule_profile import (CUSTOM_TASK, FLAG, CHOICES, default_profile, validate_profile,
                                token_from_description, decode_profile, description_for)
 from .policy import NeedsReview
-from .activity import CURRENT_EVENT_NAME
+from .activity import CURRENT_ASSAULT_NAMES
 
 
 class ScheduleManager(WindowsScheduleManager):
@@ -39,7 +39,7 @@ class ProfileDialog(MessageBoxBase):
         hint = QLabel("獨立儲存，不會改動首頁日課或其他排程。執行順序與日課相同。")
         hint.setWordWrap(True)
         self.viewLayout.addWidget(hint)
-        self.activity_label = QLabel(f"目前活動：{CURRENT_EVENT_NAME}")
+        self.activity_label = QLabel(f"活動刷票：{CURRENT_ASSAULT_NAMES}")
         self.activity_label.setWordWrap(True)
         self.viewLayout.addWidget(self.activity_label)
         actions = QHBoxLayout()
@@ -65,7 +65,7 @@ class ProfileDialog(MessageBoxBase):
         for index, (key, values) in enumerate(CHOICES.items()):
             if key == "襲擊出戰隊伍":
                 continue
-            combo = ComboBox(); combo.addItems(values); combo.setCurrentText(profile[key])
+            combo = ComboBox(); combo.addItems(values); combo.setCurrentText(profile.get(key, values[0]))
             self.options[key] = combo
             form.addWidget(QLabel(key), index, 0); form.addWidget(combo, index, 1)
         self.viewLayout.addWidget(settings)
@@ -105,8 +105,9 @@ class ProfileDialog(MessageBoxBase):
             return
         selected = {name for name, box in self.checks.items() if box.isChecked()}
         self.yesButton.setEnabled(bool(selected))
-        for key, related in (("體力刷關", {"體力刷關"}), ("限時據點關卡", {"限時據點"})):
-            self.options[key].setEnabled(bool(selected & related))
+        for key, task in (("體力刷關", "體力刷關"), ("限時據點關卡", "限時據點"),
+                          ("激戰委託關卡", "激戰委託")):
+            self.options[key].setEnabled(task in selected)
         self.assault_advance.setEnabled("活動襲擊" in selected)
         can_advance = "活動襲擊" in selected and self.assault_advance.isChecked()
         self.assault_specify.setEnabled(can_advance)

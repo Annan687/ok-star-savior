@@ -1,17 +1,15 @@
-"""Observed September events; eligibility comes from the selected sweep button."""
+"""Event navigation and rewards; eligibility comes from the selected sweep button."""
 import re
 import time
 
 from .policy import NeedsReview, roman_value
 from .vision import Text, View, norm, BOTTOM
 from .snowfield import SnowfieldFlows, SNOWFIELD_STAGE
-from .activity import ACTIVITIES
+from .activity import (ACTIVITIES, EVENT_CARD_AREA, GRID_LAYOUTS, ONSLAUGHT,
+                       ONSLAUGHT_CARD, POSITIONAL_COLUMNS)
 from .activity_flows import ActivityFlows, logo_targets
 from .assault import AssaultFlows
 from .assault_battle import AssaultBattleFlows
-
-ONSLAUGHT = ("封閉的心象", "異形的攻勢", "虛假的契約")
-
 
 class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows):
     def event_wait(self, predicate, description, seconds=18, *, stability_key=None):
@@ -125,11 +123,13 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
         if self.event_navigation_state(v) != "list":
             return []
         if kind in ACTIVITIES:
-            return logo_targets(v, ACTIVITIES[kind]['card_logo'], (.35, .55, .95, .82))
+            return logo_targets(v, ACTIVITIES[kind]['card_logo'], EVENT_CARD_AREA)
         if kind == "snowfield":
             return self.snowfield_card_targets(v)
         if kind == "onslaught":
-            targets = v.find("ONSLAUGHT", "QNSLAUGHT", area=(.35, .2, .95, .8))
+            targets = logo_targets(v, ONSLAUGHT_CARD, EVENT_CARD_AREA)
+            if not targets:
+                targets = v.find("ONSLAUGHT", "QNSLAUGHT", area=(.35, .2, .95, .8))
         else:
             # This title is split across three lines by OCR. Require both
             # distinct words on the same card, not a guessed card index.
@@ -184,8 +184,8 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
                 and v.has("事件", area=(.04, .8, .23, .97), contains=False)
                 and v.has("一般", area=(.04, .8, .23, .88), contains=False)
                 and (v.has("AStudy", "OVERLOAD", "ONSLAUGHT", "DISCORDANT", area=(.35, .2, .95, .8), contains=False)
-                     or any(len(logo_targets(v, p['card_logo'], (.35, .55, .95, .82))) == 1
-                            for p in ACTIVITIES.values()))):
+                     or any(len(logo_targets(v, logo, EVENT_CARD_AREA)) == 1 for logo in
+                            (ONSLAUGHT_CARD, *(p['card_logo'] for p in ACTIVITIES.values()))))):
             # OCR can split the heading into overlapping fragments. The two
             # navigation tabs and a known event card establish where to reread;
             # fragments alone must never authorize list navigation.
@@ -196,6 +196,7 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
                 and v.has("事件", area=(.04, .8, .23, .97), contains=False)):
             return "list"
         stages = [(SNOWFIELD_STAGE, "snowfield"),
+                  *((name, "onslaught_column") for name in ONSLAUGHT),
                   *((p['stage'], p['layout']) for p in ACTIVITIES.values())]
         if (any(self.event_rows(v, stage, layout) for stage, layout in stages)
                 and v.has("掃蕩戰鬥", area=(.74, .84, .96, .92), contains=False)
@@ -204,11 +205,11 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
             if heading is not None:
                 v.items.append(heading)
         if (v.has("事件", area=(.08, 0, .28, .13), contains=False)
-                and not v.has("掃蕩次數", area=(.7, .7, .98, .93))
+                and not v.has("掃蕩次數", "開始掃蕩", area=(.7, .7, .98, .98))
+                and not v.has("REWARD", "VICTORY", "DEFEAT", area=(.20, .15, .98, .80), contains=False)
                 and v.has("掃蕩戰鬥", "掃蕩戰門", area=(.74, .84, .96, .92), contains=False)
                 and any(self.event_rows(v, stage, layout) for stage, layout in
-                        [*((name, "column") for name in ONSLAUGHT), ("名偵探消失的世界", "grid"),
-                         *stages])):
+                        [("名偵探消失的世界", "grid"), *stages])):
             return "stage"
         return None
 
@@ -227,7 +228,7 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
                 v = self.see()
         raise NeedsReview("活動免費票券數辨識不明確（已局部重讀並等待）；未繼續操作")
 
-    def read_event_tickets(self, v):
+    def read_event_tickets(self, v, *, formation=False):
         # Only a whole fraction qualifies. A merged currency such as
         # '3/38,050' must be re-read from pixels, never repaired as text.
         from .policy import fraction
@@ -235,20 +236,28 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
             readings = [fraction(t.key, 3) for t in tokens
                         if re.fullmatch(r"\d+/\d+", t.key)]
             return [p[0] for p in readings if p is not None]
-        snowfield = (any(self.resolve_event_home(v, kind) for kind in ACTIVITIES)
-                     or self.resolve_event_home(v, "snowfield")
-                     or bool(self.event_rows(v, SNOWFIELD_STAGE, "snowfield"))
-                     or any(p['layout'] == 'snowfield' and bool(self.event_rows(v, p['stage'], p['layout']))
-                            for p in ACTIVITIES.values()))
-        direct = values(v.within((.575, .025, .642, .10) if snowfield else (.555, .025, .617, .10)))
+        right_aligned = not formation and (
+            any(self.resolve_event_home(v, kind) for kind in ACTIVITIES)
+            or self.resolve_event_home(v, "snowfield")
+            or bool(self.event_rows(v, SNOWFIELD_STAGE, "snowfield"))
+            or any((p['layout'] == 'snowfield' or p.get('read_tickets_on_stage'))
+                   and bool(self.event_rows(v, p['stage'], p['layout'])) for p in ACTIVITIES.values()))
+        area = (.555, .025, .642, .10) if formation else (
+            (.575, .025, .642, .10) if right_aligned else (.555, .025, .617, .10))
+        direct = values(v.within(area))
         if len(direct) == 1:
             return direct[0]
         if len(direct) > 1:
             return None
-        # The onslaught home resource bar places the fraction farther right
-        # than the previously recorded stage/gray bar. Do not clip its last 3.
-        areas = ((.593, .04, .636, .082), (.58, .04, .628, .082)) if snowfield else ((.587, .04, .616, .079),) if self.resolve_event_home(v, "onslaught") else (
-            (.575, .04, .602, .079), (.587, .04, .616, .079))
+        areas = ((.575, .04, .602, .079), (.587, .04, .616, .079))
+        if formation:
+            # Journey's formation places the last digit right of the legacy
+            # crops. Isolate the whole counter from adjacent currency icons.
+            areas += ((.595, .038, .631, .087),)
+        elif right_aligned:
+            areas = ((.593, .04, .636, .082), (.58, .04, .628, .082))
+        elif self.resolve_event_home(v, "onslaught"):
+            areas = ((.587, .04, .616, .079),)
         recovered = []
         for area in areas:
             readings = values(self.event_local_text(v, area))
@@ -259,8 +268,27 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
 
     @staticmethod
     def event_rows(v, stage, layout):
-        area = (.10, .15, .70, .85) if layout in ("grid", "pink_grid") else (.31, .13, .68, .95 if layout == "snowfield" else .78)
+        area = (.10, .15, .70, .85) if layout in GRID_LAYOUTS else (.31, .13, .68, .95 if layout == "snowfield" else .78)
         rows = [t for t in v.within(area) if EventFlows.stage_label(t, stage)]
+        profile = next((p for p in ACTIVITIES.values() if (p['stage'], p['layout']) == (stage, layout)), {})
+        heading = profile.get('stage_heading')
+        if heading and (v.has(heading[0], area=heading[1], contains=False)
+                        or bool(rows)):
+            # The distinctive page heading identifies the layout when the
+            # decorated stage names fail OCR. Only unlocked cards have a
+            # recommended-power label; its number is irrelevant.
+            slot = lambda row: AssaultFlows.assault_stage_slot(row, layout)
+            named = {slot(row) for row in rows}
+            fallback = {}
+            for token in v.within(area):
+                if token.key.startswith(norm("建議戰鬥力")):
+                    row = Text(token.text, token.x, token.y-.027, token.w, token.h)
+                    index = slot(row)
+                    if index is not None and index not in named:
+                        fallback.setdefault(index, []).append(row)
+            rows = [row for row in rows if slot(row) is not None]
+            rows.extend(matches[0] for matches in fallback.values() if len(matches) == 1)
+            return sorted(rows, key=slot, reverse=True)
         return sorted(rows, key=lambda t: (round(t.cy/.04), t.cx), reverse=True)
 
     # Access the shared parser without introducing an Engine import cycle.
@@ -272,7 +300,20 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
     @staticmethod
     def event_row_selected(v, row, layout):
         import numpy as np
-        x = (.335 if row.cx < .38 else .65) if layout in ("grid", "pink_grid") else .60
+        if layout == 'journey_grid':
+            # This selected card is dark gray, with two thin bright edges.
+            # Test the edges at the slot's fixed position, away from labels.
+            slot = AssaultFlows.assault_stage_slot(row, layout)
+            if slot is None:
+                return False
+            x = .245 if slot % 2 else .525
+            y = (322 + 98*((slot-1)//2)) / 900
+            for edge in (y, y + 79/900):
+                patch = v.crop((x, edge-.005, x+.028, edge+.005))
+                if not patch.size or np.max(np.mean(patch.min(axis=2), axis=1)) < 145:
+                    return False
+            return True
+        x = (.335 if row.cx < .38 else .65) if layout in GRID_LAYOUTS else .60
         patch = v.crop((x, row.cy+.032, x+.016, row.cy+.044))
         if layout == 'pink_grid':
             # Unselected pink cards are also bright. Only the pale selected
@@ -285,6 +326,8 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
         return bool(patch.size and np.mean(patch.min(axis=2) > 130) > .8)
 
     def event_selected_level(self, v, stage, row=None, layout=None):
+        if row is not None and (layout == "journey_grid" or layout in POSITIONAL_COLUMNS):
+            return self.assault_stage_slot(row, layout) if self.event_row_selected(v, row, layout) else None
         if row is not None and layout == "snowfield" and stage == ACTIVITIES["golden"]["stage"]:
             # Golden shows all eight slots at fixed positions. The decorated
             # numeral and title suffix can both be unreadable on the selected
@@ -355,11 +398,16 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
         return readings[0] if readings[0] == readings[1] else None
 
     def select_event_stage(self, stage, layout):
-        v = self.event_wait(lambda v: len(self.event_rows(v, stage, layout)) > 0,
-                            f"未辨識到 {stage} 關卡列表")
+        positional = layout == "journey_grid" or layout in POSITIONAL_COLUMNS
+        def ready(v):
+            return (self.assault_stage_page(v, stage, layout) if positional
+                    else bool(self.event_rows(v, stage, layout)))
+        v = self.event_wait(ready, f"未辨識到 {stage} 關卡列表")
         rows = self.event_rows(v, stage, layout)
         for old in rows:
             v = self.see()
+            if positional and not ready(v):
+                raise NeedsReview("活動關卡頁已變動，未沿用舊位置")
             matches = [t for t in self.event_rows(v, stage, layout)
                        if abs(t.cx-old.cx) < .06 and abs(t.cy-old.cy) < .025]
             if len(matches) != 1:
@@ -388,7 +436,15 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
         raise NeedsReview("目前可見活動關卡沒有可用掃蕩")
 
     def event_sweep(self, stage, layout):
-        before = self.event_tickets(self.see())
+        positional = layout == "journey_grid" or layout in POSITIONAL_COLUMNS
+        def tickets():
+            if not positional:
+                return self.event_tickets(self.see())
+            page = self.event_wait(lambda v: self.assault_tickets_ready(v, stage, layout),
+                                   "活動關卡或免費票券尚未穩定",
+                                   stability_key=lambda v: v.assault_tickets)
+            return page.assault_tickets
+        before = tickets()
         if before == 0:
             return "活動免費票券已用完"
         level = self.select_event_stage(stage, layout)
@@ -406,8 +462,12 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
             return maximum is not None and v.max_is_gray(maximum)
         v = self.event_wait(ready, "活動掃蕩數量未確認，未提交")
         self.click(v.one("開始掃蕩", area=(.76, .91, .9, .98)))
-        self.rewards(require_reward=True, return_when=lambda v: self.sweep_page(v, stage))
-        after = self.event_tickets(self.see())
+        if positional:
+            settled = lambda v: self.assault_stage_page(v, stage, layout)
+        else:
+            settled = lambda v: self.sweep_page(v, stage)
+        self.rewards(require_reward=True, return_when=settled)
+        after = tickets()
         if before-after != intended:
             raise NeedsReview(f"活動票券變化不符：{before}→{after}，預期使用{intended}；未重試")
         return f"{stage} {level} 掃蕩{intended}次，剩{after}/3"
@@ -423,7 +483,12 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
         if self.event_tickets(self.see()) == 0:
             return "激戰委託免費票券已用完"
         self.tap(target, area=(.04, .4, .36, .76))
-        return self.event_sweep(target, "column")
+        self.event_wait(lambda v: self.assault_stage_page(v, target, "onslaught_column"),
+                        "激戰委託關卡頁尚未載入")
+        result = self.event_sweep(target, "onslaught_column")
+        self.click(Text("返回激戰委託首頁", .038, .05, .01, .025))
+        self.event_wait(lambda v: self.resolve_event_home(v, "onslaught"), "掃蕩後未回到激戰委託首頁")
+        return result
 
     def event_claim_button(self, v):
         # The download icon is often OCR'd as 山 or と. This scoped label is
@@ -507,14 +572,16 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
 
     def orbital_tokens(self, v):
         number = r"\d+(?:,\d{3})*"
-        tokens = [t for t in v.within((.90, .14, .96, .19)) if re.fullmatch(number, t.key)]
+        profile = ACTIVITIES.get(getattr(self, '_orbital_kind', None), {})
+        area = profile.get('orbital_balance_area', (.90, .14, .96, .19))
+        tokens = [t for t in v.within(area) if re.fullmatch(number, t.key)]
         if len(tokens) != 1 and self.orbital_board(v):
             # Right-aligned balances grow leftwards. The old .918 crop cut
             # 130 into 30 when full-frame OCR merged the ticket icon with it.
             # The icon can also become a separate digit beside the balance.
             # Re-read the complete area instead of choosing the rightmost
             # number: a split 1 + 0 must not become a false zero balance.
-            tokens = [t for t in self.event_local_text(v, (.90, .14, .96, .18))
+            tokens = [t for t in self.event_local_text(v, profile.get('orbital_balance_area', (.90, .14, .96, .18)))
                       if re.fullmatch(number, t.key)]
             if any(t.x <= .02 or t.x + t.w >= .98 for t in tokens):
                 raise NeedsReview("環形鏈路票券數碰到裁切邊界，未採用不完整數字")
@@ -563,6 +630,24 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
         self.event_wait(refreshed, "更新賓果盤後尚未確認下一盤；未重試")
         self.task.log_info(f"環形鏈路已更新：第{round_before}盤→第{round_before + 1}盤")
 
+    def orbital_draw_enabled(self, v, button):
+        if v.enabled(button):
+            return True
+        if getattr(self, '_orbital_kind', None) != 'journey_end':
+            return False
+        # This board's enabled draw button uses a dark blue fill. Check two
+        # interior strips away from the label, cost badge and white outline.
+        import cv2
+        for left, right in ((.825, .834), (.890, .902)):
+            patch = v.crop((left, .92, right, .954))
+            if not patch.size:
+                return False
+            hue, saturation, value = cv2.split(cv2.cvtColor(patch, cv2.COLOR_BGR2HSV))
+            blue = ((hue >= 100) & (hue <= 120) & (saturation >= 110) & (value >= 110))
+            if blue.mean() < .80:
+                return False
+        return True
+
     def orbital_draw_ready(self, v):
         v.orbital_action = None
         v.orbital_balance = None
@@ -575,7 +660,7 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
             balance = self.orbital_tokens(v)
             if balance == 0:
                 v.orbital_action = "zero"
-            elif v.enabled(v.one("全部抽取", area=(.82, .91, .90, .97))):
+            elif self.orbital_draw_enabled(v, v.one("全部抽取", area=(.82, .91, .90, .97))):
                 v.orbital_action = "draw"
             v.orbital_balance = balance
             return v.orbital_action is not None
@@ -599,7 +684,7 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
             button = v.one("全部抽取", area=(.82, .91, .90, .97))
             if balance == 0:
                 return draws, balance
-            if not v.enabled(button):
+            if not self.orbital_draw_enabled(v, button):
                 raise NeedsReview("環形鏈路票券非0，但全部抽取按鈕未開放；未提交")
             self.click(button)
             # The observed game submits immediately, shows LINK animation,

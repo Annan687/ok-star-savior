@@ -6,28 +6,8 @@ from .engine import Engine
 from .flows import DailyFlows
 from .policy import FARM, TIMED, NeedsReview
 from .schedule_profile import ASSAULT_TEAMS
-
-STEPS = [
-    ("登入彈窗", "startup"), ("支援金與免費緊急支援", "support"), ("郵件", "mail"),
-    ("好友點數", "friends"), ("付費商店免費禮包", "paid_shop"), ("啟示錄商店", "apocalypse"),
-    ("探索委託免費券", "exploration"), ("體力刷關", "stamina"), ("帕萊斯立方", "cube"),
-    ("限時據點", "timed"), ("星際迴廊", "corridors"), ("策略戰", "strategy"),
-    ("活動襲擊", "event"), ("活動任務", "event_missions"), ("環形鏈路", "activity_orbital"),
-    ("每日與每週任務", "missions"),
-    ("地區派遣", "dispatch"), ("公會", "guild"), ("通行證", "passes"),
-]
-
-
-def migrate_event_selection(selected):
-    """Expand the former combined task in saved settings and schedules."""
-    result = []
-    for name in selected:
-        if name == "激戰委託":
-            continue  # Retired activity; retain all other saved selections.
-        for target in (("活動襲擊", "活動任務") if name == "活動襲擊與任務" else (name,)):
-            if target not in result:
-                result.append(target)
-    return result
+from .activity import ONSLAUGHT
+from .daily_steps import STEPS, migrate_event_selection
 
 
 class InspectTask(BaseTask):
@@ -66,6 +46,7 @@ class DailyTask(BaseTask):
             "執行項目": [s for s, _ in STEPS],
             "體力刷關": "不消耗體力",
             "限時據點關卡": "略過",
+            "激戰委託關卡": "略過",
             "襲擊自動推進": False,
             "襲擊指定隊伍": False,
             "襲擊出戰隊伍": "隊伍1",
@@ -76,12 +57,14 @@ class DailyTask(BaseTask):
             "執行項目": {"type": "multi_selection", "options": [s for s, _ in STEPS]},
             "體力刷關": {"type": "drop_down", "options": ["不消耗體力", *FARM]},
             "限時據點關卡": {"type": "drop_down", "options": ["略過", *TIMED]},
+            "激戰委託關卡": {"type": "drop_down", "options": ["略過", *ONSLAUGHT]},
             "襲擊出戰隊伍": {"type": "drop_down", "options": ASSAULT_TEAMS},
         })
         self.config_description.update({
             "執行項目": "按示範順序執行勾選項目。今日已做完的項目可取消勾選。",
             "體力刷關": "選一種目標，MAX 使用現有意志力；不購買或使用回體道具。探索目標先耗免費券。",
             "限時據點關卡": "選一關使用當日剩餘票券；只在可掃蕩的滿星關卡執行。",
+            "激戰委託關卡": "選擇要使用激戰委託免費票的關卡；只掃蕩已解鎖的難度。",
             "襲擊自動推進": "活動襲擊優先挑戰後續關卡；戰敗後回到最高可掃蕩關卡，用完剩餘免費票。",
             "襲擊指定隊伍": "未勾選時使用進場當下的隊伍；勾選後才切換至指定隊伍。",
             "襲擊出戰隊伍": "勾選指定出戰隊伍時，切換至隊伍 1～6；不修改隊伍成員。",
@@ -104,6 +87,7 @@ class DailyTask(BaseTask):
         resume_request = getattr(self, "_home_resume_request", None)
         self._home_resume_request = None
         engine = DailyFlows(self)
+        self.run_folder = engine.folder
         self.info_clear()
         self.info_set("執行狀態", "執行中")
         selected = migrate_event_selection(self.config["執行項目"])
@@ -116,6 +100,8 @@ class DailyTask(BaseTask):
             raise NeedsReview("未知體力刷關選項")
         if self.config["限時據點關卡"] not in ["略過", *TIMED]:
             raise NeedsReview("未知限時據點選項")
+        if "激戰委託" in selected and self.config.get("激戰委託關卡", "略過") not in ["略過", *ONSLAUGHT]:
+            raise NeedsReview("未知激戰委託關卡")
         if type(self.config.get("襲擊自動推進", False)) is not bool:
             raise NeedsReview("襲擊自動推進必須為勾選設定")
         if type(self.config.get("襲擊指定隊伍", False)) is not bool:

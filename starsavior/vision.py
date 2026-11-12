@@ -24,10 +24,16 @@ UI_TRANSLATIONS = {
     '圣铠支持路条': '圣铠支援通行证',
 }
 
+PASS_OCR_ALIASES = {
+    '启示录支路条': '启示录支援通行证',
+    '突破困难战通行证VOL.1': '突破困难作战通行证VOL.1',
+    '突破困难戏通行证VOL.1': '突破困难作战通行证VOL.1',
+}
+
 
 def norm(text):
     value = compact(_cc.convert(str(text))).replace("廻", "回")
-    return UI_TRANSLATIONS.get(value, value)
+    return UI_TRANSLATIONS.get(value, PASS_OCR_ALIASES.get(value, value))
 
 
 @dataclass(frozen=True)
@@ -288,8 +294,11 @@ class View:
         if not patch.size:
             return []
         hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+        warm = color in ("yellow", "amber")
         if color == "blue":
             mask = cv2.inRange(hsv, (85, 90, 175), (120, 255, 255))
+        elif color == "amber":
+            mask = cv2.inRange(hsv, (0, 55, 205), (43, 255, 255))
         else:
             mask = cv2.inRange(hsv, (10, 70, 185), (40, 255, 255))
         contours, _ = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -299,13 +308,13 @@ class View:
             x, y, w, h = cv2.boundingRect(contour)
             if not (.035*width < w < .17*width and .04*height < h < .30*height):
                 continue
-            if color == "yellow" and not (.75 < w/h < 1.33 and h < .16*height):
+            if warm and not (.75 < w/h < 1.33 and h < .16*height):
                 continue
-            band = 5 if color == "yellow" else 3
+            band = 5 if warm else 3
             edges = [mask[y:y+band, x:x+w], mask[y+h-band:y+h, x:x+w],
                      mask[y:y+h, x:x+band], mask[y:y+h, x+w-band:x+w]]
             coverage = [float((e > 0).mean()) for e in edges]
-            if min(coverage) < (.25 if color == "yellow" else .40) or np.mean(coverage) < .40:
+            if min(coverage) < (.25 if warm else .40) or np.mean(coverage) < .40:
                 continue
             inner = mask[y+5:y+h-5, x+5:x+w-5]
             if not inner.size or float((inner > 0).mean()) > .35:

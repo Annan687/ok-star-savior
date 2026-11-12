@@ -6,7 +6,7 @@ bounded amount. Unknown layouts stop the run and produce a review report.
 import re
 import time
 
-from .engine import Engine
+from .engine import Engine, PASS_CATEGORIES, SPECIAL_PASS, SUPPORT_PASSES
 from .events import EventFlows
 from .policy import FARM, TIMED, NeedsReview, is_free, exact_challenge, fraction
 from .vision import norm, Text, View, FULL, TOP, BOTTOM, CENTER, RIGHT, LEFT
@@ -112,6 +112,13 @@ class DailyFlows(EventFlows, Engine):
                 handled_pages += 1
                 unknown_since = None
                 self.close((.86, .15, .96, .30))
+            elif self.golden_checkin_page(v):
+                handled_pages += 1
+                unknown_since = None
+                if claim_login:
+                    self.claim_golden_checkin()
+                else:
+                    self.close_event_checkin()
             elif v.has("簽到簿", "300日紀念"):
                 handled_pages += 1
                 unknown_since = None
@@ -148,6 +155,57 @@ class DailyFlows(EventFlows, Engine):
                 self.task.sleep(.5)
                 continue
         raise NeedsReview("登入彈窗／進場仍未完成，未開始後續日課")
+
+    @staticmethod
+    def golden_checkin_page(v):
+        return (v.has("甜苦交織！黃金甜點幻想曲簽到簿",
+                      area=(.64, .47, .92, .55), contains=False)
+                and v.has("簽到活動獎勵需親自領取", area=(.57, .80, .98, .86))
+                and not v.has("REWARD", "確認", "取消", area=CENTER, contains=False))
+
+    def golden_checkin_state(self, v):
+        """Read the five observed borders, excluding gifts and day numerals."""
+        if not self.golden_checkin_page(v):
+            return None
+        import cv2
+        states = []
+        for index in range(5):
+            left = .591 + index*.075
+            gold, dark = [], []
+            for area in ((left, .657, left+.005, .74),
+                         (left+.056, .657, left+.061, .74),
+                         (left+.005, .742, left+.056, .747)):
+                patch = v.crop(area)
+                if not patch.size:
+                    return None
+                hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+                gold.append(float(((hsv[:, :, 0] > 10) & (hsv[:, :, 0] < 40)
+                                   & (hsv[:, :, 1] > 100) & (hsv[:, :, 2] > 185)).mean()))
+                dark.append(float(((hsv[:, :, 2] > 30) & (hsv[:, :, 2] < 165)).mean()))
+            if min(gold) > .55:
+                states.append(True)
+            elif min(dark) > .85:
+                states.append(False)
+            else:
+                return None
+        return tuple(states)
+
+    def claim_golden_checkin(self):
+        def ready(v):
+            v.golden_checkin = self.golden_checkin_state(v)
+            return v.golden_checkin is not None
+
+        v = self.event_wait(ready, "活動簽到獎勵外框尚未穩定",
+                            stability_key=lambda v: v.golden_checkin)
+        if any(v.golden_checkin):
+            # Clicking one available card claims all accumulated rewards.
+            index = v.golden_checkin.index(True)
+            self.click(Text("活動簽到可領獎勵", .616+index*.075, .684, .01, .02))
+            self.task.move_relative(.5, .85)
+            self.rewards(require_reward=True, return_when=self.golden_checkin_page)
+            self.event_wait(lambda page: self.golden_checkin_state(page) == (False,)*5,
+                            "簽到已領獎，但金色可領外框尚未消失；未再次領取")
+        self.close_event_checkin()
 
     def close_event_checkin(self):
         v = self.see()
@@ -615,6 +673,38 @@ class DailyFlows(EventFlows, Engine):
                                                       round(v.purchase_max.cy, 2)))
         self.click(v.purchase_max)
 
+    @staticmethod
+    def apocalypse_report_page(v):
+        tab = v.one("觀測報告書", area=(.59, .10, .72, .20), required=False)
+        return (tab is not None and v.enabled(tab)
+                and v.has("啟示錄商店", area=(.10, .02, .26, .10), contains=False)
+                and v.has("標準觀測紀錄", area=(.49, .10, .60, .20), contains=False)
+                and not v.has("購買商品", "REWARD", area=CENTER, contains=False))
+
+    @staticmethod
+    def apocalypse_discounts_sold_out(v):
+        # After MAX purchases, the two daily discounts move to the last row.
+        # Full-frame OCR can clip the final T from the diagonal sold-out badge.
+        left = v.find("SOLDOUT", "SOLDOU", area=(.52, .23, .59, .92), contains=False)
+        right = v.find("SOLDOUT", "SOLDOU", area=(.64, .23, .71, .92), contains=False)
+        return len(left) == len(right) == 1 and abs(left[0].cy - right[0].cy) < .025
+
+    def apocalypse_discount_overview(self):
+        page = self.event_wait(self.apocalypse_report_page, "觀測報告書分頁尚未載入")
+        if page.has("SALE50%", area=(.49, .20, .98, .68), contains=False):
+            return True
+        # A missing badge on the first screen is inconclusive. Scroll only
+        # to confirm the two sold-out cards, never to buy a regular product.
+        for _ in range(4):
+            if self.apocalypse_discounts_sold_out(page):
+                return False
+            self.task.scroll_relative(.85, .73, -4)
+            self.task.sleep(.6)
+            page = self.event_wait(self.apocalypse_report_page, "觀測報告書分頁尚未穩定")
+        if self.apocalypse_discounts_sold_out(page):
+            return False
+        raise NeedsReview("未辨識到五折商品，也未確認兩張售完卡片")
+
     def apocalypse(self):
         self.menu("啟示錄商店")
         self.tap("每日商品", area=LEFT)
@@ -622,7 +712,8 @@ class DailyFlows(EventFlows, Engine):
         self.free_card()
         self.tap("觀測紀錄", area=LEFT)
         self.tap("觀測報告書", area=(.3, .06, .98, .28))
-        self.expect("SALE50%", "SOLDOUT", area=(.49, .20, .98, .99))
+        if not self.apocalypse_discount_overview():
+            return "每日免費商品已檢查，兩項五折商品已售完"
         visited = set()
         for _ in range(3):
             v = self.see()
@@ -1062,6 +1153,8 @@ class DailyFlows(EventFlows, Engine):
                 and not v.has("取消", "購買", "刷新對戰列表", area=CENTER))
 
     def resolve_strategy_state(self, v):
+        if self.strategy_season_notice(v) is not None:
+            return "賽季開始通知"
         state = self.strategy_state(v)
         if state is not None:
             return state
@@ -1126,6 +1219,7 @@ class DailyFlows(EventFlows, Engine):
         previous, stable, promotions = None, 0, 0
         clear_stable, clear_submitted = 0, False
         defense_stable, defense_submitted = 0, False
+        season_handled = False
         last_state = "未知／載入畫面"
         last_keys = None
         for _ in range(max(3, int(seconds/.4))):
@@ -1140,6 +1234,14 @@ class DailyFlows(EventFlows, Engine):
                 continue
             state = self.resolve_strategy_state(v)
             last_state = state or "未知／載入畫面"
+            if state == "賽季開始通知":
+                if season_handled:
+                    raise NeedsReview("賽季開始通知再次出現，尚未回到策略戰列表")
+                self.rewards(wait_initial=True)
+                season_handled = True
+                previous, stable = None, 0
+                clear_stable = defense_stable = 0
+                continue
             # Defense results can interrupt entry, battle settlement or a
             # refreshed list. Dismiss once, then still require the target page.
             if state == "防禦紀錄資訊":
@@ -1304,7 +1406,7 @@ class DailyFlows(EventFlows, Engine):
     def event(self):
         # Activity support is shipped with the program, not selected by an old
         # homepage config or a saved Windows schedule snapshot.
-        return self.activity_assault()
+        return self.current_activity_assaults()
 
     def event_missions(self):
         return self.activity_missions()
@@ -1464,26 +1566,42 @@ class DailyFlows(EventFlows, Engine):
 
     def passes(self):
         self.menu("通行證")
+        v = self.event_wait(lambda page: self.support_pass_tabs(page) or self.special_pass_page(page)
+                            or page.has("支援通行證", area=PASS_CATEGORIES, contains=False),
+                            "通行證分頁尚未載入")
+        has_special = v.has("特別通行證", area=PASS_CATEGORIES, contains=False)
+        if has_special:
+            if not self.special_pass_page(v):
+                self.tap("特別通行證", area=PASS_CATEGORIES)
+                self.event_wait(self.special_pass_page, "特別通行證尚未載入")
+            self.claim_all(labels=("任務一鍵領取",))
+            self.claim_pass(SPECIAL_PASS)
+            v = self.see()
+        if not self.support_pass_tabs(v):
+            self.tap("支援通行證", area=PASS_CATEGORIES)
+            self.event_wait(self.support_pass_tabs, "支援通行證子分頁尚未載入")
         self.claim_all(labels=("任務一鍵領取",))
-        for name in ("啟示錄支援通行證", "旅程支援通行證", "聖鎧支援通行證"):
+        for name in SUPPORT_PASSES:
             self.claim_pass(name)
         self.open_breakthrough_pass()
-        self.task.sleep(.5)
-        v = self.see()
-        names = [t.text for t in v.within((.035, .25, .17, .75))
-                 if "通行证" in t.key and "VOL" in t.key]
-        if not names:
-            raise NeedsReview("未辨識到突破通行證子分頁")
-        for name in names:
+        v = self.event_wait(self.breakthrough_pass_names, "未辨識到突破通行證子分頁",
+                            stability_key=lambda page: tuple(self.breakthrough_pass_names(page)))
+        for name in self.breakthrough_pass_names(v):
             self.claim_pass(name)
-        return "三種支援通行證與所有可見突破通行證已檢查"
+        return ("特別通行證、" if has_special else "") + "三種支援通行證與所有可見突破通行證已檢查"
+
+    @staticmethod
+    def breakthrough_pass_names(v):
+        return [t.text for t in sorted(v.within((.035, .25, .17, .75)), key=lambda t: t.cy)
+                if ("通行证" in t.key and "VOL" in t.key)
+                or re.fullmatch(r"作战突破路条VOL\.?[0-9]+", t.key)]
 
     def open_breakthrough_pass(self):
         v = self.see()
-        if not all(v.has(name, area=(.03, .18, .17, .38), contains=False)
-                   for name in ("啟示錄支援通行證", "旅程支援通行證", "聖鎧支援通行證")):
+        if not self.support_pass_tabs(v):
             raise NeedsReview("支援通行證分頁尚未完整，未切換突破通行證")
-        area = (.055, .397, .165, .445)
+        area = ((.055, .466, .165, .53) if v.has("特別通行證", area=PASS_CATEGORIES, contains=False)
+                else (.055, .397, .165, .445))
         hits = v.find("突破通行證", area=area, contains=False)
         if len(hits) > 1:
             raise NeedsReview("突破通行證入口不唯一")
@@ -1498,15 +1616,19 @@ class DailyFlows(EventFlows, Engine):
         self.task.sleep(.5)
         self.rewards()
         v = self.see()
-        area = (.275, .36, .80, .81)
-        targets = v.outline_targets(area, color="yellow")
+        special = name == SPECIAL_PASS
+        area = (.275, .36, .80, .53) if special else (.275, .36, .80, .81)
+        color = "amber" if special else "yellow"
+        if special and not self.special_pass_page(v):
+            raise NeedsReview("特別通行證頁面尚未確認")
+        targets = v.outline_targets(area, color=color)
         targets += v.outline_targets(area, color="blue")
         if targets:
             self.click(sorted(targets, key=lambda t: (t.cy, t.cx))[0])
             self.expect("REWARD", "點擊以繼續")
             self.rewards()
             v = self.see()
-            if v.outline_targets(area, color="yellow"):
+            if v.outline_targets(area, color=color):
                 raise NeedsReview(f"{name} 領取後仍有亮框，需確認是否已領完")
         tab = v.one(name, area=LEFT)
         if self.red_mark(v, (.155, tab.cy-.04, .17, tab.cy+.015)):

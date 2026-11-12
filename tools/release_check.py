@@ -40,6 +40,9 @@ def check_source(root=ROOT, repository=None):
     for relative in ('main.py', 'assets/icon.png', 'icons/icon.ico',
                      'assets/activities/serve-list.png', 'assets/activities/serve-home.png',
                      'assets/activities/golden-list.png', 'assets/activities/golden-home.png',
+                     'assets/activities/journey-list.png', 'assets/activities/journey-home.png',
+                     'assets/activities/exile-list.png', 'assets/activities/exile-home.png',
+                     'assets/activities/onslaught-list.png',
                      'assets/activities/battle-auto.png', 'assets/activities/battle-controls.png',
                      'starsavior/assault.py', 'starsavior/assault_battle.py', 'starsavior/assault_vision.py',
                      'starsavior/assault_warning.py',
@@ -78,7 +81,7 @@ def smoke():
     assert Path(ok.__file__).resolve() == ROOT / 'vendor/ok-script/ok/__init__.py'
     app = QApplication.instance() or QApplication([])
     panel = DailyPanel(PreviewBackend())
-    assert len(panel.checks) == len(STEPS) == 19
+    assert len(panel.checks) == len(STEPS) == 20
     assert not panel.start_button.isEnabled()
     panel.timer.stop()
     panel.close()

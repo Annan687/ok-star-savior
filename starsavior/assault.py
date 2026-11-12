@@ -2,6 +2,7 @@
 
 from .policy import NeedsReview
 from .vision import Text, norm
+from .activity import GRID_LAYOUTS, POSITIONAL_COLUMNS
 
 
 ASSAULT_PROGRESS_OPTION = "襲擊自動推進"
@@ -19,7 +20,14 @@ class AssaultFlows:
         OCR results: an unreadable earlier card must not renumber later cards.
         Unsupported or displaced positions remain unknown.
         """
-        if layout not in ("grid", "pink_grid"):
+        if layout in POSITIONAL_COLUMNS:
+            first, spacing, count = POSITIONAL_COLUMNS[layout]
+            index = round((row.cy-first)/spacing)
+            if (0 <= index < count and .31 <= row.x <= .35
+                    and abs(row.cy-(first+index*spacing)) <= .018):
+                return index + 1
+            return None
+        if layout not in GRID_LAYOUTS:
             return None
         column = 0 if .10 <= row.cx < .37 else 1 if .40 < row.cx <= .70 else None
         index = round((row.cy-.39)/.11)
@@ -35,7 +43,7 @@ class AssaultFlows:
         the title or number. The original sweep-only selector is unchanged.
         """
         rows = self.event_rows(page, stage, layout)
-        if layout not in ("grid", "pink_grid"):
+        if layout not in GRID_LAYOUTS:
             return rows
         occupied = {self.assault_stage_slot(row, layout) for row in rows}
         candidates = {}
@@ -79,7 +87,7 @@ class AssaultFlows:
         if len(nearby) != 1 or not self.event_row_selected(page, nearby[0], layout):
             return False
         level = (self.assault_stage_slot(nearby[0], layout)
-                 if layout in ("grid", "pink_grid")
+                 if layout in GRID_LAYOUTS
                  else self.event_selected_level(page, stage, nearby[0], layout))
         sweep = page.one("掃蕩戰鬥", "掃蕩戰門", area=ASSAULT_SWEEP_AREA, required=False)
         enter = page.one("進入", area=ASSAULT_ENTER_AREA, required=False)
@@ -143,10 +151,11 @@ class AssaultFlows:
             if page.assault_tickets == 0:
                 return summary() + "活動免費票券已用完"
 
-            # The verified two-column layouts end at slot VIII. After its
-            # victory there is no next stage to search for. The original
-            # sweep selector still handles a win without three stars.
-            if layout in ("grid", "pink_grid") and won and won[-1] == 8:
+            # The last slot needs no further progression scan. The sweep
+            # selector still handles a win without three stars.
+            last = 8 if layout in GRID_LAYOUTS else (
+                POSITIONAL_COLUMNS[layout][2] if layout in POSITIONAL_COLUMNS else None)
+            if won and won[-1] == last:
                 return summary() + "最後一關已通關，使用剩餘票券掃蕩；" + self.event_sweep(stage, layout)
 
             level = self.next_event_stage(stage, layout, attempted)

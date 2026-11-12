@@ -3,22 +3,21 @@ import hashlib
 import json
 from datetime import date
 from pathlib import Path
-from .activity import CURRENT_EVENT_NAME
+from .activity import CURRENT_ASSAULT_NAMES, CURRENT_EVENT_NAME
 from .policy import NeedsReview
 
 PATH = Path('runs/home-progress.json')
 
 
-def signature(config, *, legacy=False, include_retired=False):
+def signature(config):
     values = {key: config.get(key, '略過') for key in
               ('體力刷關', '限時據點關卡')}
-    selected = set(config['執行項目']) - {'激戰委託'}
-    if legacy:
+    selected = set(config['執行項目'])
+    if '激戰委託' in selected:
         values['激戰委託關卡'] = config.get('激戰委託關卡', '略過')
-        if include_retired:
-            selected.add('激戰委託')
     values['執行項目'] = sorted(selected)
     values['活動'] = CURRENT_EVENT_NAME
+    values['刷票活動'] = CURRENT_ASSAULT_NAMES
     # Disabled is the original sweep-only behavior and retains old checkpoints.
     # Enabling progression must not inherit an already-completed sweep step.
     if config.get('襲擊自動推進', False) is True:
@@ -34,9 +33,7 @@ class HomeProgress:
         self.path = Path(path) if path is not None else PATH
         self.day = today or date.today().isoformat()
         self.signature = signature(config)
-        self.legacy_signatures = {signature(config, legacy=True, include_retired=selected)
-                                  for selected in (False, True)}
-        self.selected = set(config['執行項目']) - {'激戰委託'}
+        self.selected = set(config['執行項目'])
         self.data = None
 
     def load(self):
@@ -47,13 +44,9 @@ class HomeProgress:
             if not isinstance(data, dict) or data.get('schema') != 1:
                 raise ValueError('schema')
             if (data.get('day') != self.day or data.get('scope') not in ('home', 'schedule')
-                    or data.get('signature') not in {self.signature, *self.legacy_signatures}
+                    or data.get('signature') != self.signature
                     or data.get('finished') is True):
                 return None
-            if data.get('signature') in self.legacy_signatures and isinstance(data.get('done'), dict):
-                data['done'].pop('激戰委託', None)
-                if data.get('current') == '激戰委託':
-                    data.update(current=None, detail='')
             if (data.get('finished') is not False or not isinstance(data.get('done'), dict)
                     or set(data['done']) - self.selected
                     or any(not isinstance(v, str) for v in data['done'].values())

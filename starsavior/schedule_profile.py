@@ -5,6 +5,8 @@ import re
 import sys
 
 from .policy import FARM, TIMED, NeedsReview
+from .activity import ONSLAUGHT
+from .daily_steps import STEPS, migrate_event_selection
 
 CUSTOM_TASK = "starsavior.tasks.CustomDailyTask"
 MARKER = "OKSS_CUSTOM_V1:"
@@ -12,6 +14,7 @@ FLAG = "--okss-profile"
 ASSAULT_TEAMS = [f"隊伍{number}" for number in range(1, 7)]
 CHOICES = {"體力刷關": ["不消耗體力", *FARM],
            "限時據點關卡": ["略過", *TIMED],
+           "激戰委託關卡": ["略過", *ONSLAUGHT],
            "襲擊出戰隊伍": ASSAULT_TEAMS}
 
 
@@ -22,16 +25,16 @@ def default_profile():
 
 
 def validate_profile(value):
-    from .tasks import STEPS, migrate_event_selection
     if not isinstance(value, dict):
         raise NeedsReview("自訂排程設定不完整，請修改此排程並重新儲存")
     # V1 snapshots already stored in Windows include the old event name.
     # Ignore that retired field without changing the schedule's selected tasks.
-    value = {key: item for key, item in value.items() if key not in ("活動名稱", "激戰委託關卡")}
+    value = {key: item for key, item in value.items() if key != "活動名稱"}
     value.setdefault("流程失敗時繼續下一項", False)
     value.setdefault("襲擊自動推進", False)
     value.setdefault("襲擊指定隊伍", False)
     value.setdefault("襲擊出戰隊伍", "隊伍1")
+    value.setdefault("激戰委託關卡", "略過")
     if value["襲擊出戰隊伍"] == "目前隊伍" and value["襲擊指定隊伍"] is False:
         value["襲擊出戰隊伍"] = "隊伍1"  # Earlier local, unreleased selector.
     if set(value) != set(default_profile()):

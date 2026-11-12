@@ -5,8 +5,12 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from .activity import ACTIVITIES, CURRENT_EVENT_KIND
+from .activity import ACTIVITIES, CURRENT_ASSAULT_KINDS, CURRENT_EVENT_KIND
+from .policy import NeedsReview
 from .vision import Text
+
+
+EVENT_ASSAULT_CLOSED = '事件未開放，略過活動襲擊'
 
 
 @lru_cache(maxsize=16)
@@ -38,15 +42,29 @@ def logo_targets(v, name, area):
 class ActivityFlows:
     def configured_home(self, v, kind):
         profile = ACTIVITIES[kind]
-        if not (v.has('事件', area=(.08, 0, .28, .13), contains=False)
-                and v.has('襲擊進度', area=profile['progress_area'], contains=False)
-                and sum(v.has(label, area=area, contains=False)
-                        for label, area in profile['links'].items()) >= 2):
+        labels = profile.get('home_labels')
+        if not v.has('事件', '事件?', area=(.08, 0, .28, .13), contains=False):
+            return False
+        if 'progress_area' in profile and not v.has(
+                '襲擊進度', area=profile['progress_area'], contains=False):
+            return False
+        if labels is not None:
+            ready = all(v.has(label, area=area, contains=False) for label, area in labels.items())
+        else:
+            ready = sum(v.has(label, area=area, contains=False)
+                        for label, area in profile['links'].items()) >= 2
+        if not ready:
             return False
         return len(logo_targets(v, profile['home_logo'], profile['home_logo_area'])) == 1
 
     def tap_activity_home(self, kind, label):
-        area = ACTIVITIES[kind]['links'][label]
+        profile = ACTIVITIES[kind]
+        position = profile.get('fixed_links', {}).get(label)
+        if position is not None:
+            self.event_wait(lambda v: self.resolve_event_home(v, kind), f'活動首頁的{label}入口尚未穩定')
+            self.click(Text(label, *position, 0, 0))
+            return
+        area = profile['links'][label]
         def ready(v):
             if not self.resolve_event_home(v, kind):
                 return False
@@ -61,15 +79,43 @@ class ActivityFlows:
     def activity_assault(self, kind=CURRENT_EVENT_KIND):
         profile = ACTIVITIES[kind]
         if not self.open_event(kind):
-            return '事件未開放，略過活動襲擊'
-        if (not self.task.config.get('襲擊自動推進', False)
+            return EVENT_ASSAULT_CLOSED
+        if (not profile.get('read_tickets_on_stage')
+                and not self.task.config.get('襲擊自動推進', False)
                 and self.event_tickets(self.see()) == 0):
             return '活動免費票券已用完'
-        self.tap_activity_home(kind, '襲擊')
+        self.tap_activity_home(kind, profile.get('assault_link', '襲擊'))
+        if profile.get('stage_heading'):
+            self.event_wait(lambda v: self.assault_stage_page(v, profile['stage'], profile['layout']),
+                            f"{profile['name']}的關卡頁尚未載入")
         result = self.event_assault(profile['stage'], profile['layout'])
         self.click(Text('返回活動首頁', .038, .05, .01, .025))
         self.event_wait(lambda v: self.resolve_event_home(v, kind), '襲擊結束後未回到活動首頁')
         return result
+
+    def current_activity_assaults(self):
+        results, failures = [], []
+        for index, kind in enumerate(CURRENT_ASSAULT_KINDS):
+            name = ACTIVITIES[kind]['name']
+            try:
+                result = self.activity_assault(kind)
+                # The global Event menu is disabled; there is no second
+                # entry to search. A missing individual card raises instead.
+                if index == 0 and result == EVENT_ASSAULT_CLOSED:
+                    return result
+                results.append(f'{name}：{result}')
+            except NeedsReview as exc:
+                failures.append(f'{name}：{exc}')
+                # Another event has its own tickets. Continue only from a
+                # recognized navigation page, never a result or submit modal.
+                if index + 1 < len(CURRENT_ASSAULT_KINDS):
+                    state = self.event_navigation_state(self.see())
+                    if state not in ('list', 'stage', 'onslaught', *ACTIVITIES):
+                        failures.append('畫面尚未返回可確認的活動頁，未切換下一個活動')
+                        break
+        if failures:
+            raise NeedsReview('；'.join([*results, *failures]))
+        return '；'.join(results)
 
     def activity_missions(self, kind=CURRENT_EVENT_KIND):
         if not self.open_event(kind):

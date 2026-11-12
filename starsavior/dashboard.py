@@ -9,14 +9,14 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QToolButton,
 from .policy import FARM, TIMED
 from .tasks import STEPS
 from .schedule_profile import ASSAULT_TEAMS
-from .activity import CURRENT_EVENT_NAME
+from .activity import CURRENT_ASSAULT_NAMES, CURRENT_EVENT_NAME, ONSLAUGHT
 
 ROOT = Path(__file__).resolve().parent.parent
 GROUPS = {
     "領取與商店": [name for name, _ in STEPS[:6]],
     "刷關與挑戰": [name for name, _ in STEPS[6:12]],
-    "活動": [name for name, _ in STEPS[12:15]],
-    "任務與養成": [name for name, _ in STEPS[15:]],
+    "活動": [name for name, _ in STEPS[12:16]],
+    "任務與養成": [name for name, _ in STEPS[16:]],
 }
 
 
@@ -137,7 +137,7 @@ class PreviewBackend:
     """Only for rendering this widget offline. Does not construct a game driver."""
     def __init__(self):
         self.values = {"執行項目": [n for n, _ in STEPS], "體力刷關": "不消耗體力",
-                       "限時據點關卡": "略過", "襲擊自動推進": False,
+                       "限時據點關卡": "略過", "激戰委託關卡": "略過", "襲擊自動推進": False,
                        "襲擊指定隊伍": False, "襲擊出戰隊伍": "隊伍1",
                        "Exit After Task": False, "流程失敗時繼續下一項": False}
 
@@ -347,7 +347,7 @@ class DailyPanel(QWidget):
         self.refresh()
 
     def add_task_options(self, name, layout, values):
-        if name not in ("體力刷關", "限時據點", "活動襲擊", "活動任務", "環形鏈路"):
+        if name not in ("體力刷關", "限時據點", "激戰委託", "活動襲擊", "活動任務", "環形鏈路"):
             return
         container = QFrame()
         container.setObjectName("taskOptions")
@@ -360,9 +360,13 @@ class DailyPanel(QWidget):
         elif name == "限時據點":
             self.timed = self.combo(inner, "限時據點關卡", ["略過", *TIMED], values["限時據點關卡"])
             hint = "每天剩餘的票券集中刷這一關。"
+        elif name == "激戰委託":
+            self.onslaught = self.combo(inner, "激戰委託關卡", ["略過", *ONSLAUGHT],
+                                        values.get("激戰委託關卡", "略過"))
+            hint = "選擇委託關卡後，使用獨立的免費票掃蕩。"
         elif name in ("活動襲擊", "活動任務", "環形鏈路"):
             inner.addWidget(self.label("目前活動", "fieldLabel"))
-            label = self.label(CURRENT_EVENT_NAME, "detail")
+            label = self.label(CURRENT_ASSAULT_NAMES if name == "活動襲擊" else CURRENT_EVENT_NAME, "detail")
             label.setWordWrap(True)
             self.event_labels.append(label)
             inner.addWidget(label)
@@ -383,7 +387,7 @@ class DailyPanel(QWidget):
                                                values.get("襲擊出戰隊伍", "隊伍1"))
             hint = ("自動推進會挑戰後續關卡，戰敗後回頭掃蕩。未指定隊伍時沿用進場當下的隊伍。使用剩餘免費票。" if name == "活動襲擊"
                     else "領取鏈路任務票券後全部抽取；完成整盤會更新賓果盤。" if name == "環形鏈路"
-                    else "只領取活動任務與點數獎勵，不進行襲擊掃蕩。與活動襲擊共用活動名稱。")
+                    else "領取旅程的終點的活動任務與點數獎勵。")
         label = self.label(hint, "hint")
         label.setWordWrap(True)
         inner.addWidget(label)
@@ -447,6 +451,7 @@ class DailyPanel(QWidget):
             return
         self.backend.save({"執行項目": self.selected(), "體力刷關": self.farm.currentText(),
                            "限時據點關卡": self.timed.currentText(),
+                           "激戰委託關卡": self.onslaught.currentText(),
                            "襲擊自動推進": self.assault_advance.isChecked(),
                            "襲擊指定隊伍": self.assault_specify.isChecked(),
                            "襲擊出戰隊伍": self.assault_team.currentText(),

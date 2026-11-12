@@ -9,6 +9,10 @@ from pathlib import Path
 from .policy import NeedsReview, Result, is_free, roman_value
 from .vision import View, Text, norm, FULL, TOP, BOTTOM, CENTER, RIGHT, LEFT
 
+SUPPORT_PASSES = ("啟示錄支援通行證", "旅程支援通行證", "聖鎧支援通行證")
+SPECIAL_PASS = "拉維斯塔高級通行證"
+PASS_CATEGORIES = (.034, .09, .17, .53)
+
 
 class Engine:
     def __init__(self, task):
@@ -137,6 +141,14 @@ class Engine:
                  if re.fullmatch(r"[\u4e00-\u9fff]{2,6}[1-9]?", t.key)]
         return ("rank" if promotion else "demotion") if len(ranks) == 1 else None
 
+    @staticmethod
+    def strategy_season_notice(v):
+        if (v.one("賽季開始通知", area=(.42, .43, .69, .54), required=False) is None
+                or len(v.find("賽季期間", area=(.43, .53, .76, .59), contains=True)) != 1
+                or v.has("REWARD", "確認", "取消", area=CENTER, contains=False)):
+            return None
+        return v.one("點擊以繼續", area=(.43, .70, .59, .79), required=False)
+
     def rewards(self, maximum=18, wait_initial=False, require_reward=False, return_when=None):
         seen = 0
         quiet = 0
@@ -144,11 +156,27 @@ class Engine:
         promotion_frames = 0
         promotion_previous = None
         promotion_clicked = set()
+        season_frames = season_pending = 0
+        season_clicked = False
         deadline = time.monotonic() + 30 if require_reward else None
         while seen < maximum:
             if deadline is not None and time.monotonic() >= deadline:
                 raise NeedsReview("等待獎勵與返回頁面逾時，未繼續導航")
             v = self.see()
+            season_notice = self.strategy_season_notice(v)
+            if season_notice is not None:
+                quiet = 0
+                season_frames += 1
+                if season_clicked:
+                    season_pending += 1
+                    if season_pending >= 20:
+                        raise NeedsReview("賽季開始通知點擊後仍未消失；未重複點擊")
+                elif season_frames >= 3:
+                    self.click(season_notice)
+                    season_clicked = True
+                self.task.sleep(.35)
+                continue
+            season_frames = 0
             promotion_kind = self.strategy_promotion_kind(v)
             if promotion_kind is not None:
                 quiet = 0
@@ -189,7 +217,7 @@ class Engine:
                     quiet = 0
                     if pending >= 20:
                         raise NeedsReview("獎勵動畫後仍未出現繼續提示")
-                elif seen or wait_initial or require_reward:
+                elif seen or wait_initial or require_reward or season_clicked:
                     # A blank/transitional frame is not proof of settlement.
                     # For sweeps, require an actual reward dismissal followed
                     # by five consecutive readings of the expected stage UI.
@@ -331,6 +359,7 @@ class Engine:
                     area = (.39, .1, .52, .45)
                     hits = [t for t in v.within(area)
                             if (norm("支援通行證") in t.key
+                                or t.key == norm(SPECIAL_PASS)
                                 or re.fullmatch(r"作战突破路条VOL\.?[0-9]+", t.key))]
                     if len(hits) != 1:
                         raise NeedsReview("四格選單通行證入口名稱不完整或不唯一，未點擊")
@@ -507,6 +536,16 @@ class Engine:
                             (int(h*area[1])+t.y*ih/scale)/h, t.w*iw/scale/w, t.h*ih/scale/h)
         return None
 
+    @staticmethod
+    def support_pass_tabs(v):
+        return all(v.has(name, area=(.03, .18, .17, .48), contains=False) for name in SUPPORT_PASSES)
+
+    @staticmethod
+    def special_pass_page(v):
+        return (v.has("特別通行證", area=PASS_CATEGORIES, contains=False)
+                and v.has(SPECIAL_PASS, area=(.03, .16, .17, .26), contains=False)
+                and v.has(SPECIAL_PASS, area=(.27, .20, .65, .33), contains=False))
+
     def resolve_claim_button(self, v, labels=("一鍵領取",)):
         if (labels == ("一鍵領取",)
                 and v.has("公會任務", area=(.15, .18, .28, .26), contains=False)
@@ -518,8 +557,7 @@ class Engine:
             # At 900p the disabled label's OCR box alternates between the
             # download icon + text and text alone, preventing stable geometry.
             # Re-read the same text-only region on the verified pass page.
-            if not all(v.has(name, area=(.03, .18, .17, .38), contains=False)
-                       for name in ("啟示錄支援通行證", "旅程支援通行證", "聖鎧支援通行證")):
+            if not (self.support_pass_tabs(v) or self.special_pass_page(v)):
                 return None
             return self.reread_claim_button(v, (.065, .90, .155, .96), labels)
         token = self.claim_button(v, labels)

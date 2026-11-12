@@ -16,6 +16,8 @@ def prepare():
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] in ("--mcp", "--okss-mcp-worker"):
+        raise SystemExit("OKSS 已移除 MCP，請從 OKSS 介面啟動日課。")
     prepare()
     if "--check" in sys.argv:
         from starsavior.tasks import DailyTask, InspectTask, CustomDailyTask
