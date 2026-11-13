@@ -12,6 +12,8 @@ from .vision import View, Text, norm, FULL, TOP, BOTTOM, CENTER, RIGHT, LEFT
 SUPPORT_PASSES = ("啟示錄支援通行證", "旅程支援通行證", "聖鎧支援通行證")
 SPECIAL_PASS = "拉維斯塔高級通行證"
 PASS_CATEGORIES = (.034, .09, .17, .53)
+PURCHASE_TITLE_AREA = (.20, .19, .33, .29)
+GUILD_SHOP_CLOSE_AREA = (.80, .15, .90, .28)
 
 
 class Engine:
@@ -251,11 +253,19 @@ class Engine:
         return len(core) == 3 or (len(labels) >= 4 and len(core) >= 2)
 
     @staticmethod
+    def is_guild_shop(v):
+        return (v.has("公會成員商店", area=(.16, .18, .28, .27), contains=False)
+                and v.has("管理員商店", area=(.28, .18, .41, .27), contains=False)
+                and not v.has("購買商品", "REWARD", "通知", area=CENTER, contains=False))
+
+    @staticmethod
     def page_name(v):
         if Engine.is_menu(v):
             return "四格選單"
         if Engine.is_lobby(v):
             return "大廳"
+        if Engine.is_guild_shop(v):
+            return "公會商店"
         labels = ("限時據點", "燭光廣場", "探索委託", "討伐委託", "星際迴廊",
                   "策略戰", "信件", "好友", "地區派遣", "啟示錄商店", "付費商店", "公會")
         matches = [s for s in labels if v.has(s, area=(.07, .015, .38, .13), contains=False)]
@@ -268,12 +278,12 @@ class Engine:
     @staticmethod
     def purchase_quantity_dialog(v):
         """Recognize the observed shop quantity modal before using its controls."""
-        if v.has("REWARD", "LEVELUP", area=CENTER, contains=False):
+        if v.has("REWARD", "LEVELUP", "通知", area=CENTER, contains=False):
             return False
-        fields = (("購買商品", (.20, .21, .33, .29), False),
-                  ("每日購買", (.24, .55, .35, .63), True),
-                  ("單件價格", (.35, .63, .50, .70), True),
-                  ("總購買價格", (.49, .63, .64, .70), True),
+        fields = (("購買商品", PURCHASE_TITLE_AREA, False),
+                  ("每日購買", (.23, .55, .35, .64), True),
+                  ("單件價格", (.32, .63, .50, .73), True),
+                  ("總購買價格", (.44, .63, .64, .73), True),
                   ("購買", (.42, .69, .58, .78), False))
         return all(len(v.find(label, area=area, contains=contains)) == 1
                    for label, area, contains in fields)
@@ -296,7 +306,7 @@ class Engine:
                 if v.has("取消", area=CENTER, contains=False):
                     return
                 try:
-                    token = v.close_icon((.74, .20, .80, .29))
+                    token = v.close_icon((.74, .19, .836, .29))
                 except NeedsReview:
                     pass
             key = (round(token.cx, 2), round(token.cy, 2)) if token else None
@@ -340,6 +350,9 @@ class Engine:
                     self.tap("取消", area=CENTER)
                 else:
                     self.close_purchase_quantity_dialog()
+                continue
+            if self.is_guild_shop(v):
+                self.click(v.close_icon(GUILD_SHOP_CLOSE_AREA))
                 continue
             if arrived is not None and arrived(v):
                 self.navigate_checked(destination, lambda _: None, arrived)

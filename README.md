@@ -24,11 +24,11 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-**v0.2.17 測試版**支援「旅程的終點」與「放逐者的歸還軌跡」各自刷票，恢復激戰委託，並修正五折商品售完辨識和新版通行證入口。[更新紀錄](CHANGELOG.md)
+**v0.2.18 測試版**修正啟示錄商店的 MAX、公會星光石購買視窗和特別通行證紅點誤報。[更新紀錄](CHANGELOG.md)
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.17/ok-star-savior-win32-Global-setup.exe) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.18/ok-star-savior-win32-Global-setup.exe) ·
 
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.17) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.18) ·
 
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 
@@ -78,15 +78,15 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-**[v0.2.17 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.17)。一般使用者請下載 Global 安裝版。**
+**[v0.2.18 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.18)。一般使用者請下載 Global 安裝版。**
 
 | 檔案 | 用途 |
 
 | --- | --- |
 
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.17/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.18/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
 
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.17/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.18/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 
 | `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
 
@@ -560,7 +560,7 @@ Star Savior：目前遊戲版本
 
 | --- | --- |
 
-| 日課流程 | v0.2.17 已在單一帳號實測兩個活動自動推進至第 III 關、用完兩種免費票，並把「旅程的終點」環形鏈路票抽至零。五折商品售完與新版通行證已用三種解析度的實機截圖回放。[修正內容](CHANGELOG.md) |
+| 日課流程 | v0.2.18 已在單一帳號分段續跑完成 20 項日課。實機確認啟示錄商店購買、公會任務及通行證流程，並完成兩個活動及激戰委託的免費票。相關辨識已用三種解析度的實機截圖回放。[修正內容](CHANGELOG.md) |
 
 | 自訂排程 | 本機原始碼版已實測 22:00 定時啟動 Steam 遊戲，只跑保存的五項設定，完成後關閉遊戲及 OKSS；首頁仍保留完整日課設定。 |
 
@@ -576,7 +576,7 @@ Star Savior：目前遊戲版本
 
 - 安裝版排程、不同任務組合及長期跨日穩定性；目前完整啟動至關閉的排程實测限本機原始碼版的五項自訂流程。
 
-- 本期兩個活動第 IV 關以後的推進、環形鏈路整盤更新及新版通行證實際領獎。
+- 「旅程的終點」第 VII、VIII 關、「放逐者的歸還軌跡」第 V 關勝利及環形鏈路整盤更新。
 
 - 完整安裝精靈、乾淨 Windows 環境及第二台電腦的安裝與執行。
 
@@ -684,7 +684,7 @@ OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`�
 
 ## 📌 專案狀態
 
-目前提供 `v0.2.17` 測試版。各項驗證進度見上方「目前測試狀態」。
+目前提供 `v0.2.18` 測試版。各項驗證進度見上方「目前測試狀態」。
 
 歡迎透過 [Issues](https://github.com/Annan687/ok-star-savior/issues) 提供不同環境的測試結果與問題紀錄。
 

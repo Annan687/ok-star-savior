@@ -6,7 +6,7 @@ bounded amount. Unknown layouts stop the run and produce a review report.
 import re
 import time
 
-from .engine import Engine, PASS_CATEGORIES, SPECIAL_PASS, SUPPORT_PASSES
+from .engine import Engine, GUILD_SHOP_CLOSE_AREA, PASS_CATEGORIES, PURCHASE_TITLE_AREA, SPECIAL_PASS, SUPPORT_PASSES
 from .events import EventFlows
 from .policy import FARM, TIMED, NeedsReview, is_free, exact_challenge, fraction
 from .vision import norm, Text, View, FULL, TOP, BOTTOM, CENTER, RIGHT, LEFT
@@ -655,13 +655,16 @@ class DailyFlows(EventFlows, Engine):
     def apocalypse_max_button(self, v):
         if not self.purchase_quantity_dialog(v):
             return None
-        area = (.606, .582, .644, .622)
-        hits = v.find("MAX", area=area, contains=False)
+        hits = v.find("MAX", area=(.566, .58, .645, .66), contains=False)
         if len(hits) > 1:
             raise NeedsReview("五折商品 MAX 有多個候選，未點擊")
+        if hits:
+            return hits[0]
         # Full-frame OCR may merge the adjacent plus into '+ MAX'. Re-read
         # only the observed MAX label; do not click the merged token's center.
-        return hits[0] if hits else self.reread_claim_button(v, area, ("MAX",))
+        title = v.one("購買商品", area=PURCHASE_TITLE_AREA)
+        area = (.572, .611, .607, .656) if title.cy < .235 else (.606, .582, .644, .622)
+        return self.reread_claim_button(v, area, ("MAX",))
 
     def tap_apocalypse_max(self):
         def ready(v):
@@ -734,7 +737,7 @@ class DailyFlows(EventFlows, Engine):
             v = self.expect("購買商品", area=CENTER)
             remaining = v.count(3, area=CENTER)[1][0]
             if remaining == 0:
-                self.close((.74, .20, .80, .29))
+                self.close_purchase_quantity_dialog()
                 continue
             v.one("1", area=(.45, .56, .55, .66))
             unit_text = v.field("總購買價格").text.replace(",", "").strip()
@@ -1488,7 +1491,7 @@ class DailyFlows(EventFlows, Engine):
             self.click(star)
             v = self.guild_star_purchase_ready()
             if v is None:
-                self.close((.74, .20, .80, .29))
+                self.close_purchase_quantity_dialog()
             else:
                 price = v.field("總購買價格")
                 if price.key != "10":
@@ -1496,7 +1499,7 @@ class DailyFlows(EventFlows, Engine):
                 self.tap("購買", area=(.3, .60, .8, .95), enabled=True)
                 self.expect("REWARD", "點擊以繼續")
                 self.rewards()
-        self.close((.80, .15, .90, .28))
+        self.close(GUILD_SHOP_CLOSE_AREA)
         self.tap("公會捐獻")
         for name in ("黃金", "公會活動證明"):
             for _ in range(3):
@@ -1533,9 +1536,10 @@ class DailyFlows(EventFlows, Engine):
         for _ in range(25):
             v = self.see()
             state = None
-            if (v.has("購買商品", area=(.20, .20, .40, .30))
-                    and v.has("星光石", area=(.35, .29, .65, .37), contains=False)):
-                count = v.count(1, area=(.25, .56, .35, .64), required=False)
+            if (v.has("購買商品", area=PURCHASE_TITLE_AREA, contains=False)
+                    and v.has("星光石", area=(.31, .29, .65, .38), contains=False)
+                    and not v.has("REWARD", "通知", area=CENTER, contains=False)):
+                count = v.count(1, area=(.23, .55, .35, .64), required=False)
                 button = v.one("購買", area=(.40, .70, .60, .78), required=False)
                 if count and button:
                     remaining = count[1][0]
@@ -1578,7 +1582,14 @@ class DailyFlows(EventFlows, Engine):
             self.claim_pass(SPECIAL_PASS)
             v = self.see()
         if not self.support_pass_tabs(v):
-            self.tap("支援通行證", area=PASS_CATEGORIES)
+            if has_special and not v.has("支援通行證", area=PASS_CATEGORIES, contains=False):
+                # The collapsed category icon can merge into its OCR label.
+                button = self.reread_claim_button(v, (.055, .263, .165, .322), ("支援通行證",))
+                if button is None:
+                    raise NeedsReview("支援通行證入口局部重讀仍無法確認")
+                self.click(button)
+            else:
+                self.tap("支援通行證", area=PASS_CATEGORIES)
             self.event_wait(self.support_pass_tabs, "支援通行證子分頁尚未載入")
         self.claim_all(labels=("任務一鍵領取",))
         for name in SUPPORT_PASSES:
@@ -1632,4 +1643,19 @@ class DailyFlows(EventFlows, Engine):
                 raise NeedsReview(f"{name} 領取後仍有亮框，需確認是否已領完")
         tab = v.one(name, area=LEFT)
         if self.red_mark(v, (.155, tab.cy-.04, .17, tab.cy+.015)):
-            raise NeedsReview(f"{name} 左側仍有紅點，獎勵尚未確認領完")
+            message = f"{name} 左側仍有紅點，獎勵尚未確認領完"
+            if not special:
+                raise NeedsReview(message)
+            # This pass can retain its badge with premium rewards locked.
+            # Verify the free track and task claim independently.
+            self.event_wait(self.special_pass_free_rewards_done, message)
+
+    def special_pass_free_rewards_done(self, v):
+        if (not self.special_pass_page(v)
+                or not v.has("購買路條", area=(.78, .89, .96, .97), contains=False)
+                or v.has("REWARD", "每日任務", "每週任務", "限定任務", area=CENTER, contains=False)):
+            return False
+        button = self.resolve_claim_button(v, ("任務一鍵領取",))
+        area = (.275, .36, .80, .53)
+        return (button is not None and not v.enabled(button)
+                and not v.outline_targets(area, color="amber") and not v.outline_targets(area, color="blue"))
