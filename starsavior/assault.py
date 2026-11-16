@@ -2,7 +2,7 @@
 
 from .policy import NeedsReview
 from .vision import Text, norm
-from .activity import GRID_LAYOUTS, POSITIONAL_COLUMNS
+from .activity import ASSAULT_BUTTON_LAYOUTS, GRID_LAYOUTS, POSITIONAL_COLUMNS
 
 
 ASSAULT_PROGRESS_OPTION = "襲擊自動推進"
@@ -73,7 +73,13 @@ class AssaultFlows:
         page.assault_tickets = None
         if not self.assault_stage_page(page, stage, layout):
             return False
-        page.assault_tickets = self.read_event_tickets(page)
+        if layout in ASSAULT_BUTTON_LAYOUTS:
+            if page.has("通知", "購買商品", "確認", "取消", area=(.20, .17, .83, .82), contains=False):
+                return False
+            button = page.one("進入", area=ASSAULT_ENTER_AREA, required=False)
+            page.assault_tickets = page.assault_entry_available(button) if button else None
+        else:
+            page.assault_tickets = self.read_event_tickets(page)
         return page.assault_tickets is not None
 
     def assault_selected_state(self, page, stage, layout, old_row):
@@ -143,10 +149,12 @@ class AssaultFlows:
         def summary():
             return (f"已推進{len(won)}關（至第{won[-1]}關）；" if won else "")
 
+        condition = ("襲擊關卡頁或進入按鈕尚未穩定；未挑戰" if layout in ASSAULT_BUTTON_LAYOUTS
+                     else "襲擊關卡頁或免費票券數尚未穩定；未挑戰")
         for _ in range(ASSAULT_ATTEMPTS):
             page = self.event_wait(
                 lambda v: self.assault_tickets_ready(v, stage, layout),
-                "襲擊關卡頁或免費票券數尚未穩定；未挑戰",
+                condition,
                 stability_key=lambda v: v.assault_tickets)
             if page.assault_tickets == 0:
                 return summary() + "活動免費票券已用完"

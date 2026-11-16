@@ -14,6 +14,7 @@ POSITIONAL_COLUMNS = {
     "exile_column": (.189, .102, 5),
     "onslaught_column": (.189, .102, 6),
 }
+ASSAULT_BUTTON_LAYOUTS = ("journey_grid", *POSITIONAL_COLUMNS)
 
 # Per-event evidence and layout; submission/claim logic stays shared.
 ACTIVITIES = {

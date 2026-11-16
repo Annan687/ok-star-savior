@@ -193,6 +193,24 @@ class View:
         white = (hsv[:, :, 1] < 35) & (hsv[:, :, 2] > 215)
         return float(bright_color.mean()) > .24 or float(white.mean()) > .50
 
+    def assault_entry_available(self, button):
+        """Distinguish a blue entry button from a gray button with a red cost."""
+        # Inspect blank parts of the button, away from text, icons and hover.
+        y = button.cy
+        fills = [cv2.cvtColor(self.crop((x, y-.009, x+.010, y+.009)), cv2.COLOR_BGR2HSV)
+                 for x in (.775, .861)]
+        if all(((p[:, :, 0] >= 92) & (p[:, :, 0] <= 125)
+                & (p[:, :, 1] >= 105) & (p[:, :, 2] >= 140)).mean() > .80 for p in fills):
+            return True
+        if all(((p[:, :, 1] <= 40) & (p[:, :, 2] >= 34) & (p[:, :, 2] <= 135)).mean() > .80
+               for p in fills):
+            # A dark background or disabled button alone doesn't prove zero.
+            cost = cv2.cvtColor(self.crop((.913, y-.013, .931, y+.014)), cv2.COLOR_BGR2HSV)
+            red = ((cost[:, :, 0] <= 12) | (cost[:, :, 0] >= 168)) & (cost[:, :, 1] > 120) & (cost[:, :, 2] > 95)
+            if red.mean() > .009:
+                return False
+        return None
+
     def menu_tile_state(self, token):
         """Sample both blank margins of a four-square menu tile."""
         states = []
@@ -213,6 +231,20 @@ class View:
         if token.key != "MAX":
             return False
         return self.stepper_is_gray(token)
+
+    def event_sweep_plus_disabled(self):
+        """Check the + control beside MAX on a verified event sweep panel."""
+        # The inactive + has a gray fill on both sides of its light glyph.
+        for x in (.878, .895):
+            patch = self.crop((x, .848, x + .004, .875))
+            if not patch.size:
+                return False
+            hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+            gray = ((hsv[:, :, 1] < 40) & (hsv[:, :, 2] >= 85) & (hsv[:, :, 2] <= 175))
+            if gray.mean() < .80:
+                return False
+        glyph = self.crop((.8875, .858, .891, .864))
+        return bool(glyph.size and (glyph.min(axis=2) >= 190).mean() > .55)
 
     def stepper_is_gray(self, token):
         if token.key not in ("MIN", "MAX"):

@@ -5,10 +5,10 @@ import time
 from .policy import NeedsReview, roman_value
 from .vision import Text, View, norm, BOTTOM
 from .snowfield import SnowfieldFlows, SNOWFIELD_STAGE
-from .activity import (ACTIVITIES, EVENT_CARD_AREA, GRID_LAYOUTS, ONSLAUGHT,
+from .activity import (ACTIVITIES, ASSAULT_BUTTON_LAYOUTS, EVENT_CARD_AREA, GRID_LAYOUTS, ONSLAUGHT,
                        ONSLAUGHT_CARD, POSITIONAL_COLUMNS)
 from .activity_flows import ActivityFlows, logo_targets
-from .assault import AssaultFlows
+from .assault import ASSAULT_SWEEP_AREA, AssaultFlows
 from .assault_battle import AssaultBattleFlows
 
 class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows):
@@ -436,41 +436,89 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
         raise NeedsReview("目前可見活動關卡沒有可用掃蕩")
 
     def event_sweep(self, stage, layout):
-        positional = layout == "journey_grid" or layout in POSITIONAL_COLUMNS
-        def tickets():
-            if not positional:
-                return self.event_tickets(self.see())
+        by_button = layout in ASSAULT_BUTTON_LAYOUTS
+        if by_button:
             page = self.event_wait(lambda v: self.assault_tickets_ready(v, stage, layout),
-                                   "活動關卡或免費票券尚未穩定",
+                                   "活動關卡或進入按鈕尚未穩定",
                                    stability_key=lambda v: v.assault_tickets)
-            return page.assault_tickets
-        before = tickets()
+            before = page.assault_tickets
+        else:
+            before = self.event_tickets(self.see())
         if before == 0:
             return "活動免費票券已用完"
         level = self.select_event_stage(stage, layout)
-        self.tap("掃蕩戰鬥", area=(.74, .84, .96, .92), enabled=True)
-        self.expect("掃蕩次數", area=BOTTOM)
-        self.tap("MAX", area=(.89, .82, .95, .91))
-        intended = before
+        if by_button:
+            def sweep_ready(v):
+                if not self.assault_tickets_ready(v, stage, layout) or v.assault_tickets is not True:
+                    return False
+                selected = [row for row in self.event_rows(v, stage, layout)
+                            if self.event_row_selected(v, row, layout)]
+                sweep = v.one("掃蕩戰鬥", "掃蕩戰門", area=ASSAULT_SWEEP_AREA, required=False)
+                return (len(selected) == 1 and self.assault_stage_slot(selected[0], layout) == level
+                        and sweep is not None and v.enabled(sweep))
+            v = self.event_wait(sweep_ready, "活動關卡或掃蕩按鈕已變動，未提交掃蕩")
+            self.click(v.one("掃蕩戰鬥", "掃蕩戰門", area=ASSAULT_SWEEP_AREA))
+        else:
+            self.tap("掃蕩戰鬥", area=ASSAULT_SWEEP_AREA, enabled=True)
+        start_area = (.76, .91, .9, .98)
+        max_area = (.89, .82, .95, .91)
+
+        def quantity_ready(v):
+            if not v.has("掃蕩次數", area=(.8, .78, .9, .85), contains=False):
+                return False
+            start = v.one("開始掃蕩", area=start_area, required=False)
+            return start is not None and v.enabled(start)
+
+        maximum = None
+        if by_button:
+            def can_set_max(v):
+                v.sweep_max = None
+                if not quantity_ready(v):
+                    return False
+                if v.event_sweep_plus_disabled():
+                    return True  # The selector can open at its limit with one ticket.
+                hits = v.find("MAX", area=max_area, contains=False)
+                if len(hits) > 1:
+                    return False
+                v.sweep_max = hits[0] if hits else self.reread_claim_button(
+                    v, (.903, .836, .942, .889), ("MAX",))
+                return v.sweep_max is not None
+
+            v = self.event_wait(can_set_max, "活動掃蕩 MAX 尚未就緒，未提交",
+                                stability_key=lambda v: (round(v.sweep_max.cx, 2), round(v.sweep_max.cy, 2))
+                                if v.sweep_max is not None else None)
+            maximum = v.sweep_max
+            if maximum is not None:
+                self.click(maximum)
+                self.task.move_relative(.70, .72)
+        else:
+            self.expect("掃蕩次數", area=BOTTOM)
+            self.tap("MAX", area=max_area)
+
         def ready(v):
-            if not v.has("掃蕩次數", area=(.8, .78, .9, .85)):
+            if not quantity_ready(v):
                 return False
-            button = v.one("開始掃蕩", area=(.76, .91, .9, .98), required=False)
-            if button is None or not v.enabled(button):
-                return False
-            maximum = v.one("MAX", area=(.89, .82, .95, .91), required=False)
-            return maximum is not None and v.max_is_gray(maximum)
+            if by_button:
+                return v.event_sweep_plus_disabled() or (maximum is not None and v.max_is_gray(maximum))
+            legacy_max = v.one("MAX", area=max_area, required=False)
+            return legacy_max is not None and v.max_is_gray(legacy_max)
+
         v = self.event_wait(ready, "活動掃蕩數量未確認，未提交")
-        self.click(v.one("開始掃蕩", area=(.76, .91, .9, .98)))
-        if positional:
+        self.click(v.one("開始掃蕩", area=start_area))
+        if by_button:
             settled = lambda v: self.assault_stage_page(v, stage, layout)
         else:
             settled = lambda v: self.sweep_page(v, stage)
         self.rewards(require_reward=True, return_when=settled)
-        after = tickets()
-        if before-after != intended:
-            raise NeedsReview(f"活動票券變化不符：{before}→{after}，預期使用{intended}；未重試")
-        return f"{stage} {level} 掃蕩{intended}次，剩{after}/3"
+        if by_button:
+            self.event_wait(lambda v: self.assault_tickets_ready(v, stage, layout)
+                            and v.assault_tickets is False,
+                            "MAX 掃蕩後尚未確認免費票券用完；未再次掃蕩")
+            return f"{stage} {level} 已完成 MAX 掃蕩，活動免費票券已用完"
+        after = self.event_tickets(self.see())
+        if after != 0:
+            raise NeedsReview(f"活動票券變化不符：{before}→{after}，預期使用{before}；未重試")
+        return f"{stage} {level} 掃蕩{before}次，剩{after}/3"
 
     def onslaught(self):
         target = self.task.config.get("激戰委託關卡", "略過")
@@ -480,8 +528,6 @@ class EventFlows(AssaultFlows, AssaultBattleFlows, ActivityFlows, SnowfieldFlows
             raise NeedsReview("未知激戰委託關卡")
         if not self.open_event("onslaught"):
             return "事件未開放，略過激戰委託"
-        if self.event_tickets(self.see()) == 0:
-            return "激戰委託免費票券已用完"
         self.tap(target, area=(.04, .4, .36, .76))
         self.event_wait(lambda v: self.assault_stage_page(v, target, "onslaught_column"),
                         "激戰委託關卡頁尚未載入")

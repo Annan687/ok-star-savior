@@ -7,6 +7,7 @@ import numpy as np
 from .policy import NeedsReview
 from .assault_vision import auto_battle_state, auto_battle_target
 from .assault_warning import AssaultWarningFlows
+from .activity import ASSAULT_BUTTON_LAYOUTS
 
 
 _START = (.76, .90, .96, .98)
@@ -68,7 +69,7 @@ class AssaultBattleFlows(AssaultWarningFlows):
         hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
         return bool(np.mean((hsv[:, :, 1] < 40) & (hsv[:, :, 2] > 215)) > .55)
 
-    def prepare_assault_party(self, stage, level):
+    def prepare_assault_party(self, stage, level, *, by_button=False):
         number = self.configured_assault_party()
         def ready(v):
             self.check_assault_interruption(v)
@@ -86,9 +87,14 @@ class AssaultBattleFlows(AssaultWarningFlows):
             if number is not None and not self.assault_party_selected(page, self.assault_party(page, number)):
                 return False
             button = page.one('開始戰鬥', area=_START, required=False)
+            if by_button:
+                return (button is not None and page.assault_entry_available(button) is True
+                        and not page.has('通知', '購買商品', '確認', '取消', area=(.20, .17, .83, .82), contains=False))
             count = self.read_event_tickets(page, formation=True)
             return button is not None and page.enabled(button) and count is not None and count > 0
-        return self.event_wait(selected, '未確認所選隊伍、剩餘免費票或開始戰鬥按鈕；未出戰', seconds=30)
+        message = ('未確認所選隊伍或開始戰鬥按鈕；未出戰' if by_button
+                   else '未確認所選隊伍、剩餘免費票或開始戰鬥按鈕；未出戰')
+        return self.event_wait(selected, message, seconds=30)
 
     def assault_battle_result(self, v, stage, level):
         # Both observed result screens have a right-hand result and Leave.
@@ -162,10 +168,16 @@ class AssaultBattleFlows(AssaultWarningFlows):
                         if self.event_row_selected(page, row, layout)]
             if len(selected) != 1 or not self.assault_selected_state(page, stage, layout, selected[0]):
                 return False
+            if layout in ASSAULT_BUTTON_LAYOUTS and (
+                    not self.assault_tickets_ready(page, stage, layout) or not page.assault_tickets):
+                return False
             return page.assault_selection == (level, 'advance')
         page = self.event_wait(ready, '襲擊關卡或進入狀態已改變；未出戰')
         self.click(page.one('進入', area=(.74, .92, .96, .99)))
-        page = self.prepare_assault_party(stage, level)
+        if layout in ASSAULT_BUTTON_LAYOUTS:
+            page = self.prepare_assault_party(stage, level, by_button=True)
+        else:
+            page = self.prepare_assault_party(stage, level)
         choice = f'隊伍{party}' if party is not None else '目前隊伍'
         self.task.log_info(f'襲擊第{level}關：{choice}開始戰鬥（僅提交一次）')
         self.click(page.one('開始戰鬥', area=_START))

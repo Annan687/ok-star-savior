@@ -24,11 +24,11 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-**v0.2.18 測試版**修正啟示錄商店的 MAX、公會星光石購買視窗和特別通行證紅點誤報。[更新紀錄](CHANGELOG.md)
+**v0.2.19 測試版**修正兩個活動和激戰委託的免費票券辨識，改依「進入」按鈕狀態執行 MAX 掃蕩。[更新紀錄](CHANGELOG.md)
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.18/ok-star-savior-win32-Global-setup.exe) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.19/ok-star-savior-win32-Global-setup.exe) ·
 
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.18) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.19) ·
 
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 
@@ -78,15 +78,15 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-**[v0.2.18 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.18)。一般使用者請下載 Global 安裝版。**
+**[v0.2.19 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.19)。一般使用者請下載 Global 安裝版。**
 
 | 檔案 | 用途 |
 
 | --- | --- |
 
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.18/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.19/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
 
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.18/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.19/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 
 | `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
 
@@ -216,7 +216,7 @@ v0.2.2 已加入以下功能，目前已完成離線驗證，仍待實際定時�
 
 激戰委託可獨立勾選，並指定封閉的心象、異形的攻勢或虛假的契約。助手會掃蕩所選委託中最高可掃蕩的難度。
 
-「活動襲擊」依卡片標誌尋找「旅程的終點」（雙欄八關）與「放逐者的歸還軌跡」（直列五關），卡片前移時仍可定位。兩個活動各自使用免費票，可勾選自動推進，也可使用已解鎖的最高關卡掃蕩。
+「活動襲擊」依卡片標誌尋找「旅程的終點」（雙欄八關）與「放逐者的歸還軌跡」（直列五關），卡片前移時仍可定位。兩個活動各自依「進入」按鈕狀態確認有沒有免費票。可勾選自動推進，也可在已解鎖的最高關卡使用 MAX 掃蕩。
 
 「活動任務」和「環形鏈路」可分開勾選，皆適用於「旅程的終點」。環形鏈路票數非零且「全部抽取」可用時，會抽取並確認獎勵，直到票數為零。整盤完成時會更新並確認下一盤。
 
@@ -560,6 +560,8 @@ Star Savior：目前遊戲版本
 
 | --- | --- |
 
+| 活動掃蕩 | v0.2.19 已用 720p、900p、1080p 實機截圖回放辨識，並模擬兩個活動在沒有票數結果時各自用 MAX 掃蕩、領獎和確認零票。正票掃蕩待實機複驗。 |
+
 | 日課流程 | v0.2.18 已在單一帳號分段續跑完成 20 項日課。實機確認啟示錄商店購買、公會任務及通行證流程，並完成兩個活動及激戰委託的免費票。相關辨識已用三種解析度的實機截圖回放。[修正內容](CHANGELOG.md) |
 
 | 自訂排程 | 本機原始碼版已實測 22:00 定時啟動 Steam 遊戲，只跑保存的五項設定，完成後關閉遊戲及 OKSS；首頁仍保留完整日課設定。 |
@@ -684,7 +686,7 @@ OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`�
 
 ## 📌 專案狀態
 
-目前提供 `v0.2.18` 測試版。各項驗證進度見上方「目前測試狀態」。
+目前提供 `v0.2.19` 測試版。各項驗證進度見上方「目前測試狀態」。
 
 歡迎透過 [Issues](https://github.com/Annan687/ok-star-savior/issues) 提供不同環境的測試結果與問題紀錄。
 
