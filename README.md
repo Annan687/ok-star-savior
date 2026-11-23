@@ -24,11 +24,11 @@ OKSS 使用 [ok-script](https://github.com/ok-oldking/ok-script) 框架與
 
 **快速連結**
 
-**v0.2.19 測試版**修正兩個活動和激戰委託的免費票券辨識，改依「進入」按鈕狀態執行 MAX 掃蕩。[更新紀錄](CHANGELOG.md)
+**v0.2.20 測試版**修正限時據點、策略戰進場、公會星光石及突破通行證辨識，並以「進入」按鈕狀態判定星際迴廊是否可挑戰。[更新紀錄](CHANGELOG.md)
 
-[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.19/ok-star-savior-win32-Global-setup.exe) ·
+[下載 Global 測試版](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.20/ok-star-savior-win32-Global-setup.exe) ·
 
-[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.19) ·
+[版本說明](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.20) ·
 
 [Issues](https://github.com/Annan687/ok-star-savior/issues) ·
 
@@ -78,15 +78,15 @@ OKSS 是第三方遊戲自動化工具：
 
 ### 下載
 
-**[v0.2.19 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.19)。一般使用者請下載 Global 安裝版。**
+**[v0.2.20 測試版下載頁](https://github.com/Annan687/ok-star-savior/releases/tag/v0.2.20)。一般使用者請下載 Global 安裝版。**
 
 | 檔案 | 用途 |
 
 | --- | --- |
 
-| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.19/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
+| [ok-star-savior-win32-Global-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.20/ok-star-savior-win32-Global-setup.exe) | 包含 OKSS、Python、執行套件及 OCR 模型。不需要另外安裝 Codex、OKPY 或 Python。 |
 
-| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.19/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
+| [ok-star-savior-win32-online-setup.exe](https://github.com/Annan687/ok-star-savior/releases/download/v0.2.20/ok-star-savior-win32-online-setup.exe) | 線上安裝版，首次使用需要連網下載程式與環境，準備時間較長。 |
 
 | `ok-star-savior-win32.zip` | 精簡啟動器壓縮包，不包含完整執行環境。 |
 
@@ -686,7 +686,7 @@ OKSS 自有程式碼的授權尚待確認，目前未提供根目錄 `LICENSE`�
 
 ## 📌 專案狀態
 
-目前提供 `v0.2.19` 測試版。各項驗證進度見上方「目前測試狀態」。
+目前提供 `v0.2.20` 測試版。各項驗證進度見上方「目前測試狀態」。
 
 歡迎透過 [Issues](https://github.com/Annan687/ok-star-savior/issues) 提供不同環境的測試結果與問題紀錄。
 

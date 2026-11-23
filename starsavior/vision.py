@@ -33,6 +33,13 @@ PASS_OCR_ALIASES = {
 
 def norm(text):
     value = compact(_cc.convert(str(text))).replace("廻", "回")
+    stage = re.fullmatch(r"(虚空涅盘者)([IVXLCDM0-9|]+)", value)
+    if stage:
+        return UI_TRANSLATIONS[stage[1]] + stage[2]
+    # The small dot after Vol can disappear between reads of a pass label.
+    volume = re.fullmatch(r"(作战突破路条|突破困难作战通行证)VOL([0-9]+)", value)
+    if volume:
+        value = f"{volume[1]}VOL.{volume[2]}"
     return UI_TRANSLATIONS.get(value, PASS_OCR_ALIASES.get(value, value))
 
 
@@ -192,6 +199,39 @@ class View:
         bright_color = (hsv[:, :, 1] > 115) & (hsv[:, :, 2] > 160)
         white = (hsv[:, :, 1] < 35) & (hsv[:, :, 2] > 215)
         return float(bright_color.mean()) > .24 or float(white.mean()) > .50
+
+    def corridor_entry_available(self, button):
+        """Observe the detail page's entry control without reading its badge."""
+        if self.enabled(button):
+            return True
+        # Use the blank ends of the gray button, below the counter and far
+        # enough from the label that its low-contrast text cannot interfere.
+        for x in (.80, .904):
+            patch = self.crop((x, button.cy-.009, x+.015, button.cy+.012))
+            if not patch.size:
+                return None
+            hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+            dark_gray = ((hsv[:, :, 1] <= 30) & (hsv[:, :, 2] >= 34) & (hsv[:, :, 2] <= 85))
+            if dark_gray.mean() < .85:
+                return None
+        return False
+
+    def corridor_floor_marker(self):
+        """Record the shape of the displayed floor, without parsing digits."""
+        patch = self.crop((.820, .301, .901, .341))
+        if not patch.size:
+            return None
+        marker = cv2.resize(patch, (96, 36), interpolation=cv2.INTER_AREA).min(axis=2) >= 188
+        return marker if .018 < marker.mean() < .45 else None
+
+    @staticmethod
+    def corridor_floor_changed(before, current):
+        # Allow one pixel of alignment or antialiasing drift after resizing.
+        kernel = np.ones((3, 3), np.uint8)
+        previous_area = cv2.dilate(before.astype(np.uint8), kernel) != 0
+        current_area = cv2.dilate(current.astype(np.uint8), kernel) != 0
+        unmatched = np.count_nonzero(before & ~current_area) + np.count_nonzero(current & ~previous_area)
+        return unmatched > .012 * np.count_nonzero(before | current)
 
     def assault_entry_available(self, button):
         """Distinguish a blue entry button from a gray button with a red cost."""

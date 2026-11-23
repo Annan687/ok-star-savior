@@ -85,13 +85,15 @@ class Engine:
         self.click(token)
         return True
 
-    def expect(self, *labels, area=FULL, seconds=8):
+    def expect(self, *labels, area=FULL, seconds=8, required=True):
         end = time.monotonic()+seconds
         while True:
             v = self.see()
             if v.has(*labels, area=area):
                 return v
             if time.monotonic() >= end:
+                if not required:
+                    return None
                 raise NeedsReview(f"畫面未到達：{' / '.join(labels)}")
             self.task.sleep(.4)
 
@@ -842,8 +844,13 @@ class Engine:
             self.task.sleep(.4)
         raise NeedsReview("策略戰跳過確認的 1 個聖鎧鑰匙與完整內文尚未穩定，未提交")
 
-    def skip_battle(self, strategy=False):
-        self.expect("跳過戰鬥", seconds=12)
+    def skip_battle(self, strategy=False, *, retry_entry=None):
+        area = BOTTOM if strategy else FULL
+        ready = self.expect("跳過戰鬥", area=area, seconds=12, required=retry_entry is None)
+        if retry_entry is not None and ready is None:
+            retry_entry()
+            if self.expect("跳過戰鬥", area=area, seconds=12, required=False) is None:
+                raise NeedsReview("策略戰重試進場後仍未出現跳過戰鬥")
         self.tap("跳過戰鬥", area=BOTTOM, enabled=True)
         if strategy:
             self.confirm_strategy_skip()

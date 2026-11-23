@@ -12,6 +12,9 @@ from .policy import FARM, TIMED, NeedsReview, is_free, exact_challenge, fraction
 from .vision import norm, Text, View, FULL, TOP, BOTTOM, CENTER, RIGHT, LEFT
 
 
+CORRIDOR_CHALLENGE_AREA = (.79, .895, .92, .953)
+
+
 class DailyFlows(EventFlows, Engine):
     LOGIN_WAIT_SECONDS = 180
 
@@ -997,31 +1000,26 @@ class DailyFlows(EventFlows, Engine):
             if v.has("CLOSED", area=area):
                 results.append(f"{name}未開放")
                 continue
-            remaining = v.count(3, area=area)[1][0]
-            if not remaining:
-                results.append(f"{name}次數已用完")
-                continue
             self.navigate_checked(f"選擇{name}",
                                   lambda frame: self.corridor_row_target(frame, name),
                                   lambda frame: self.corridor_enter_target(frame, name) is not None)
             self.navigate_checked(f"進入{name}",
                                   lambda frame: self.corridor_enter_target(frame, name),
                                   lambda frame: self.corridor_detail_ready(frame, name))
-            for _ in range(remaining):
-                v = self.wait_corridor_detail(name)
-                before = v.count(3, area=(.65, .70, .98, 1))[1][0]
-                if not before:
-                    break
-                self.click(v.one("進入", area=BOTTOM))
+            button, floor = self.wait_corridor_detail(name)
+            attempts = 0
+            while button is not None and attempts < 3:
+                self.click(button)
+                attempts += 1
                 won = self.skip_battle()
                 if not won:
                     results.append(f"{name}本次失敗，停止該迴廊")
                     break
-                after = self.wait_corridor_detail(name).count(3, area=(.65, .70, .98, 1))[1][0]
-                if after != before-1:
-                    raise NeedsReview("迴廊剩餘次數未按預期減少")
+                button, floor = self.wait_corridor_detail(name, previous_floor=floor)
             else:
-                results.append(f"{name}完成")
+                if button is not None:
+                    raise NeedsReview(f"{name}已完成 3 場，進入仍可用；未再次出戰")
+                results.append(f"{name}完成" if attempts else f"{name}次數已用完")
         return "；".join(results)
 
     def corridor_row_target(self, v, name):
@@ -1030,8 +1028,7 @@ class DailyFlows(EventFlows, Engine):
             return None
         row = v.one(name, area=RIGHT, required=False)
         area = (.88, row.cy, .98, row.cy+.08)
-        counter = v.count(3, area=area, required=False)
-        if v.has("CLOSED", area=area) or counter is None or counter[1][0] == 0:
+        if v.has("CLOSED", area=area):
             return None
         return row
 
@@ -1044,29 +1041,40 @@ class DailyFlows(EventFlows, Engine):
 
     def corridor_detail_ready(self, v, name):
         # The overview also contains the corridor name and an Enter button.
-        # Require inner-page details and its bottom counter before any battle.
+        # Identify the detail page before checking its battle button.
         if self.is_menu(v) or any(v.has(other, area=RIGHT, contains=False)
-                                 for other in ("太陽迴廊", "月亮迴廊", "星辰迴廊") if other != name):
+                                  for other in ("太陽迴廊", "月亮迴廊", "星辰迴廊") if other != name):
             return False
         return (v.one(name, area=(.80, .24, .96, .40), required=False) is not None
                 and v.has("編制條件", "建議戰鬥力", area=(.77, .32, .98, .52))
-                and v.one("進入", area=BOTTOM, required=False) is not None
-                and v.count(3, area=(.65, .70, .98, 1), required=False) is not None)
+                and v.one("進入", area=CORRIDOR_CHALLENGE_AREA, required=False) is not None
+                and not v.has("通知", "確認", "取消", "REWARD", "VICTORY", "DEFEAT",
+                              area=CENTER, contains=False))
 
-    def wait_corridor_detail(self, name):
+    def wait_corridor_detail(self, name, *, previous_floor=None):
         previous, stable = None, 0
         for _ in range(30):
             v = self.see()
-            count = v.count(3, area=(.65, .70, .98, 1), required=False) if self.corridor_detail_ready(v, name) else None
-            value = count[1][0] if count else None
-            if value and not v.enabled(v.one("進入", area=BOTTOM)):
-                value = None
-            stable = stable + 1 if value is not None and value == previous else int(value is not None)
-            previous = value
+            key = button = floor = None
+            if self.corridor_detail_ready(v, name):
+                button = v.one("進入", area=CORRIDOR_CHALLENGE_AREA)
+                available = v.corridor_entry_available(button)
+                if available is False:
+                    button = None
+                    key = ("disabled",)
+                elif available is True:
+                    floor = v.corridor_floor_marker()
+                    # After victory, the next floor must be visible before
+                    # we submit again. Three stable frames also reject fades.
+                    if floor is not None and (previous_floor is None
+                                              or v.corridor_floor_changed(previous_floor, floor)):
+                        key = ("ready", floor.tobytes())
+            stable = stable + 1 if key is not None and key == previous else int(key is not None)
+            previous = key
             if stable >= 3:
-                return v
+                return button, floor
             self.task.sleep(.4)
-        raise NeedsReview(f"{name}內頁／剩餘次數未穩定，未重新提交戰鬥")
+        raise NeedsReview(f"{name}內頁進入按鈕或下一層尚未確認，未重新提交戰鬥")
 
     def corridor_overview(self):
         # The page title appears before the entrance animation finishes.
@@ -1327,6 +1335,34 @@ class DailyFlows(EventFlows, Engine):
             raise NeedsReview("策略戰防禦紀錄已確認，但尚未回到預期頁面；未重複點擊")
         raise NeedsReview(f"策略戰等待{'／'.join(labels)}逾時；目前為{last_state}，未繼續操作")
 
+    def retry_strategy_challenge(self, source, target):
+        """Retry opening one opponent's preparation screen before spending a key."""
+        opponent_area = (.39, target.cy-.045, .52, target.cy-.006)
+        button_area = source.around(target, .035, .025)
+
+        def opponent(page):
+            return sorted(t.key for t in page.within(opponent_area) if not t.key.isdecimal())
+
+        identity = opponent(source)
+        message = "策略戰進場未確認，無法確認同一對手及鑰匙，未重試"
+        for observation in range(3):
+            if observation:
+                self.task.sleep(.4)
+            v = self.see()
+            state = self.strategy_state(v)
+            if (state is None
+                    and v.has("策略戰", area=TOP, contains=False)
+                    and v.one("跳過戰鬥", area=BOTTOM, required=False) is not None):
+                return  # Preparation finished just after the initial wait.
+            if (not identity or state != "對戰列表"
+                    or v.has("確認", "取消", "通知", "跳過戰鬥", "REWARD", area=CENTER, contains=False)
+                    or opponent(v) != identity):
+                raise NeedsReview(message)
+            button = v.one("挑戰", area=button_area, required=False)
+            if button is None or not v.enabled(button) or self.strategy_keys(v) != source.strategy_key_count:
+                raise NeedsReview(message)
+        self.click(button)
+
     def strategy(self):
         v = self.see()
         if not (self.resolve_strategy_state(v) or self.strategy_promotion(v)):
@@ -1349,10 +1385,11 @@ class DailyFlows(EventFlows, Engine):
             targets = [t for t in v.within((.5, .22, .97, .98)) if exact_challenge(t.text)]
             targets = sorted([t for t in targets if v.enabled(t)], key=lambda t: t.cy)
             if targets:
-                self.click(targets[0])
-                self.skip_battle(strategy=True)
+                target = targets[0]
+                self.click(target)
+                self.skip_battle(strategy=True, retry_entry=lambda: self.retry_strategy_challenge(v, target))
                 after = self.strategy_screen("對戰列表", read_keys=True,
-                                             key_before=before, completed_target=targets[0])
+                                             key_before=before, completed_target=target)
                 if after.strategy_key_count == 0:
                     return "鑰匙已用完"
                 continue
@@ -1541,12 +1578,18 @@ class DailyFlows(EventFlows, Engine):
                     and not v.has("REWARD", "通知", area=CENTER, contains=False)):
                 count = v.count(1, area=(.23, .55, .35, .64), required=False)
                 button = v.one("購買", area=(.40, .70, .60, .78), required=False)
-                if count and button:
-                    remaining = count[1][0]
+                if button is not None:
+                    value = count[1] if count is not None else None
+                    if value is None:
+                        # Whole-frame OCR can drop the narrow denominator
+                        # (每日購買1/次). Re-read the badge by itself.
+                        badge = self.reread_claim_button(
+                            v, (.214, .574, .30, .613), ("每日購買0/1次", "每日購買1/1次"))
+                        value = fraction(badge.key, 1) if badge is not None else None
                     enabled = v.enabled(button)
-                    if remaining == 0 and not enabled:
+                    if value == (0, 1) and not enabled:
                         state = "sold_out"
-                    elif remaining == 1 and enabled:
+                    elif value == (1, 1) and enabled:
                         state = "available"
             stable = stable + 1 if state is not None and state == previous else (1 if state else 0)
             previous = state
@@ -1596,7 +1639,7 @@ class DailyFlows(EventFlows, Engine):
             self.claim_pass(name)
         self.open_breakthrough_pass()
         v = self.event_wait(self.breakthrough_pass_names, "未辨識到突破通行證子分頁",
-                            stability_key=lambda page: tuple(self.breakthrough_pass_names(page)))
+                            stability_key=lambda page: tuple(map(norm, self.breakthrough_pass_names(page))))
         for name in self.breakthrough_pass_names(v):
             self.claim_pass(name)
         return ("特別通行證、" if has_special else "") + "三種支援通行證與所有可見突破通行證已檢查"
